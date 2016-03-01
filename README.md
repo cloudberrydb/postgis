@@ -1,5 +1,9 @@
 # geospatial repo
 
+## licence
+
+This project is developing under GPL v2, because PostGIS is GPL v2.
+
 ## sub-directories under planing
 1. postgis
   * geometry
