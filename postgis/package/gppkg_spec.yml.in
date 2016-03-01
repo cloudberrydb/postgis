@@ -1,0 +1,10 @@
+Pkgname: postgis
+Architecture: #arch
+OS: #os
+Version: ossv2.1.5_pv2.1_gpdb4.4
+GPDBVersion: #gpver
+Description: PostGIS provides spatial database functions for the Greenplum Database. 
+PostInstall:
+- Master: "echo 'Please run psql -d mydatabase -f $GPHOME/share/postgresql/contrib/postgis-2.1/*.sql to enable the PostGIS package. The most commonly used files include postgis.sql, rtpostgis.sql, postgis_comments.sql, raster_comments.sql and spatial_ref_sys.sql'"
+PostUpdate:
+- Master: "echo 'Please run psql -d mydatabase -f $GPHOME/share/postgresql/contrib/postgis-2.1/postgis_upgrade_20_minor.sql to finish the update.'"

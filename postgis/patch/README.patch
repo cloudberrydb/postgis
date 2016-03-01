@@ -1,0 +1,43 @@
+Usage:
+--------
+0. Download the source code of PostGIS 2.1.5
+  wget http://download.osgeo.org/postgis/source/postgis-2.1.5.tar.gz /tmp/
+  cp /tmp/postgis-2.1.5.tar.gz $GPDB/cdb-pg/contrib/postgis/
+
+  NOTE: we are providing the source code of PostGIS, but you can 
+	also download it from websites if you insist.
+
+1. Extract and patch the raw PostGIS 2.1.5
+  cd $GPDB/cdb-pg/contrib/postgis
+  ./build.sh
+
+  NOTE: build.sh will extract the tar ball firstly and then patch it. Again,
+	you can patch the package with commands below, e.g., 
+		1. patch -p 4 < $GIS/patch/postgis-2.1.5-GPDB.patch
+		2. Or perform command below in GIT working directory:
+			cd $GPDB/cdb-pg/contrib/postgis/
+			git apply $GIS/patch/postgis-2.1.5-GPDB.patch
+
+2. Compile the patched PostGIS 2.1.5
+  cd $GPDB/cdb-pg/contrib/postgis/
+  make
+
+3. Run regressing tests
+  cd $GPDB/cdb-pg/contrib/postgis/
+  make check
+
+Note:
+--------
+Now we can compile PostGIS Geometry and pass all the regressing tests except below:
+1. regress_selectivity
+  #Greenplum does not support ANALYZE functions for user-defined data types.
+2. long_xact
+  #Greenplum does not support long transcation for user-defined data types with triggers
+3. typmod
+  #Greenplum does not support BINARY, so test cannot continues...
+
+Furthermore, we can compile PostGIS Raster and pass all the regressing tests.
+Beside, we are enriching GPDB 4.4 with necessary features to support PostGIS Topology.
+
+Commit by:
+  Kuien Liu <kliu@pivotal.io>, 21 April 2015
