@@ -2,16 +2,18 @@
 include Makefile.version
 
 # compiling directory
-POSTGIS_BLD_TOP     = $(shell cd .. && pwd)
+POSTGIS_BLD_TOP     = $(shell mkdir -p build && cd ./build && pwd)
 POSTGIS_BLD_DIR     = $(POSTGIS_BLD_TOP)/postgis-$(POSTGIS_VER)
 
 # tar ball and patch file
-POSTGIS_TAR_BALL    = postgis-$(POSTGIS_VER).tar.gz
+POSTGIS_TAR_BALL    = source/postgis-$(POSTGIS_VER).tar.gz
 POSTGIS_PATCH_FILE  = patch/postgis-$(POSTGIS_VER)-GPDB.patch
 
 # entry
-all install uninstall clean distclean maintainer-clean test check installcheck docs docs-install docs-uninstall utils: prepare 
-	make -C $(POSTGIS_BLD_DIR) $@
+all install uninstall clean distclean maintainer-clean test check installcheck docs docs-install docs-uninstall utils: prepare
+	@echo 'you choose $@, but we reject'
+
+#make -C $(POSTGIS_BLD_DIR) $@
 
 # prepare the compiling dir
 prepare:
