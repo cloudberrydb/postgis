@@ -1,29 +1,7 @@
-diff --git a/cdb-pg/contrib/postgis-2.1.5/Makefile b/cdb-pg/contrib/postgis-2.1.5/Makefile
-index 7ccdb64..49f7818 100644
---- a/cdb-pg/contrib/postgis-2.1.5/Makefile
-+++ b/cdb-pg/contrib/postgis-2.1.5/Makefile
-@@ -2,7 +2,7 @@
- # this file copied and adapted from PostgreSQL source
- # to allow easy build on BSD systems
- 
--all install uninstall clean distclean maintainer-clean test check docs docs-install docs-uninstall utils: GNUmakefile
-+all install uninstall clean distclean maintainer-clean test check installcheck docs docs-install docs-uninstall utils: GNUmakefile
- 	@IFS=':' ; \
- 	 for dir in $$PATH; do \
- 	   for prog in gmake gnumake make; do \
-@@ -24,5 +24,6 @@ all install uninstall clean distclean maintainer-clean test check docs docs-inst
- configure: configure.in
- 	./autogen.sh
- 
--GNUmakefile: GNUmakefile.in
--	./configure
-+include ./Makefile.libs
-+
-+GNUmakefile: GNUmakefile.in config_with_dep_libs dep_libs_install 
-diff --git a/cdb-pg/contrib/postgis-2.1.5/GNUmakefile.in b/cdb-pg/contrib/postgis-2.1.5/GNUmakefile.in
+diff --git a/postgis/build/postgis-2.1.5/GNUmakefile.in b/postgis/build/postgis-2.1.5/GNUmakefile.in
 index 8fc0c24..2367468 100644
---- a/cdb-pg/contrib/postgis-2.1.5/GNUmakefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/GNUmakefile.in
+--- a/postgis/build/postgis-2.1.5/GNUmakefile.in
++++ b/postgis/build/postgis-2.1.5/GNUmakefile.in
 @@ -33,6 +33,9 @@ clean-local:
  # TODO: drop 'test' target..
  test: check
@@ -34,171 +12,10 @@ index 8fc0c24..2367468 100644
  check: all docs-check
  
  distclean: clean distclean-local
-diff --git a/cdb-pg/contrib/postgis-2.1.5/Makefile.libs b/cdb-pg/contrib/postgis-2.1.5/Makefile.libs
-new file mode 100644
-index 0000000..646a8cc
---- /dev/null
-+++ b/cdb-pg/contrib/postgis-2.1.5/Makefile.libs
-@@ -0,0 +1,155 @@
-+#------------------------------------------------------------#
-+# To deploy PostGIS onto Greenplum Database, we need to install
-+# a set of 3rd-party libraries, e.g., geos, gdal, json-c, proj4,
-+# etc. This file is created to deal with this kind of jobs.
-+#
-+# Kuien Liu <kliu@pivotal.io>, 1 April 2015.
-+#-------------------------------------------#
-+
-+BLD_TOP=$(shell cd ../../.. && pwd)
-+include $(BLD_TOP)/Makefile.global     # for BLD_ARCH
-+include $(BLD_TOP)/releng/tools.mk
-+EXT_TOP=$(BLD_TOP)/ext/$(BLD_ARCH)
-+
-+#build path on releng's host
-+RELENG_PREFIX=/data/home/build/tools_build_tanm8/tools
-+RELENG_PREFIX_PROJ=/data/shahi1/tools
-+
-+#GPDB
-+PG_CONFIG=$(BLD_TOP)/cdb-pg/src/bin/pg_config/pg_config
-+GPDB_LIB_BUILD_PREFIX=$(RELENG_PREFIX)/greenplum-db/lib
-+
-+PG_DEP_LIB_DIR=$(shell $(PG_CONFIG) --libdir)
-+GPDB_LIB_DIR=$(PG_DEP_LIB_DIR)
-+GPDB_DIR=$(shell cd $(GPDB_LIB_DIR)/.. && pwd)
-+
-+#ape from $(BLD_TOP)/cdb-pg/src/Makefile.global etc
-+INSTALL=$(BLD_TOP)/cdb-pg/config/install-sh -c
-+INSTALL_SHLIB=$(BLD_TOP)/cdb-pg/config/install-sh -c -m 755
-+INSTALL_DATA=$(BLD_TOP)/cdb-pg/config/install-sh -c -m 644
-+INSTALL_PROGRAM=$(BLD_TOP)/cdb-pg/config/install-sh -s
-+mkinstalldirs=$(BLD_TOP)/cdb-pg/config/mkinstalldirs
-+
-+# versions for these 3rd party libraries and Postgis
-+include Makefile.version
-+
-+#GOES
-+GEOS_BUILD_PREFIX=$(RELENG_PREFIX)/geos/$(GEOS_VER)/dist/$(BLD_ARCH)
-+GEOS_DIR=$(EXT_TOP)/geos-$(GEOS_VER)
-+GEOS_CONFIG=$(GEOS_DIR)/bin/geos-config
-+GEOS_LIBS_BE=$(GEOS_DIR)/lib/libgeos*
-+GEOS_LIBS_AF=$(PG_DEP_LIB_DIR)/libgeos*
-+
-+#Proj.4
-+PROJ_BUILD_PREFIX=$(RELENG_PREFIX)/proj/$(PROJ_VER)/dist/$(BLD_ARCH)
-+#releng built PROJ-4 on a seperated machine
-+PROJ_BUILD_PREFIX2=$(RELENG_PREFIX_PROJ)/proj/$(PROJ_VER)/dist/$(BLD_ARCH)
-+PROJ_DIR=$(EXT_TOP)/proj-$(PROJ_VER)
-+PROJ_LIBS_BE=$(PROJ_DIR)/lib/libproj*
-+PROJ_LIBS_AF=$(PG_DEP_LIB_DIR)/libproj*
-+
-+#json-c
-+JSON_BUILD_PREFIX=$(RELENG_PREFIX)/json-c/$(JSON_VER)/dist/$(BLD_ARCH)
-+JSON_DIR=$(EXT_TOP)/json-c-$(JSON_VER)
-+JSON_LIBS_BE=$(JSON_DIR)/lib/libjson-c*
-+JSON_LIBS_AF=$(PG_DEP_LIB_DIR)/libjson-c*
-+
-+#GDAL
-+GDAL_BUILD_PREFIX=$(RELENG_PREFIX)/gdal/$(GDAL_VER)/dist/$(BLD_ARCH)
-+GDAL_DIR=$(EXT_TOP)/gdal-$(GDAL_VER)
-+GDAL_CONFIG=$(GDAL_DIR)/bin/gdal-config
-+GDAL_LIBS_BE=$(GDAL_DIR)/lib/libgdal*
-+GDAL_LIBS_AF=$(PG_DEP_LIB_DIR)/libgdal*
-+
-+#XML2
-+XML2_DIR=$(EXT_TOP)
-+XML2_CONFIG=$(XML2_DIR)/bin/xml2-config
-+
-+# for regressing
-+DEP_LIBS_PATH=$(GEOS_DIR) $(PROJ_DIR) $(JSON_DIR) $(GDAL_DIR)
-+DEP_LIBS_BE=$(GEOS_LIBS_BE) $(PROJ_LIBS_BE) $(JSON_LIBS_BE) $(GDAL_LIBS_BE)
-+DEP_LIBS_AF=$(GEOS_LIBS_AF) $(PROJ_LIBS_AF) $(JSON_LIBS_AF) $(GDAL_LIBS_AF)
-+
-+#for data dir copying during source-code-building (not form GPROOT)
-+DEP_LIBS_DATA=$(GDAL_DIR)/share/gdal $(PROJ_DIR)/share/proj
-+GPDB_DATA_AF=$(GPDB_DIR)/share/gdal $(GPDB_DIR)/share/proj
-+
-+SHLIB_LINK_F = @SHLIB_LINK@
-+SHLIB_LINK := $(SHLIB_LINK_F) $(SHLIB_LINK)
-+
-+# for compiling
-+dep_libs_path_prepare:
-+	@echo
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Prepare paths for dependent libraries, e.g., GDAL, GEOS, JSON-c, PROJ.4"
-+	@echo "-----------------------------------------------------------------------"
-+	@for lib in $(DEP_LIBS_PATH); do \
-+		echo "chmod -R +w $$lib"; \
-+		chmod -R +w $$lib; \
-+		echo "rm -rf $$lib/lib/*.a $$lib/lib/*.la $$lib/lib/pkgconfig"; \
-+		rm -rf $$lib/lib/*.a $$lib/lib/*.la $$lib/lib/pkgconfig; \
-+	done
-+	perl -i.bak -p -e "s|$(GEOS_BUILD_PREFIX)|$(GEOS_DIR)|g" $(GEOS_CONFIG) 2>/dev/null
-+	perl -i.bak -p -e "s|$(GDAL_BUILD_PREFIX)|$(GDAL_DIR)|g" $(GDAL_CONFIG) 2>/dev/null
-+	perl -i.bak -p -e "s|$(GEOS_BUILD_PREFIX)|$(GEOS_DIR)|g" $(GDAL_CONFIG) 2>/dev/null
-+	perl -i.bak -p -e "s|$(PROJ_BUILD_PREFIX)|$(PROJ_DIR)|g" $(GDAL_CONFIG) 2>/dev/null
-+	perl -i.bak -p -e "s|$(JSON_BUILD_PREFIX)|$(JSON_DIR)|g" $(GDAL_CONFIG) 2>/dev/null
-+	perl -i.bak -p -e "s|$(GPDB_LIB_BUILD_PREFIX)|$(GPDB_LIB_DIR)|g" $(GDAL_CONFIG) 2>/dev/null
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Done"
-+	@echo "-----------------------------------------------------------------------"
-+
-+config_with_dep_libs: dep_libs_path_prepare
-+	@echo
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Configure with dependent libraries from Ivy Repo"
-+	@echo "-----------------------------------------------------------------------"
-+#   GEOS_PREFIX=$(GEOS_DIR)
-+	./configure --with-geosconfig=$(GEOS_CONFIG) --with-projdir=$(PROJ_DIR) --with-jsondir=$(JSON_DIR) --with-gdalconfig=$(GDAL_CONFIG) --with-pgconfig=$(PG_CONFIG) --with-xml2config=$(XML2_CONFIG) --with-raster --without-topology
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Done"
-+	@echo "-----------------------------------------------------------------------"
-+
-+dep_libs_install:
-+	@echo
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Install libraries, e.g., GDAL, GEOS, JSON-c, PROJ.4, into GPHOME dir"
-+	@echo "-----------------------------------------------------------------------"
-+ifneq (,$(DEP_LIBS_BE))
-+	@for lib in $(DEP_LIBS_BE); do \
-+		echo "$(INSTALL_SHLIB) $$lib '$(PG_DEP_LIB_DIR)'"; \
-+		$(INSTALL_SHLIB) $$lib '$(PG_DEP_LIB_DIR)'; \
-+	done
-+endif # DEP_LIBS_BE
-+ifneq (,$(DEP_LIBS_DATA))
-+	$(mkinstalldirs) '$(GPDB_DIR)/share/gdal'
-+	$(mkinstalldirs) '$(GPDB_DIR)/share/proj'
-+	$(INSTALL_DATA) $(GDAL_DIR)/share/gdal/* $(GPDB_DIR)/share/gdal/
-+	$(INSTALL_DATA) $(PROJ_DIR)/share/proj/* $(GPDB_DIR)/share/proj/
-+endif # DEP_LIBS_DATA
-+ifeq (,$(GDAL_DATA))
-+	@echo "export GDAL_DATA=\$$GPHOME/share/gdal" >> $(GPDB_DIR)/greenplum_path.sh
-+	@source $(GPDB_DIR)/greenplum_path.sh
-+endif
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Done"
-+	@echo "-----------------------------------------------------------------------"
-+
-+dep_libs_uninstall:
-+	@echo
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Uninstall libraries, e.g., GDAL, GEOS, JSON-c, PROJ.4, from GPHOME dir"
-+	@echo "-----------------------------------------------------------------------"
-+ifneq (,$(DEP_LIBS_AF))
-+	@for lib in $(DEP_LIBS_AF); do \
-+		rm -f '$(PG_DEP_LIB_DIR)/$$lib'; \
-+	done
-+endif # DEP_LIBS_AF
-+ifneq (,$(GPDB_DATA_AF))
-+	@for data in $(GPDB_DATA_AF); do \
-+		rm -rf $$data; \
-+	done
-+endif # GPDB_DATA_AF
-+	@echo "-----------------------------------------------------------------------"
-+	@echo "Done"
-+	@echo "-----------------------------------------------------------------------"
-diff --git a/cdb-pg/contrib/postgis-2.1.5/configure b/cdb-pg/contrib/postgis-2.1.5/configure
-index 2a68b7b..9a011c5 100755
---- a/cdb-pg/contrib/postgis-2.1.5/configure
-+++ b/cdb-pg/contrib/postgis-2.1.5/configure
+diff --git a/postgis/build/postgis-2.1.5/configure b/postgis/build/postgis-2.1.5/configure
+index 2a68b7b..44718a9 100755
+--- a/postgis/build/postgis-2.1.5/configure
++++ b/postgis/build/postgis-2.1.5/configure
 @@ -17040,8 +17040,8 @@ PGSQL_SHAREDIR=`$PG_CONFIG --sharedir`
  
  { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking PostgreSQL version... $PGSQL_FULL_VERSION" >&5
@@ -206,7 +23,7 @@ index 2a68b7b..9a011c5 100755
 -if test ! "$PGSQL_MAJOR_VERSION" -ge 9; then
 -	as_fn_error $? "PostGIS requires PostgreSQL >= 9.0" "$LINENO" 5
 +if test ! "$PGSQL_MAJOR_VERSION" -ge 8; then
-+	as_fn_error $? "PostGIS requires PostgreSQL >= 8.2" "$LINENO" 5
++	as_fn_error $? "PostGIS requires PostgreSQL >= 8.3" "$LINENO" 5
  fi
  
  PGXSOVERRIDE=0
@@ -220,62 +37,10 @@ index 2a68b7b..9a011c5 100755
  case $host in
  	*mingw32*)
  		PGSQL_BE_CPPFLAGS="${PGSQL_BE_CPPFLAGS} -I${PGSRV_INC}/port/win32"
-@@ -17420,6 +17421,7 @@ if test ! "$GEOS_NUMERIC_VERSION" -ge 30300; then
- fi
- 
- GEOS_LDFLAGS=`$GEOSCONFIG --ldflags`
-+GEOS_LDFLAGS="$GEOS_LDFLAGS -lgeos -lgeos_c"
- GEOS_CPPFLAGS=-I`$GEOSCONFIG --includes`
- 
- 
-@@ -19707,7 +19709,7 @@ if test ! "x$PROJDIR" = "x"; then
- $as_echo "Using user-specified proj directory: $PROJDIR" >&6; }
- 
- 						PROJ_CPPFLAGS="-I$PROJDIR/include"
--			PROJ_LDFLAGS="-L$PROJDIR/lib"
-+			PROJ_LDFLAGS="-L$PROJDIR/lib -lproj"
- 		else
- 			as_fn_error $? "the --with-projdir directory \"$PROJDIR\" cannot be found" "$LINENO" 5
- 		fi
-@@ -20611,6 +20613,7 @@ $as_echo "$OGR_ENABLED" >&6; }
- $as_echo "$OGR_ENABLED" >&6; }
- 
- 				LIBGDAL_LDFLAGS=`$GDAL_CONFIG --libs`
-+				LIBGDAL_DEPLIBS_LDFLAGS="$PROJ_LDFLAGS $JSON_LDFLAGS $GEOS_LDFLAGS $PGSQL_FE_LDFLAGS"
- 				LIBGDAL_CFLAGS=`$GDAL_CONFIG --cflags`
- 
- 		CPPFLAGS_SAVE="$CPPFLAGS"
-@@ -20618,7 +20621,7 @@ $as_echo "$OGR_ENABLED" >&6; }
- 		CFLAGS_SAVE="$CFLAGS"
- 		CFLAGS=""
- 		LIBS_SAVE="$LIBS"
--		LIBS="$LIBGDAL_LDFLAGS"
-+		LIBS="$LIBGDAL_LDFLAGS $LIBGDAL_DEPLIBS_LDFLAGS"
- 
- 				for ac_header in gdal.h ogr_api.h cpl_conv.h
- do :
-@@ -20695,7 +20698,7 @@ else
- fi
- 
- 
--		LIBS="$LIBGDAL_LDFLAGS"
-+		LIBS="$LIBGDAL_LDFLAGS $LIBGDAL_DEPLIBS_LDFLAGS"
- 
- 				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing OGRRegisterAll" >&5
- $as_echo_n "checking for library containing OGRRegisterAll... " >&6; }
-@@ -20756,7 +20759,7 @@ else
- fi
- 
- 
--		LIBS="$LIBGDAL_LDFLAGS"
-+		LIBS="$LIBGDAL_LDFLAGS  $LIBGDAL_DEPLIBS_LDFLAGS"
- 
- 				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing GDALFPolygonize" >&5
- $as_echo_n "checking for library containing GDALFPolygonize... " >&6; }
-diff --git a/cdb-pg/contrib/postgis-2.1.5/configure.ac b/cdb-pg/contrib/postgis-2.1.5/configure.ac
+diff --git a/postgis/build/postgis-2.1.5/configure.ac b/postgis/build/postgis-2.1.5/configure.ac
 index bb45ff6..79b4457 100644
---- a/cdb-pg/contrib/postgis-2.1.5/configure.ac
-+++ b/cdb-pg/contrib/postgis-2.1.5/configure.ac
+--- a/postgis/build/postgis-2.1.5/configure.ac
++++ b/postgis/build/postgis-2.1.5/configure.ac
 @@ -450,7 +450,9 @@ AC_SUBST([PGSQL_FE_CPPFLAGS])
  
  dnl Extract the include flags for the backend (libpgcommon)
@@ -287,60 +52,10 @@ index bb45ff6..79b4457 100644
  dnl Add $PGSRV_INC/port/win32 to MinGW build to pick up netdb.h
  case $host in
  	*mingw32*)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.comments.in b/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.comments.in
-index dbe3527..260fafd 100644
---- a/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.comments.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.comments.in
-@@ -21,9 +21,17 @@ MODULEDIR=contrib/$(MODULE_doc)
- DATA_built=postgis_comments.sql raster_comments.sql topology_comments.sql
- 
- # PGXS information
-+ifdef USE_PGXS
- PG_CONFIG = @PG_CONFIG@ 
- PGXS := @PGXS@
- include $(PGXS)
-+else
-+# Include common tasks defined in Makefile.global, otherwise
-+# make clean etc will not work.
-+top_builddir=$(shell cd ../../.. && pwd)
-+include $(top_builddir)/src/Makefile.global
-+include $(top_builddir)/contrib/contrib-global.mk
-+endif
- 
- # PGXS override feature. The ability to allow PostGIS to install itself
- # in a versioned directory is only available in PostgreSQL >= 8.5. To
-diff --git a/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.in
-index bc824b7..e1f2590 100644
---- a/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/doc/Makefile.in
-@@ -75,6 +75,23 @@ DBLATEX=@DBLATEX@
- # Imagemagick's convert utility program for generated images used in the documentation
- IMAGEMAGICK=@IMAGEMAGICK@
- 
-+# Directories for postgresql subdirectories
-+ifdef USE_PGXS
-+PG_CONFIG = @PGCONFIG@
-+PGSQL_DOCDIR = $(shell $(PG_CONFIG) --docdir)
-+PGSQL_MANDIR = $(shell $(PG_CONFIG) --mandir)
-+PGSQL_SHAREDIR = $(shell $(PG_CONFIG) --sharedir)
-+else
-+top_builddir=$(shell cd ../../.. && pwd)
-+include $(top_builddir)/src/Makefile.global
-+include $(top_builddir)/contrib/contrib-global.mk
-+
-+BLD_TOP=$(shell cd ../../../.. && pwd)
-+PGSQL_DOCDIR = $(docdir)
-+PGSQL_MANDIR = $(mandir)
-+PGSQL_SHAREDIR = $(datadir)
-+endif
-+
- # Gettext for translated documentation
- MSGMERGE=msgmerge
- 
-diff --git a/cdb-pg/contrib/postgis-2.1.5/liblwgeom/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/liblwgeom/Makefile.in
+diff --git a/postgis/build/postgis-2.1.5/liblwgeom/Makefile.in b/postgis/build/postgis-2.1.5/liblwgeom/Makefile.in
 index 5773a7d..94d5800 100644
---- a/cdb-pg/contrib/postgis-2.1.5/liblwgeom/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/liblwgeom/Makefile.in
+--- a/postgis/build/postgis-2.1.5/liblwgeom/Makefile.in
++++ b/postgis/build/postgis-2.1.5/liblwgeom/Makefile.in
 @@ -11,7 +11,7 @@
  # **********************************************************************
  
@@ -350,10 +65,10 @@ index 5773a7d..94d5800 100644
  LDFLAGS = @LDFLAGS@ @GEOS_LDFLAGS@ -lgeos_c @PROJ_LDFLAGS@ -lproj @JSON_LDFLAGS@
  NUMERICFLAGS = @NUMERICFLAGS@
  top_builddir = @top_builddir@
-diff --git a/cdb-pg/contrib/postgis-2.1.5/liblwgeom/g_serialized.c b/cdb-pg/contrib/postgis-2.1.5/liblwgeom/g_serialized.c
+diff --git a/postgis/build/postgis-2.1.5/liblwgeom/g_serialized.c b/postgis/build/postgis-2.1.5/liblwgeom/g_serialized.c
 index 98adc61..8d96e27 100644
---- a/cdb-pg/contrib/postgis-2.1.5/liblwgeom/g_serialized.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/liblwgeom/g_serialized.c
+--- a/postgis/build/postgis-2.1.5/liblwgeom/g_serialized.c
++++ b/postgis/build/postgis-2.1.5/liblwgeom/g_serialized.c
 @@ -12,6 +12,7 @@
  
  #include "liblwgeom_internal.h"
@@ -382,10 +97,10 @@ index 98adc61..8d96e27 100644
  
  	/* Set the SRID! */
  	gserialized_set_srid(g, geom->srid);
-diff --git a/cdb-pg/contrib/postgis-2.1.5/liblwgeom/liblwgeom_internal.h b/cdb-pg/contrib/postgis-2.1.5/liblwgeom/liblwgeom_internal.h
+diff --git a/postgis/build/postgis-2.1.5/liblwgeom/liblwgeom_internal.h b/postgis/build/postgis-2.1.5/liblwgeom/liblwgeom_internal.h
 index 03d43ce..c44fb5c 100644
---- a/cdb-pg/contrib/postgis-2.1.5/liblwgeom/liblwgeom_internal.h
-+++ b/cdb-pg/contrib/postgis-2.1.5/liblwgeom/liblwgeom_internal.h
+--- a/postgis/build/postgis-2.1.5/liblwgeom/liblwgeom_internal.h
++++ b/postgis/build/postgis-2.1.5/liblwgeom/liblwgeom_internal.h
 @@ -114,14 +114,6 @@
  #define WKB_TRIANGLE_TYPE 17
  
@@ -401,10 +116,10 @@ index 03d43ce..c44fb5c 100644
  * Tolerance used to determine equality.
  */
  #define EPSILON_SQLMM 1e-8
-diff --git a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/Makefile.in
+diff --git a/postgis/build/postgis-2.1.5/libpgcommon/Makefile.in b/postgis/build/postgis-2.1.5/libpgcommon/Makefile.in
 index 7e3b012..875f944 100644
---- a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/Makefile.in
+--- a/postgis/build/postgis-2.1.5/libpgcommon/Makefile.in
++++ b/postgis/build/postgis-2.1.5/libpgcommon/Makefile.in
 @@ -22,6 +22,7 @@ LEX=@LEX@
  # Standalone COMMON objects
  SA_OBJS = \
@@ -426,10 +141,10 @@ index 7e3b012..875f944 100644
  
  all: libpgcommon.a
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/common.h b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/common.h
+diff --git a/postgis/build/postgis-2.1.5/libpgcommon/common.h b/postgis/build/postgis-2.1.5/libpgcommon/common.h
 index 31e404c..d02e268 100644
---- a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/common.h
-+++ b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/common.h
+--- a/postgis/build/postgis-2.1.5/libpgcommon/common.h
++++ b/postgis/build/postgis-2.1.5/libpgcommon/common.h
 @@ -13,7 +13,6 @@
  #ifndef PG_LIBCOMMON_H
  #define PG_LIBCOMMON_H
@@ -438,12 +153,12 @@ index 31e404c..d02e268 100644
  #include "lwgeom_pg.h"
  #include "lwgeom_transform.h"
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/libsrid.c b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/libsrid.c
+diff --git a/postgis/build/postgis-2.1.5/libpgcommon/libsrid.c b/postgis/build/postgis-2.1.5/libpgcommon/libsrid.c
 new file mode 100644
-index 0000000..2ec0f6c
+index 0000000..e80d39c
 --- /dev/null
-+++ b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/libsrid.c
-@@ -0,0 +1,8016 @@
++++ b/postgis/build/postgis-2.1.5/libpgcommon/libsrid.c
+@@ -0,0 +1,8018 @@
 +/**********************************************************************
 + * =============================================================================
 + * Portions of this file modified by EMC Corporation, 2011
@@ -8459,12 +8174,14 @@ index 0000000..2ec0f6c
 +            }
 +        }
 +    }
++
++	return 0;
 +}
-diff --git a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/libsrid.h b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/libsrid.h
+diff --git a/postgis/build/postgis-2.1.5/libpgcommon/libsrid.h b/postgis/build/postgis-2.1.5/libpgcommon/libsrid.h
 new file mode 100644
 index 0000000..6489ca8
 --- /dev/null
-+++ b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/libsrid.h
++++ b/postgis/build/postgis-2.1.5/libpgcommon/libsrid.h
 @@ -0,0 +1,24 @@
 +/**********************************************************************
 + * =============================================================================
@@ -8490,10 +8207,10 @@ index 0000000..6489ca8
 +int    getSRIDbySRSbyRule(const char* srs);
 +
 +#endif /* PG_LIBSRID_H*/
-diff --git a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_pg.h b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_pg.h
+diff --git a/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_pg.h b/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_pg.h
 index 594bff9..ea33c7c 100644
---- a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_pg.h
-+++ b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_pg.h
+--- a/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_pg.h
++++ b/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_pg.h
 @@ -20,7 +20,6 @@
  #include "fmgr.h"
  
@@ -8502,10 +8219,10 @@ index 594bff9..ea33c7c 100644
  
  /* Install PosgreSQL handlers for liblwgeom use */
  void pg_install_lwgeom_handlers(void);
-diff --git a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_transform.c b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_transform.c
+diff --git a/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_transform.c b/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_transform.c
 index 525c4a2..df15710 100644
---- a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_transform.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/lwgeom_transform.c
+--- a/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_transform.c
++++ b/postgis/build/postgis-2.1.5/libpgcommon/lwgeom_transform.c
 @@ -26,6 +26,7 @@
  #include "lwgeom_pg.h"
  #include "lwgeom_cache.h"
@@ -8625,79 +8342,446 @@ index 525c4a2..df15710 100644
  	/* Connect */
  	spi_result = SPI_connect();
  	if (spi_result != SPI_OK_CONNECT)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/pgsql_compat.h b/cdb-pg/contrib/postgis-2.1.5/libpgcommon/pgsql_compat.h
-deleted file mode 100644
-index 8104db9..0000000
---- a/cdb-pg/contrib/postgis-2.1.5/libpgcommon/pgsql_compat.h
-+++ /dev/null
-@@ -1,19 +0,0 @@
--#ifndef _PGSQL_COMPAT_H
--#define _PGSQL_COMPAT_H 1
--
--/* Make sure PG_NARGS is defined for older PostgreSQL versions */
--#ifndef PG_NARGS
--#define PG_NARGS() (fcinfo->nargs)
--#endif
--
--/* Define ARR_OVERHEAD_NONULLS for PostgreSQL < 8.2 */
--#if POSTGIS_PGSQL_VERSION < 82
--#define ARR_OVERHEAD_NONULLS(x) ARR_OVERHEAD((x))
--#endif
--
--/* PostgreSQL < 8.3 uses VARATT_SIZEP rather than SET_VARSIZE for varlena types */
--#if POSTGIS_PGSQL_VERSION < 83
--#define SET_VARSIZE(var, size)   VARATT_SIZEP(var) = size
--#endif
--
--#endif /* _PGSQL_COMPAT_H */
-diff --git a/cdb-pg/contrib/postgis-2.1.5/loader/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/loader/Makefile.in
-index e190491..d9b1742 100644
---- a/cdb-pg/contrib/postgis-2.1.5/loader/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/loader/Makefile.in
-@@ -15,9 +15,17 @@
- # the DESTDIR variable so we can get the correct install paths. 
- # Hence we include the PGXS Makefile here, but ensure that we override the
- # 'all' and 'install' targets with the ones we really want to use below.
-+ifdef USE_PGXS
- PG_CONFIG = @PG_CONFIG@
- PGXS := @PGXS@
- include $(PGXS)
-+else
-+# Include common tasks defined in Makefile.global, otherwise
-+# make clean etc will not work.
-+top_builddir=../../..
-+include $(top_builddir)/src/Makefile.global
-+include $(top_builddir)/contrib/contrib-global.mk
-+endif
+diff --git a/postgis/build/postgis-2.1.5/libtool b/postgis/build/postgis-2.1.5/libtool
+index 1e69385..1d3abad 100755
+--- a/postgis/build/postgis-2.1.5/libtool
++++ b/postgis/build/postgis-2.1.5/libtool
+@@ -1,6 +1,6 @@
+ #! /bin/sh
+ # Generated automatically by config.status () 
+-# Libtool was configured on host Crane.local:
++# Libtool was configured on host r7:
+ # NOTE: Changes made to this file will be lost: look at ltmain.sh.
  
- # Set CFLAGS afer PGXS, otherwise it will get overwritten with the PGXS
- # version which is not what we want. 
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/postgis/Makefile.in
-index 9f5db81..d6ca296 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/Makefile.in
-@@ -108,9 +108,17 @@ EXTRA_CLEAN=$(SQL_OBJS) \
- 	postgis_upgrade_21_minor.sql 
+ # Provide generalized library-building support services.
+@@ -48,7 +48,7 @@ build_old_libs=yes
+ pic_mode=default
  
- # PGXS information
-+ifdef USE_PGXS
- PG_CONFIG = @PG_CONFIG@ 
- PGXS := @PGXS@
- include $(PGXS)
-+else
-+# Include common tasks defined in Makefile.global, otherwise
-+# make clean etc will not work.
-+top_builddir=$(shell cd ../../.. && pwd)
-+include $(top_builddir)/src/Makefile.global
-+include $(top_builddir)/contrib/contrib-global.mk
-+endif
+ # Whether or not to optimize for fast installation.
+-fast_install=needless
++fast_install=yes
  
- # Set PERL _after_ the include of PGXS
- PERL=@PERL@
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_estimate.c b/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_estimate.c
-index f5aa190..f5c9415 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_estimate.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_estimate.c
+ # Shared archive member basename,for filename based shared library versioning on AIX.
+ shared_archive_member_spec=
+@@ -64,37 +64,37 @@ PATH_SEPARATOR=":"
+ 
+ # The host system.
+ host_alias=
+-host=x86_64-apple-darwin13.4.0
+-host_os=darwin13.4.0
++host=x86_64-unknown-linux-gnu
++host_os=linux-gnu
+ 
+ # The build system.
+ build_alias=
+-build=x86_64-apple-darwin13.4.0
+-build_os=darwin13.4.0
++build=x86_64-unknown-linux-gnu
++build_os=linux-gnu
+ 
+ # A sed program that does not truncate output.
+-SED="/usr/bin/sed"
++SED="/bin/sed"
+ 
+ # Sed that helps us avoid accidentally triggering echo(1) options like -n.
+ Xsed="$SED -e 1s/^X//"
+ 
+ # A grep program that handles long lines.
+-GREP="/usr/bin/grep"
++GREP="/bin/grep"
+ 
+ # An ERE matcher.
+-EGREP="/usr/bin/grep -E"
++EGREP="/bin/grep -E"
+ 
+ # A literal string matcher.
+-FGREP="/usr/bin/grep -F"
++FGREP="/bin/grep -F"
+ 
+ # A BSD- or MS-compatible name lister.
+-NM="/opt/local/bin/nm"
++NM="/bin/nm -B"
+ 
+ # Whether we need soft or hard links.
+ LN_S="ln -s"
+ 
+ # What is the maximum length of a command?
+-max_cmd_len=196608
++max_cmd_len=1572864
+ 
+ # Object file suffix (normally "o").
+ objext=o
+@@ -118,7 +118,7 @@ to_host_file_cmd=func_convert_file_noop
+ to_tool_file_cmd=func_convert_file_noop
+ 
+ # An object symbol dumper.
+-OBJDUMP="false"
++OBJDUMP="objdump"
+ 
+ # Method to check whether dependent libraries are shared objects.
+ deplibs_check_method="pass_all"
+@@ -145,7 +145,7 @@ AR="ar"
+ AR_FLAGS="cru"
+ 
+ # How to feed a file listing to the archiver.
+-archiver_list_spec=""
++archiver_list_spec="@"
+ 
+ # A symbol stripping program.
+ STRIP="strip"
+@@ -156,7 +156,7 @@ old_postinstall_cmds="chmod 644 \$oldlib~\$RANLIB \$tool_oldlib"
+ old_postuninstall_cmds=""
+ 
+ # Whether to use a lock for old archive extraction.
+-lock_old_archive_extraction=yes
++lock_old_archive_extraction=no
+ 
+ # A C compiler.
+ LTCC="gcc"
+@@ -165,25 +165,25 @@ LTCC="gcc"
+ LTCFLAGS="-g -O2"
+ 
+ # Take the output of nm and produce a listing of raw symbols and C names.
+-global_symbol_pipe="sed -n -e 's/^.*[	 ]\\([BCDEGRST][BCDEGRST]*\\)[	 ][	 ]*_\\([_A-Za-z][_A-Za-z0-9]*\\)\$/\\1 _\\2 \\2/p' | sed '/ __gnu_lto/d'"
++global_symbol_pipe="sed -n -e 's/^.*[	 ]\\([ABCDGIRSTW][ABCDGIRSTW]*\\)[	 ][	 ]*\\([_A-Za-z][_A-Za-z0-9]*\\)\$/\\1 \\2 \\2/p' | sed '/ __gnu_lto/d'"
+ 
+ # Transform the output of nm in a proper C declaration.
+-global_symbol_to_cdecl="sed -n -e 's/^T .* \\(.*\\)\$/extern int \\1();/p' -e 's/^[BCDEGRST][BCDEGRST]* .* \\(.*\\)\$/extern char \\1;/p'"
++global_symbol_to_cdecl="sed -n -e 's/^T .* \\(.*\\)\$/extern int \\1();/p' -e 's/^[ABCDGIRSTW][ABCDGIRSTW]* .* \\(.*\\)\$/extern char \\1;/p'"
+ 
+ # Transform the output of nm into a list of symbols to manually relocate.
+ global_symbol_to_import=""
+ 
+ # Transform the output of nm in a C name address pair.
+-global_symbol_to_c_name_address="sed -n -e 's/^: \\(.*\\) .*\$/  {\"\\1\", (void *) 0},/p' -e 's/^[BCDEGRST][BCDEGRST]* .* \\(.*\\)\$/  {\"\\1\", (void *) \\&\\1},/p'"
++global_symbol_to_c_name_address="sed -n -e 's/^: \\(.*\\) .*\$/  {\"\\1\", (void *) 0},/p' -e 's/^[ABCDGIRSTW][ABCDGIRSTW]* .* \\(.*\\)\$/  {\"\\1\", (void *) \\&\\1},/p'"
+ 
+ # Transform the output of nm in a C name address pair when lib prefix is needed.
+-global_symbol_to_c_name_address_lib_prefix="sed -n -e 's/^: \\(.*\\) .*\$/  {\"\\1\", (void *) 0},/p' -e 's/^[BCDEGRST][BCDEGRST]* .* \\(lib.*\\)\$/  {\"\\1\", (void *) \\&\\1},/p' -e 's/^[BCDEGRST][BCDEGRST]* .* \\(.*\\)\$/  {\"lib\\1\", (void *) \\&\\1},/p'"
++global_symbol_to_c_name_address_lib_prefix="sed -n -e 's/^: \\(.*\\) .*\$/  {\"\\1\", (void *) 0},/p' -e 's/^[ABCDGIRSTW][ABCDGIRSTW]* .* \\(lib.*\\)\$/  {\"\\1\", (void *) \\&\\1},/p' -e 's/^[ABCDGIRSTW][ABCDGIRSTW]* .* \\(.*\\)\$/  {\"lib\\1\", (void *) \\&\\1},/p'"
+ 
+ # The name lister interface.
+ nm_interface="BSD nm"
+ 
+ # Specify filename containing input files for $NM.
+-nm_file_list_spec=""
++nm_file_list_spec="@"
+ 
+ # The root where to search for dependent libraries,and where our libraries should be installed.
+ lt_sysroot=
+@@ -204,32 +204,32 @@ need_locks="no"
+ MANIFEST_TOOL=":"
+ 
+ # Tool to manipulate archived DWARF debug symbol files on Mac OS X.
+-DSYMUTIL="dsymutil"
++DSYMUTIL=""
+ 
+ # Tool to change global to local symbols on Mac OS X.
+-NMEDIT="nmedit"
++NMEDIT=""
+ 
+ # Tool to manipulate fat objects and archives on Mac OS X.
+-LIPO="lipo"
++LIPO=""
+ 
+ # ldd/readelf like tool for Mach-O binaries on Mac OS X.
+-OTOOL="otool"
++OTOOL=""
+ 
+ # ldd/readelf like tool for 64 bit Mach-O binaries on Mac OS X 10.4.
+-OTOOL64=":"
++OTOOL64=""
+ 
+ # Old archive suffix (normally "a").
+ libext=a
+ 
+ # Shared library suffix (normally ".so").
+-shrext_cmds="\`test .\$module = .yes && echo .so || echo .dylib\`"
++shrext_cmds=".so"
+ 
+ # The commands to extract the exported symbol list from a shared archive.
+ extract_expsyms_cmds=""
+ 
+ # Variables whose values should be saved in libtool wrapper scripts and
+ # restored at link time.
+-variables_saved_for_relink="PATH DYLD_LIBRARY_PATH  GCC_EXEC_PREFIX COMPILER_PATH LIBRARY_PATH"
++variables_saved_for_relink="PATH LD_LIBRARY_PATH LD_RUN_PATH GCC_EXEC_PREFIX COMPILER_PATH LIBRARY_PATH"
+ 
+ # Do we need the "lib" prefix for modules?
+ need_lib_prefix=no
+@@ -238,26 +238,26 @@ need_lib_prefix=no
+ need_version=no
+ 
+ # Library versioning type.
+-version_type=darwin
++version_type=linux
+ 
+ # Shared library runtime path variable.
+-runpath_var=
++runpath_var=LD_RUN_PATH
+ 
+ # Shared library path variable.
+-shlibpath_var=DYLD_LIBRARY_PATH
++shlibpath_var=LD_LIBRARY_PATH
+ 
+ # Is shlibpath searched before the hard-coded library search path?
+-shlibpath_overrides_runpath=yes
++shlibpath_overrides_runpath=no
+ 
+ # Format of library name prefix.
+ libname_spec="lib\$name"
+ 
+ # List of archive names.  First name is the real one, the rest are links.
+ # The last name is the one that the linker finds with -lNAME
+-library_names_spec="\$libname\$release\$major\$shared_ext \$libname\$shared_ext"
++library_names_spec="\$libname\$release\$shared_ext\$versuffix \$libname\$release\$shared_ext\$major \$libname\$shared_ext"
+ 
+ # The coded name of the library, if different from the real name.
+-soname_spec="\$libname\$release\$major\$shared_ext"
++soname_spec="\$libname\$release\$shared_ext\$major"
+ 
+ # Permission mode override for installation of shared libraries.
+ install_override_mode=""
+@@ -269,20 +269,20 @@ postinstall_cmds=""
+ postuninstall_cmds=""
+ 
+ # Commands used to finish a libtool library installation in a directory.
+-finish_cmds=""
++finish_cmds="PATH=\\\"\\\$PATH:/sbin\\\" ldconfig -n \$libdir"
+ 
+ # As "finish_cmds", except a single script fragment to be evaled but
+ # not shown.
+ finish_eval=""
+ 
+ # Whether we should hardcode library paths into libraries.
+-hardcode_into_libs=no
++hardcode_into_libs=yes
+ 
+ # Compile-time system search path for libraries.
+-sys_lib_search_path_spec="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/6.0  /usr/local/lib"
++sys_lib_search_path_spec="/usr/lib/gcc/x86_64-redhat-linux/4.8.3 /usr/lib64 /lib64 /usr/lib /lib "
+ 
+ # Run-time system search path for libraries.
+-sys_lib_dlsearch_path_spec="/usr/local/lib /lib /usr/lib"
++sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib64/dyninst /usr/lib64/iscsi /usr/lib64/mysql /usr/lib64/tracker-0.16 /usr/lib/vmware-tools/lib32/libvmGuestLib.so /usr/lib/vmware-tools/lib64/libvmGuestLib.so /usr/lib/vmware-tools/lib32/libvmGuestLibJava.so /usr/lib/vmware-tools/lib64/libvmGuestLibJava.so /usr/lib/vmware-tools/lib32/libDeployPkg.so /usr/lib/vmware-tools/lib64/libDeployPkg.so "
+ 
+ # Whether dlopen is supported.
+ dlopen_support=unknown
+@@ -294,16 +294,16 @@ dlopen_self=unknown
+ dlopen_self_static=unknown
+ 
+ # Commands to strip libraries.
+-old_striplib="strip -S"
+-striplib="strip -x"
++old_striplib="strip --strip-debug"
++striplib="strip --strip-unneeded"
+ 
+ 
+ # The linker used to build libraries.
+-LD="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
++LD="/bin/ld -m elf_x86_64"
+ 
+ # How to create reloadable object files.
+ reload_flag=" -r"
+-reload_cmds="\$LTCC \$LTCFLAGS -nostdlib \$wl-r -o \$output\$reload_objs"
++reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
+ 
+ # Commands used to build an old-style archive.
+ old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$tool_oldlib"
+@@ -315,10 +315,10 @@ CC="gcc"
+ with_gcc=yes
+ 
+ # Compiler flag to turn off builtin functions.
+-no_builtin_flag=" -fno-builtin -fno-rtti -fno-exceptions"
++no_builtin_flag=" -fno-builtin"
+ 
+ # Additional compiler flags for building library objects.
+-pic_flag=" -fno-common -DPIC"
++pic_flag=" -fPIC -DPIC"
+ 
+ # How to pass a linker flag through the compiler.
+ wl="-Wl,"
+@@ -336,10 +336,10 @@ build_libtool_need_lc=no
+ allow_libtool_libs_with_static_runtimes=no
+ 
+ # Compiler flag to allow reflexive dlopens.
+-export_dynamic_flag_spec=""
++export_dynamic_flag_spec="\$wl--export-dynamic"
+ 
+ # Compiler flag to generate shared objects directly from archives.
+-whole_archive_flag_spec="\`for conv in \$convenience\\\"\\\"; do test  -n \\\"\$conv\\\" && new_convenience=\\\"\$new_convenience \$wl-force_load,\$conv\\\"; done; func_echo_all \\\"\$new_convenience\\\"\`"
++whole_archive_flag_spec="\$wl--whole-archive\$convenience \$wl--no-whole-archive"
+ 
+ # Whether the compiler copes with passing no objects directly.
+ compiler_needs_object="no"
+@@ -351,26 +351,29 @@ old_archive_from_new_cmds=""
+ old_archive_from_expsyms_cmds=""
+ 
+ # Commands used to build a shared archive.
+-archive_cmds="\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring \$single_module"
+-archive_expsym_cmds="sed 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring \$single_module \$wl-exported_symbols_list,\$output_objdir/\$libname-symbols.expsym"
++archive_cmds="\$CC -shared \$pic_flag \$libobjs \$deplibs \$compiler_flags \$wl-soname \$wl\$soname -o \$lib"
++archive_expsym_cmds="echo \\\"{ global:\\\" > \$output_objdir/\$libname.ver~
++            cat \$export_symbols | sed -e \\\"s/\\\\(.*\\\\)/\\\\1;/\\\" >> \$output_objdir/\$libname.ver~
++            echo \\\"local: *; };\\\" >> \$output_objdir/\$libname.ver~
++            \$CC -shared \$pic_flag \$libobjs \$deplibs \$compiler_flags \$wl-soname \$wl\$soname \$wl-version-script \$wl\$output_objdir/\$libname.ver -o \$lib"
+ 
+ # Commands used to build a loadable module if different from building
+ # a shared archive.
+-module_cmds="\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs \$compiler_flags"
+-module_expsym_cmds="sed -e 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs \$compiler_flags \$wl-exported_symbols_list,\$output_objdir/\$libname-symbols.expsym"
++module_cmds=""
++module_expsym_cmds=""
+ 
+ # Whether we are building with GNU ld or not.
+-with_gnu_ld="no"
++with_gnu_ld="yes"
+ 
+ # Flag that allows shared libraries with undefined symbols to be built.
+-allow_undefined_flag="\$wl-undefined \${wl}dynamic_lookup"
++allow_undefined_flag=""
+ 
+ # Flag that enforces no undefined symbols.
+ no_undefined_flag=""
+ 
+ # Flag to hardcode $libdir into a binary during linking.
+ # This must work even if $libdir does not exist
+-hardcode_libdir_flag_spec=""
++hardcode_libdir_flag_spec="\$wl-rpath \$wl\$libdir"
+ 
+ # Whether we need a single "-rpath" flag with a separated argument.
+ hardcode_libdir_separator=""
+@@ -396,14 +399,14 @@ hardcode_shlibpath_var=unsupported
+ # Set to "yes" if building a shared library automatically hardcodes DIR
+ # into the library and all subsequent libraries and executables linked
+ # against it.
+-hardcode_automatic=yes
++hardcode_automatic=no
+ 
+ # Set to yes if linker adds runtime paths of dependent libraries
+ # to runtime path list.
+ inherit_rpath=no
+ 
+ # Whether libtool must link a program against all its dependency libraries.
+-link_all_deplibs=yes
++link_all_deplibs=unknown
+ 
+ # Set to "yes" if exported symbols are required.
+ always_export_symbols=no
+@@ -11537,11 +11540,11 @@ build_old_libs=`case $build_libtool_libs in yes) echo no;; *) echo yes;; esac`
+ # ### BEGIN LIBTOOL TAG CONFIG: CXX
+ 
+ # The linker used to build libraries.
+-LD="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
++LD="/bin/ld -m elf_x86_64"
+ 
+ # How to create reloadable object files.
+ reload_flag=" -r"
+-reload_cmds="\$LTCC \$LTCFLAGS -nostdlib \$wl-r -o \$output\$reload_objs"
++reload_cmds="\$LD\$reload_flag -o \$output\$reload_objs"
+ 
+ # Commands used to build an old-style archive.
+ old_archive_cmds="\$AR \$AR_FLAGS \$oldlib\$oldobjs~\$RANLIB \$tool_oldlib"
+@@ -11556,7 +11559,7 @@ with_gcc=yes
+ no_builtin_flag=" -fno-builtin"
+ 
+ # Additional compiler flags for building library objects.
+-pic_flag=" -fno-common -DPIC"
++pic_flag=" -fPIC -DPIC"
+ 
+ # How to pass a linker flag through the compiler.
+ wl="-Wl,"
+@@ -11574,10 +11577,10 @@ build_libtool_need_lc=no
+ allow_libtool_libs_with_static_runtimes=no
+ 
+ # Compiler flag to allow reflexive dlopens.
+-export_dynamic_flag_spec=""
++export_dynamic_flag_spec="\$wl--export-dynamic"
+ 
+ # Compiler flag to generate shared objects directly from archives.
+-whole_archive_flag_spec="\`for conv in \$convenience\\\"\\\"; do test  -n \\\"\$conv\\\" && new_convenience=\\\"\$new_convenience \$wl-force_load,\$conv\\\"; done; func_echo_all \\\"\$new_convenience\\\"\`"
++whole_archive_flag_spec="\$wl--whole-archive\$convenience \$wl--no-whole-archive"
+ 
+ # Whether the compiler copes with passing no objects directly.
+ compiler_needs_object="no"
+@@ -11589,26 +11592,26 @@ old_archive_from_new_cmds=""
+ old_archive_from_expsyms_cmds=""
+ 
+ # Commands used to build a shared archive.
+-archive_cmds="\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring \$single_module"
+-archive_expsym_cmds="sed 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC -dynamiclib \$allow_undefined_flag -o \$lib \$libobjs \$deplibs \$compiler_flags -install_name \$rpath/\$soname \$verstring \$single_module \$wl-exported_symbols_list,\$output_objdir/\$libname-symbols.expsym"
++archive_cmds="\$CC \$pic_flag -shared -nostdlib \$predep_objects \$libobjs \$deplibs \$postdep_objects \$compiler_flags \$wl-soname \$wl\$soname -o \$lib"
++archive_expsym_cmds="\$CC \$pic_flag -shared -nostdlib \$predep_objects \$libobjs \$deplibs \$postdep_objects \$compiler_flags \$wl-soname \$wl\$soname \$wl-retain-symbols-file \$wl\$export_symbols -o \$lib"
+ 
+ # Commands used to build a loadable module if different from building
+ # a shared archive.
+-module_cmds="\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs \$compiler_flags"
+-module_expsym_cmds="sed -e 's|^|_|' < \$export_symbols > \$output_objdir/\$libname-symbols.expsym~\$CC \$allow_undefined_flag -o \$lib -bundle \$libobjs \$deplibs \$compiler_flags \$wl-exported_symbols_list,\$output_objdir/\$libname-symbols.expsym"
++module_cmds=""
++module_expsym_cmds=""
+ 
+ # Whether we are building with GNU ld or not.
+-with_gnu_ld="no"
++with_gnu_ld="yes"
+ 
+ # Flag that allows shared libraries with undefined symbols to be built.
+-allow_undefined_flag="\$wl-undefined \${wl}dynamic_lookup"
++allow_undefined_flag=""
+ 
+ # Flag that enforces no undefined symbols.
+ no_undefined_flag=""
+ 
+ # Flag to hardcode $libdir into a binary during linking.
+ # This must work even if $libdir does not exist
+-hardcode_libdir_flag_spec=""
++hardcode_libdir_flag_spec="\$wl-rpath \$wl\$libdir"
+ 
+ # Whether we need a single "-rpath" flag with a separated argument.
+ hardcode_libdir_separator=""
+@@ -11634,14 +11637,14 @@ hardcode_shlibpath_var=unsupported
+ # Set to "yes" if building a shared library automatically hardcodes DIR
+ # into the library and all subsequent libraries and executables linked
+ # against it.
+-hardcode_automatic=yes
++hardcode_automatic=no
+ 
+ # Set to yes if linker adds runtime paths of dependent libraries
+ # to runtime path list.
+ inherit_rpath=no
+ 
+ # Whether libtool must link a program against all its dependency libraries.
+-link_all_deplibs=yes
++link_all_deplibs=unknown
+ 
+ # Set to "yes" if exported symbols are required.
+ always_export_symbols=no
+@@ -11668,17 +11671,17 @@ file_list_spec=""
+ hardcode_action=immediate
+ 
+ # The directories searched by this compiler when creating a shared library.
+-compiler_lib_search_dirs=""
++compiler_lib_search_dirs="/usr/lib/gcc/x86_64-redhat-linux/4.8.3 /usr/lib/gcc/x86_64-redhat-linux/4.8.3/../../../../lib64 /lib/../lib64 /usr/lib/../lib64 /usr/lib/gcc/x86_64-redhat-linux/4.8.3/../../.."
+ 
+ # Dependencies to place before and after the objects being linked to
+ # create a shared library.
+-predep_objects=""
+-postdep_objects=""
++predep_objects="/usr/lib/gcc/x86_64-redhat-linux/4.8.3/../../../../lib64/crti.o /usr/lib/gcc/x86_64-redhat-linux/4.8.3/crtbeginS.o"
++postdep_objects="/usr/lib/gcc/x86_64-redhat-linux/4.8.3/crtendS.o /usr/lib/gcc/x86_64-redhat-linux/4.8.3/../../../../lib64/crtn.o"
+ predeps=""
+-postdeps=""
++postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
+ 
+ # The library search path used internally by the compiler when linking
+ # a shared library.
+-compiler_lib_search_path=""
++compiler_lib_search_path="-L/usr/lib/gcc/x86_64-redhat-linux/4.8.3 -L/usr/lib/gcc/x86_64-redhat-linux/4.8.3/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 -L/usr/lib/gcc/x86_64-redhat-linux/4.8.3/../../.."
+ 
+ # ### END LIBTOOL TAG CONFIG: CXX
+diff --git a/postgis/build/postgis-2.1.5/postgis/gserialized_estimate.c b/postgis/build/postgis-2.1.5/postgis/gserialized_estimate.c
+index f5aa190..bb792a1 100644
+--- a/postgis/build/postgis-2.1.5/postgis/gserialized_estimate.c
++++ b/postgis/build/postgis-2.1.5/postgis/gserialized_estimate.c
 @@ -826,7 +826,7 @@ pg_get_nd_stats(const Oid table_oid, AttrNumber att_num, int mode)
  		stats_kind = STATISTIC_KIND_2D;
  			
@@ -8707,63 +8791,10 @@ index f5aa190..f5c9415 100644
  	if ( ! rv )
  	{
  		ReleaseSysCache(stats_tuple);
-@@ -1372,7 +1372,7 @@ compute_gserialized_stats_mode(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfu
- 	if ( ! notnull_cnt )
- 	{
- 		elog(NOTICE, "no non-null/empty features, unable to compute statistics");
--		stats->stats_valid = false;
-+		stats->pgstat.stats_valid = false;
- 		return;
- 	}
- 
-@@ -1634,7 +1634,7 @@ compute_gserialized_stats_mode(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfu
- 	{
- 		POSTGIS_DEBUG(3, " no stats have been gathered");
- 		elog(NOTICE, " no features lie in the stats histogram, invalid stats");
--		stats->stats_valid = false;
-+		stats->pgstat.stats_valid = false;
- 		return;
- 	}
- 	
-@@ -1655,20 +1655,20 @@ compute_gserialized_stats_mode(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfu
- 	}
- 	
- 	/* Write the statistics data */
--	stats->stakind[stats_slot] = stats_kind;
--	stats->staop[stats_slot] = InvalidOid;
--	stats->stanumbers[stats_slot] = (float4*)nd_stats;
--	stats->numnumbers[stats_slot] = nd_stats_size/sizeof(float4);
--	stats->stanullfrac = (float4)null_cnt/sample_rows;
--	stats->stawidth = total_width/notnull_cnt;
--	stats->stadistinct = -1.0;
--	stats->stats_valid = true;
--
--	POSTGIS_DEBUGF(3, " out: slot 0: kind %d (STATISTIC_KIND_ND)", stats->stakind[0]);
--	POSTGIS_DEBUGF(3, " out: slot 0: op %d (InvalidOid)", stats->staop[0]);
--	POSTGIS_DEBUGF(3, " out: slot 0: numnumbers %d", stats->numnumbers[0]);
--	POSTGIS_DEBUGF(3, " out: null fraction: %f=%d/%d", stats->stanullfrac, null_cnt, sample_rows);
--	POSTGIS_DEBUGF(3, " out: average width: %d bytes", stats->stawidth);
-+	stats->pgstat.stakind[stats_slot] = stats_kind;
-+	stats->pgstat.staop[stats_slot] = InvalidOid;
-+	stats->pgstat.stanumbers[stats_slot] = (float4*)nd_stats;
-+	stats->pgstat.numnumbers[stats_slot] = nd_stats_size/sizeof(float4);
-+	stats->pgstat.stanullfrac = (float4)null_cnt/sample_rows;
-+	stats->pgstat.stawidth = total_width/notnull_cnt;
-+	stats->pgstat.stadistinct = -1.0;
-+	stats->pgstat.stats_valid = true;
-+
-+	POSTGIS_DEBUGF(3, " out: slot 0: kind %d (STATISTIC_KIND_ND)", stats->pgstat.stakind[0]);
-+	POSTGIS_DEBUGF(3, " out: slot 0: op %d (InvalidOid)", stats->pgstat.staop[0]);
-+	POSTGIS_DEBUGF(3, " out: slot 0: numnumbers %d", stats->pgstat.numnumbers[0]);
-+	POSTGIS_DEBUGF(3, " out: null fraction: %f=%d/%d", stats->pgstat.stanullfrac, null_cnt, sample_rows);
-+	POSTGIS_DEBUGF(3, " out: average width: %d bytes", stats->pgstat.stawidth);
- 	POSTGIS_DEBUG (3, " out: distinct values: all (no check done)");
- 	POSTGIS_DEBUGF(3, " out: %s", nd_stats_to_json(nd_stats));
- 	/*
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_2d.c b/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_2d.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/gserialized_gist_2d.c b/postgis/build/postgis-2.1.5/postgis/gserialized_gist_2d.c
 index 44c87c2..6b7b63f 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_2d.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_2d.c
+--- a/postgis/build/postgis-2.1.5/postgis/gserialized_gist_2d.c
++++ b/postgis/build/postgis-2.1.5/postgis/gserialized_gist_2d.c
 @@ -36,15 +36,6 @@
  #include "gserialized_gist.h"	     /* For utility functions. */
  #include "liblwgeom_internal.h"  /* For MAXFLOAT */
@@ -8796,10 +8827,10 @@ index 44c87c2..6b7b63f 100644
  
  	POSTGIS_DEBUG(4, "[GIST] 'consistent' function called");
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_nd.c b/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_nd.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/gserialized_gist_nd.c b/postgis/build/postgis-2.1.5/postgis/gserialized_gist_nd.c
 index 91c9a7e..b9b6ac8 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_nd.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/gserialized_gist_nd.c
+--- a/postgis/build/postgis-2.1.5/postgis/gserialized_gist_nd.c
++++ b/postgis/build/postgis-2.1.5/postgis/gserialized_gist_nd.c
 @@ -34,15 +34,6 @@
  #include "gserialized_gist.h"	     /* For utility functions. */
  #include "geography.h"
@@ -8832,10 +8863,10 @@ index 91c9a7e..b9b6ac8 100644
  
  	POSTGIS_DEBUG(4, "[GIST] 'consistent' function called");
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_accum.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_accum.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_accum.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_accum.c
 index 0aecda7..fe92042 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_accum.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_accum.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_accum.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_accum.c
 @@ -17,6 +17,8 @@
  #include "utils/array.h"
  #include "utils/lsyscache.h"
@@ -8872,10 +8903,10 @@ index 0aecda7..fe92042 100644
  
  	state = p->a;
  	dims[0] = state->nelems;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_backend_api.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_backend_api.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_backend_api.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_backend_api.c
 index 0910ad0..0e749b6 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_backend_api.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_backend_api.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_backend_api.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_backend_api.c
 @@ -79,7 +79,7 @@ struct lwgeom_backend_definition lwgeom_backends[LWGEOM_NUM_BACKENDS] = {
  char* lwgeom_backend_name;
  struct lwgeom_backend_definition* lwgeom_backend = &lwgeom_backends[0];
@@ -8900,10 +8931,10 @@ index 0910ad0..0e749b6 100644
  				NULL  /* GucShowHook show_hook */
  				);
  }
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_box3d.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_box3d.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_box3d.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_box3d.c
 index 5f816e9..53d28a3 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_box3d.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_box3d.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_box3d.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_box3d.c
 @@ -350,7 +350,7 @@ PG_FUNCTION_INFO_V1(BOX3D_combine);
  Datum BOX3D_combine(PG_FUNCTION_ARGS)
  {
@@ -8913,10 +8944,10 @@ index 5f816e9..53d28a3 100644
  	LWGEOM *lwgeom = NULL;
  	BOX3D *result = NULL;
  	GBOX gbox;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_export.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_export.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_export.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_export.c
 index 72abf7a..c0113a5 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_export.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_export.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_export.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_export.c
 @@ -22,6 +22,7 @@
  #include "lwgeom_pg.h"
  #include "liblwgeom.h"
@@ -8955,10 +8986,10 @@ index 72abf7a..c0113a5 100644
  	if (srs == NULL)
  		return 0;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_functions_lrs.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_functions_lrs.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_functions_lrs.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_functions_lrs.c
 index fd18319..a0c4f81 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_functions_lrs.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_functions_lrs.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_functions_lrs.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_functions_lrs.c
 @@ -442,7 +442,7 @@ ptarray_locate_between_m(POINTARRAY *ipa, double m0, double m1)
  	 */
  	ret.ptarrays=lwalloc(sizeof(POINTARRAY *)*ipa->npoints-1);
@@ -9013,10 +9044,10 @@ index fd18319..a0c4f81 100644
  
  	switch (lwin->type)
  	{
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_geos.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_geos.c
 index f79ed6f..bddbb79 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_geos.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_geos.c
 @@ -2899,7 +2899,7 @@ Datum relate_pattern(PG_FUNCTION_ARGS)
  	}
  
@@ -9037,10 +9068,10 @@ index f79ed6f..bddbb79 100644
  
  	initGEOS(lwnotice, lwgeom_geos_error);
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos_prepared.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos_prepared.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_geos_prepared.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_geos_prepared.c
 index 33e5890..f5a39a7 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos_prepared.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_geos_prepared.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_geos_prepared.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_geos_prepared.c
 @@ -86,11 +86,15 @@ static void PreparedCacheInit(MemoryContext context);
  static void PreparedCacheReset(MemoryContext context);
  static void PreparedCacheDelete(MemoryContext context);
@@ -9116,10 +9147,10 @@ index 33e5890..f5a39a7 100644
  #ifdef MEMORY_CONTEXT_CHECKING
  static void
  PreparedCacheCheck(MemoryContext context)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_in_gml.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_in_gml.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_in_gml.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_in_gml.c
 index 5d784b0..71181c8 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_in_gml.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_in_gml.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_in_gml.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_in_gml.c
 @@ -47,6 +47,8 @@
  #include "liblwgeom.h"
  #include "lwgeom_transform.h"
@@ -9142,10 +9173,10 @@ index 5d784b0..71181c8 100644
  	if (SPI_OK_CONNECT != SPI_connect ())
  		lwerror("gml_is_srid_planar: could not connect to SPI manager");
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_transform.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_transform.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_transform.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_transform.c
 index cfedca5..97e8e62 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_transform.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_transform.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_transform.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_transform.c
 @@ -60,7 +60,7 @@ Datum transform(PG_FUNCTION_ARGS)
  	 * without transform it
  	 */
@@ -9155,10 +9186,10 @@ index cfedca5..97e8e62 100644
  
  	if ( GetProjectionsUsingFCInfo(fcinfo, input_srid, output_srid, &input_pj, &output_pj) == LW_FAILURE )
  	{
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_triggers.c b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_triggers.c
+diff --git a/postgis/build/postgis-2.1.5/postgis/lwgeom_triggers.c b/postgis/build/postgis-2.1.5/postgis/lwgeom_triggers.c
 index c7be160..d16b8a4 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_triggers.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/lwgeom_triggers.c
+--- a/postgis/build/postgis-2.1.5/postgis/lwgeom_triggers.c
++++ b/postgis/build/postgis-2.1.5/postgis/lwgeom_triggers.c
 @@ -97,7 +97,7 @@ Datum cache_bbox(PG_FUNCTION_ARGS)
  
  	if ( ! isnull )
@@ -9168,11 +9199,49 @@ index c7be160..d16b8a4 100644
  
  		rettuple = SPI_modifytuple(trigdata->tg_relation, rettuple,
  		                           1, &attno, &out, NULL);
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/postgis.sql.in b/cdb-pg/contrib/postgis-2.1.5/postgis/postgis.sql.in
-index 049fa22..b1523ca 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/postgis.sql.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/postgis.sql.in
-@@ -3270,7 +3270,7 @@ CREATE OR REPLACE FUNCTION ST_Collect(geom1 geometry, geom2 geometry)
+diff --git a/postgis/build/postgis-2.1.5/postgis/postgis.sql.in b/postgis/build/postgis-2.1.5/postgis/postgis.sql.in
+index 049fa22..c11cb99 100644
+--- a/postgis/build/postgis-2.1.5/postgis/postgis.sql.in
++++ b/postgis/build/postgis-2.1.5/postgis/postgis.sql.in
+@@ -28,7 +28,7 @@ SET client_min_messages TO warning;
+ BEGIN;
+ 
+ -- Check that no other postgis is installed
+-DO $$
++CREATE OR REPLACE FUNCTION _anonymous_function() RETURNS VOID AS $$
+ DECLARE
+   rec RECORD;
+ BEGIN
+@@ -41,6 +41,8 @@ BEGIN
+   END LOOP;
+ END
+ $$ LANGUAGE 'plpgsql';
++SELECT _anonymous_function();
++DROP FUNCTION IF EXISTS _anonymous_function();
+ 
+ 
+ -- Let the user know about a deprecated signature and its new name, if any
+@@ -2908,7 +2910,7 @@ CREATE OR REPLACE FUNCTION _ST_Buffer(geometry,float8,cstring)
+ CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,integer)
+ 	RETURNS geometry
+ 	AS $$ SELECT _ST_Buffer($1, $2,
+-		CAST('quad_segs='||CAST($3 AS text) as cstring))
++		textout('quad_segs='||CAST($3 AS text)))
+ 	   $$
+ 	LANGUAGE 'sql' IMMUTABLE STRICT;
+ 
+@@ -2916,8 +2918,8 @@ CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,integer)
+ CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,text)
+ 	RETURNS geometry
+ 	AS $$ SELECT _ST_Buffer($1, $2,
+-		CAST( regexp_replace($3, '^[0123456789]+$',
+-			'quad_segs='||$3) AS cstring)
++		textout( regexp_replace($3, '^[0123456789]+$',
++			'quad_segs='||$3))
+ 		)
+ 	   $$
+ 	LANGUAGE 'sql' IMMUTABLE STRICT;
+@@ -3270,7 +3272,7 @@ CREATE OR REPLACE FUNCTION ST_Collect(geom1 geometry, geom2 geometry)
  	LANGUAGE 'c' IMMUTABLE;
  
  -- Availability: 1.2.2
@@ -9181,7 +9250,7 @@ index 049fa22..b1523ca 100644
  	sfunc = ST_collect,
  	basetype = geometry,
  	stype = geometry
-@@ -3283,7 +3283,7 @@ CREATE OR REPLACE FUNCTION ST_Collect(geometry[])
+@@ -3283,7 +3285,7 @@ CREATE OR REPLACE FUNCTION ST_Collect(geometry[])
  	LANGUAGE 'c' IMMUTABLE STRICT;
  
  -- Availability: 1.2.2
@@ -9190,7 +9259,7 @@ index 049fa22..b1523ca 100644
  	basetype = geometry,
  	sfunc = ST_Union,
  	stype = geometry
-@@ -3348,7 +3348,7 @@ CREATE OR REPLACE FUNCTION pgis_geometry_makeline_finalfn(pgis_abs)
+@@ -3348,7 +3350,7 @@ CREATE OR REPLACE FUNCTION pgis_geometry_makeline_finalfn(pgis_abs)
  	LANGUAGE 'c';
  
  -- Availability: 1.2.2
@@ -9199,7 +9268,7 @@ index 049fa22..b1523ca 100644
  	sfunc = pgis_geometry_accum_transfn,
  	basetype = geometry,
  	stype = pgis_abs,
-@@ -3362,7 +3362,7 @@ CREATE OR REPLACE FUNCTION ST_Union (geometry[])
+@@ -3362,7 +3364,7 @@ CREATE OR REPLACE FUNCTION ST_Union (geometry[])
  	LANGUAGE 'c' IMMUTABLE STRICT;
  
  -- Availability: 1.2.2
@@ -9208,7 +9277,7 @@ index 049fa22..b1523ca 100644
  	basetype = geometry,
  	sfunc = pgis_geometry_accum_transfn,
  	stype = pgis_abs,
-@@ -3370,7 +3370,7 @@ CREATE AGGREGATE ST_Union (
+@@ -3370,7 +3372,7 @@ CREATE AGGREGATE ST_Union (
  	);
  
  -- Availability: 1.2.2
@@ -9217,7 +9286,7 @@ index 049fa22..b1523ca 100644
  	BASETYPE = geometry,
  	SFUNC = pgis_geometry_accum_transfn,
  	STYPE = pgis_abs,
-@@ -3378,7 +3378,7 @@ CREATE AGGREGATE ST_Collect (
+@@ -3378,7 +3380,7 @@ CREATE AGGREGATE ST_Collect (
  	);
  
  -- Availability: 1.2.2
@@ -9226,7 +9295,7 @@ index 049fa22..b1523ca 100644
  	BASETYPE = geometry,
  	SFUNC = pgis_geometry_accum_transfn,
  	STYPE = pgis_abs,
-@@ -3386,7 +3386,7 @@ CREATE AGGREGATE ST_Polygonize (
+@@ -3386,7 +3388,7 @@ CREATE AGGREGATE ST_Polygonize (
  	);
  
  -- Availability: 1.2.2
@@ -9235,22 +9304,43 @@ index 049fa22..b1523ca 100644
  	BASETYPE = geometry,
  	SFUNC = pgis_geometry_accum_transfn,
  	STYPE = pgis_abs,
-diff --git a/cdb-pg/contrib/postgis-2.1.5/postgis/sqldefines.h b/cdb-pg/contrib/postgis-2.1.5/postgis/sqldefines.h
-index f8db7ae..9bc7949 100644
---- a/cdb-pg/contrib/postgis-2.1.5/postgis/sqldefines.h
-+++ b/cdb-pg/contrib/postgis-2.1.5/postgis/sqldefines.h
+diff --git a/postgis/build/postgis-2.1.5/postgis/postgis_drop_before.sql b/postgis/build/postgis-2.1.5/postgis/postgis_drop_before.sql
+index 8fa7cbc..fef5732 100644
+--- a/postgis/build/postgis-2.1.5/postgis/postgis_drop_before.sql
++++ b/postgis/build/postgis-2.1.5/postgis/postgis_drop_before.sql
+@@ -32,7 +32,7 @@ DROP FUNCTION IF EXISTS UpdateGeometrySRID(varchar,varchar,varchar,varchar,integ
+ -- We can't just drop it since its bound to opclass
+ -- See ticket 2279 for why we need to do this
+ -- We can get rid of this DO code when 3.0 comes along
+-DO  language 'plpgsql' $$ 
++CREATE OR REPLACE FUNCTION _anonymous_function() RETURNS VOID AS $$
+ BEGIN
+ 	-- fix geometry ops --
+ 	IF EXISTS(SELECT oprname from pg_operator where oprname = '&&' AND oprrest::text = 'geometry_gist_sel_2d') THEN
+@@ -58,4 +58,6 @@ BEGIN
+ 		ALTER FUNCTION geography_gist_join_selectivity(internal, oid, internal, smallint) RENAME TO gserialized_gist_joinsel_nd;
+ 	END IF;
+ END;
+-$$ ;
++$$ LANGUAGE 'plpgsql';
++SELECT _anonymous_function();
++DROP FUNCTION IF EXISTS _anonymous_function();
+diff --git a/postgis/build/postgis-2.1.5/postgis/sqldefines.h b/postgis/build/postgis-2.1.5/postgis/sqldefines.h
+index f8db7ae..7a4c4f3 100644
+--- a/postgis/build/postgis-2.1.5/postgis/sqldefines.h
++++ b/postgis/build/postgis-2.1.5/postgis/sqldefines.h
 @@ -6,11 +6,11 @@
  /*
   * Define just the version numbers; otherwise we get some strange substitutions in postgis.sql.in
   */
 -#define POSTGIS_PGSQL_VERSION 93
 -#define POSTGIS_GEOS_VERSION 33
-+#define POSTGIS_PGSQL_VERSION 82
++#define POSTGIS_PGSQL_VERSION 83
 +#define POSTGIS_GEOS_VERSION 34
  #define POSTGIS_PROJ_VERSION 48
  #define POSTGIS_LIB_VERSION '2.1.5'
 -#define POSTGIS_LIBXML2_VERSION 2.9.2
-+#define POSTGIS_LIBXML2_VERSION 2.6.26
++#define POSTGIS_LIBXML2_VERSION 2.9.1
  
  /*
   * Define the build date and the version number
@@ -9259,15 +9349,15 @@ index f8db7ae..9bc7949 100644
   */
  #define _POSTGIS_SQL_SELECT_POSTGIS_VERSION 'SELECT ''2.1 USE_GEOS=1 USE_PROJ=1 USE_STATS=1''::text AS version'
 -#define _POSTGIS_SQL_SELECT_POSTGIS_BUILD_DATE 'SELECT ''2014-12-18 22:41:40''::text AS version'
-+#define _POSTGIS_SQL_SELECT_POSTGIS_BUILD_DATE 'SELECT ''2015-04-20 01:42:55''::text AS version'
++#define _POSTGIS_SQL_SELECT_POSTGIS_BUILD_DATE 'SELECT ''2016-03-03 05:33:35''::text AS version'
  
  #if POSTGIS_SVN_REVISION
  #define _POSTGIS_SQL_SELECT_POSTGIS_SCRIPTS_VERSION $$ SELECT '2.1.5'::text || ' r' || POSTGIS_SVN_REVISION::text AS version $$
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/loader/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/raster/loader/Makefile.in
-index a539fba..4faea9c 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/loader/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/loader/Makefile.in
-@@ -21,6 +21,24 @@
+diff --git a/postgis/build/postgis-2.1.5/raster/loader/Makefile.in b/postgis/build/postgis-2.1.5/raster/loader/Makefile.in
+index a539fba..9f9aff0 100644
+--- a/postgis/build/postgis-2.1.5/raster/loader/Makefile.in
++++ b/postgis/build/postgis-2.1.5/raster/loader/Makefile.in
+@@ -21,6 +21,16 @@
  #
  #############################################################################
  
@@ -9277,22 +9367,14 @@ index a539fba..4faea9c 100644
 +# the DESTDIR variable so we can get the correct install paths.
 +# Hence we include the PGXS Makefile here, but ensure that we override the
 +# 'all' and 'install' targets with the ones we really want to use below.
-+ifdef USE_PGXS
 +PG_CONFIG = @PG_CONFIG@
 +PGXS := @PGXS@
 +include $(PGXS)
-+else
-+# Include common tasks defined in Makefile.global, otherwise
-+# make clean etc will not work.
-+top_builddir=../../../..
-+include $(top_builddir)/src/Makefile.global
-+include $(top_builddir)/contrib/contrib-global.mk
-+endif
 +
  # Set CFLAGS after PGXS, otherwise it will get overwritten with the PGXS
  # version which is not what we want. 
  CC=@CC@
-@@ -32,9 +50,6 @@ LIBTOOL = @LIBTOOL@
+@@ -32,9 +42,6 @@ LIBTOOL = @LIBTOOL@
  # Filenames with extension as determined by the OS
  RASTER2PGSQL=raster2pgsql@EXESUFFIX@
  
@@ -9302,7 +9384,7 @@ index a539fba..4faea9c 100644
  RT_CORE=../rt_core
  
  LIBLWGEOM_LDFLAGS=../../liblwgeom/liblwgeom.la
-@@ -57,7 +72,7 @@ GETTEXT_LDFLAGS = @GETTEXT_LDFLAGS@ @LIBINTL@
+@@ -57,7 +64,7 @@ GETTEXT_LDFLAGS = @GETTEXT_LDFLAGS@ @LIBINTL@
  ICONV_LDFLAGS=@ICONV_LDFLAGS@
  ICONV_CFLAGS=@ICONV_CFLAGS@
  
@@ -9311,7 +9393,7 @@ index a539fba..4faea9c 100644
  	@CFLAGS@ @PICFLAGS@ @WARNFLAGS@ \
  	$(RTCORE_CFLAGS) \
  	$(LIBLWGEOM_CFLAGS) \
-@@ -67,7 +82,7 @@ CFLAGS = \
+@@ -67,7 +74,7 @@ CFLAGS = \
  	$(GETTEXT_CFLAGS) \
  	$(ICONV_CFLAGS)
  
@@ -9320,7 +9402,7 @@ index a539fba..4faea9c 100644
  	@LDFLAGS@ \
  	$(LIBLWGEOM_LDFLAGS) \
  	$(LIBGDAL_LDFLAGS) \
-@@ -86,13 +101,13 @@ $(RASTER2PGSQL): $(RT_CORE)/librtcore.a raster2pgsql.o
+@@ -86,13 +93,13 @@ $(RASTER2PGSQL): $(RT_CORE)/librtcore.a raster2pgsql.o
  	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
  
  installdir:
@@ -9337,32 +9419,10 @@ index a539fba..4faea9c 100644
  
  $(RT_CORE)/librtcore.a:
  	$(MAKE) -C ../rt_core
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/Makefile.in
-index 7966048..2e04fe7 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/Makefile.in
-@@ -60,9 +60,17 @@ SHLIB_LINK_F = ../rt_core/librtcore.a $(LIBLWGEOM_LDFLAGS) $(LIBPGCOMMON_LDFLAGS
- EXTRA_CLEAN=$(SQL_OBJS) $(DATA_built) rtpostgis_upgrade.sql
- 
- # PGXS information
-+ifdef USE_PGXS
- PG_CONFIG = @PG_CONFIG@ 
- PGXS := @PGXS@
- include $(PGXS)
-+else
-+# Include common tasks defined in Makefile.global, otherwise
-+# make clean etc will not work.
-+top_builddir=$(shell cd ../../../.. && pwd)
-+include $(top_builddir)/src/Makefile.global
-+include $(top_builddir)/contrib/contrib-global.mk
-+endif
- 
- # Set PERL _after_ the include of PGXS
- PERL=@PERL@
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rt_pg.c b/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rt_pg.c
+diff --git a/postgis/build/postgis-2.1.5/raster/rt_pg/rt_pg.c b/postgis/build/postgis-2.1.5/raster/rt_pg/rt_pg.c
 index 62e1bb0..1b2c3a9 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rt_pg.c
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rt_pg.c
+--- a/postgis/build/postgis-2.1.5/raster/rt_pg/rt_pg.c
++++ b/postgis/build/postgis-2.1.5/raster/rt_pg/rt_pg.c
 @@ -50,7 +50,6 @@
  
  #include "lwgeom_pg.h"
@@ -9477,10 +9537,10 @@ index 62e1bb0..1b2c3a9 100644
  	rt_raster _rtn = NULL;
  	rt_raster _raster = NULL;
  	rt_pgraster *pgraster = NULL;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in b/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in
+diff --git a/postgis/build/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in b/postgis/build/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in
 index 65b580d..5c4aa7b 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in
+--- a/postgis/build/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in
++++ b/postgis/build/postgis-2.1.5/raster/rt_pg/rtpostgis.sql.in
 @@ -248,7 +248,7 @@ CREATE OR REPLACE FUNCTION st_summary(rast raster)
  		ELSE
  			msg := msg || 'bands ';
@@ -10067,10 +10127,10 @@ index 65b580d..5c4aa7b 100644
  CREATE OR REPLACE FUNCTION _overview_constraint_info(
  	ovschema name, ovtable name, ovcolumn name,
  	OUT refschema name, OUT reftable name, OUT refcolumn name, OUT factor integer
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5.sql b/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5.sql
 index 53ca14e..06c9fef 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5.sql
 @@ -42,7 +42,7 @@ INSERT INTO car5 (rid,rast) VALUES (2, ('01000003009A9999999999A93F9A9999999999A
  INSERT INTO car5 (rid,rast) VALUES (3, ('01000003009A9999999999A93F9A9999999999A9BF000000E02B274A41000000007719564100000000000000000000000000000000FFFFFFFF050005000400FDFEFDFEFEFDFEFEFDF9FAFEFEFCF9FBFDFEFEFDFCFAFEFEFE04004E627AADD16076B4F9FE6370A9F5FE59637AB0E54F58617087040046566487A1506CA2E3FA5A6CAFFBFE4D566DA4CB3E454C5665')::raster );
  
@@ -10080,10 +10140,10 @@ index 53ca14e..06c9fef 100644
  
  DROP TABLE car5;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5_expected b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5_expected
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5_expected b/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5_expected
 index 5599f59..2492ea8 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/bug_test_car5_expected
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5_expected
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/bug_test_car5_expected
 @@ -1,7 +1,7 @@
  BEGIN
 -NOTICE:  SRID value -1 converted to the officially unknown SRID value 0 at character 41
@@ -10095,10 +10155,10 @@ index 5599f59..2492ea8 100644
  1|5|5|8BUI|8BUI|8BUI
  2|5|5|8BUI|8BUI|8BUI
  3|5|5|8BUI|8BUI|8BUI
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns.sql b/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns.sql
 index 40d4377..0182303 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns.sql
 @@ -99,6 +99,12 @@ DELETE FROM test_raster_columns;
  
  -- regular_blocking
@@ -10153,10 +10213,10 @@ index 40d4377..0182303 100644
  DROP FUNCTION make_test_raster(integer, integer, integer, double precision, double precision, double precision, double precision, double precision, double precision);
  DROP TABLE IF EXISTS test_raster_columns;
 +
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns_expected b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns_expected
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns_expected b/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns_expected
 index 2c05c8f..06fcf0e 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/check_raster_columns_expected
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns_expected
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/check_raster_columns_expected
 @@ -13,11 +13,9 @@ t
  test_raster_columns|rast|0|||2|2|t|f|1||{0}|MULTIPOLYGON(((0 0,0 -2,-2 -2,-2 0,0 0)),((3 1,3 -1,1 -1,1 0,0 0,0 2,1 2,1 3,2 3,2 4,4 4,4 2,3 2,3 1)))
  t
@@ -10172,10 +10232,10 @@ index 2c05c8f..06fcf0e 100644
 +test_raster_columns|rast|0|1|1|3|3|t|f|1|{8BUI}|{0}|POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))
  t
 +ERROR:  Unable to add constraint: 'regular_blocking', because Greenplum doesn't support exclusion constraint (EXCLUDE), so spatially unique constraints will be ignored. Skipping
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_4ma.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_4ma.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_4ma.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_4ma.sql
 index 0833279..872382e 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_4ma.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_4ma.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_4ma.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_4ma.sql
 @@ -4,7 +4,7 @@ CREATE TABLE raster_value_arrays (
  	val double precision[][]
  );
@@ -10198,10 +10258,10 @@ index 0833279..872382e 100644
  				IF skip_expr IS NULL OR length(skip_expr) < 1 THEN
  					result := TRUE;
  				ELSE
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_asraster.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_asraster.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_asraster.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_asraster.sql
 index 548cc97..feea694 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_asraster.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_asraster.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_asraster.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_asraster.sql
 @@ -493,8 +493,8 @@ FROM (
  		END AS same_alignment
  	FROM raster_asraster_dst d
@@ -10213,10 +10273,10 @@ index 548cc97..feea694 100644
  
  DELETE FROM "spatial_ref_sys" WHERE srid = 992163;
  DELETE FROM "spatial_ref_sys" WHERE srid = 993309;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_clip.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_clip.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_clip.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_clip.sql
 index d50eb31..d45f347 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_clip.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_clip.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_clip.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_clip.sql
 @@ -119,7 +119,8 @@ FROM (
  		(ST_Metadata(rast)).*,
  		(ST_BandMetadata(rast, 1)).*
@@ -10236,10 +10296,10 @@ index d50eb31..d45f347 100644
  
  -- Display the pixels and the values of the resulting rasters (raster 2, 3 bands)
  SELECT
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap.sql
 index 2a5841e..5fe3d68 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap.sql
 @@ -2,13 +2,16 @@ DROP TABLE IF EXISTS raster_colormap_out;
  CREATE TABLE raster_colormap_out (
  	testid integer,
@@ -10270,10 +10330,10 @@ index 2a5841e..5fe3d68 100644
  
  DROP TABLE IF EXISTS raster_colormap_in;
  DROP TABLE IF EXISTS raster_colormap_out;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap_expected b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap_expected
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap_expected b/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap_expected
 index 38e9774..f44baa6 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_colormap_expected
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap_expected
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_colormap_expected
 @@ -6,22 +6,22 @@ NOTICE:  RGBA value cannot be greater than 255. Defaulting to 255
  NOTICE:  RGBA value cannot be greater than 255. Defaulting to 255
  NOTICE:  Method INTERPOLATE requires at least two non-NODATA colormap entries. Using NEAREST instead
@@ -10303,10 +10363,10 @@ index 38e9774..f44baa6 100644
  3|1|{{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1}}
  3|1|{{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1},{1,1,1,1,1,1,1,1,1,1}}
  3|2|{{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127},{127,127,127,127,127,127,127,127,127,127}}
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql
 index a305bd8..f51ddf7 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_dumpvalues.sql
 @@ -7,7 +7,7 @@ CREATE TABLE raster_dumpvalues (
  CREATE OR REPLACE FUNCTION make_raster(
  	rast raster DEFAULT NULL,
@@ -10354,10 +10414,10 @@ index a305bd8..f51ddf7 100644
  
  DROP TABLE IF EXISTS raster_dumpvalues;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql
 index 7780fea..4e5329f 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_elevation_functions.sql
 @@ -164,128 +164,76 @@ WHERE rid = 0
  /* with coverage */
  DO $$
@@ -10556,10 +10616,10 @@ index 7780fea..4e5329f 100644
  				IF skip_expr IS NULL OR length(skip_expr) < 1 THEN
  					result := TRUE;
  				ELSE
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql
 index 14b7a2f..375ede7 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_gdalwarp.sql
 @@ -762,7 +762,7 @@ FROM (
  		(ST_SummaryStats(rast)).*
  	FROM raster_gdalwarp_dst
@@ -10569,10 +10629,10 @@ index 14b7a2f..375ede7 100644
  
  DROP TABLE raster_gdalwarp_src;
  DROP TABLE raster_gdalwarp_dst;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql
 index 10cb4d7..70ca25c 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_geos_relationships.sql
 @@ -183,7 +183,8 @@ SELECT
  	ST_DFullyWithin(r1.rast, 1, r2.rast, 1, 7)
  FROM raster_geos_rast r1
@@ -10652,10 +10712,10 @@ index 10cb4d7..70ca25c 100644
 +ORDER BY 2, 3;
  
  DROP TABLE IF EXISTS raster_geos_rast;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection.sql
 index 7e636d8..c9e63ed 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection.sql
 @@ -140,7 +140,8 @@ FROM (
  		ST_Value(rast, 1, 1, 1) AS firstvalue,
  		ST_Value(rast, 1, ST_Width(rast), ST_Height(rast)) AS lastvalue
@@ -10666,10 +10726,10 @@ index 7e636d8..c9e63ed 100644
  
  -- Display the pixels and the values of the resulting rasters
  SELECT
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection_expected b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection_expected
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection_expected b/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection_expected
 index 67161ba..a254a19 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersection_expected
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection_expected
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersection_expected
 @@ -1,26 +1,26 @@
 +0|1|0.000|0.000|2|2|1.000|1.000|0.000|0.000|0|1|8BUI|0.000|1.000|1.000
 +0|1|0.000|0.000|2|2|1.000|1.000|0.000|0.000|0|1|8BUI|0.000|2.000|2.000
@@ -10711,10 +10771,10 @@ index 67161ba..a254a19 100644
  10|14||||||||||||||
  0|1|1|1|1|1|POLYGON((0 0,1 0,1 1,0 1,0 0))
  0|1|1|1|1|1|POLYGON((0 0,1 0,1 1,0 1,0 0))
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersects.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersects.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersects.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersects.sql
 index 3458b59..a989d6b 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersects.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_intersects.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersects.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_intersects.sql
 @@ -164,7 +164,8 @@ SELECT
  FROM raster_intersects_rast r1
  JOIN raster_intersects_rast r2
@@ -10795,10 +10855,10 @@ index 3458b59..a989d6b 100644
  
  DROP TABLE IF EXISTS raster_intersects_rast;
  DROP TABLE IF EXISTS raster_intersects_geom;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql
 index 8573d70..33a3407 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_invdistweight4ma.sql
 @@ -4,7 +4,7 @@ CREATE TABLE raster_value_arrays (
  	val double precision[][]
  );
@@ -10821,10 +10881,10 @@ index 8573d70..33a3407 100644
  				IF skip_expr IS NULL OR length(skip_expr) < 1 THEN
  					result := TRUE;
  				ELSE
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_io.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_io.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_io.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_io.sql
 index f672a20..496448a 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_io.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_io.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_io.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_io.sql
 @@ -660,7 +660,7 @@ VALUES ( 9, '1x1 single band (32BUI) no transform',
  
  -- 1x1, single band of type 32BF, no transform, scale 1:1
@@ -10843,10 +10903,10 @@ index f672a20..496448a 100644
  
  -- Out of range value for 1BB pixeltype
  SELECT (
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql
 index edb8e80..3d86f79 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra.sql
 @@ -3,8 +3,9 @@ SET client_min_messages TO warning;
  DROP TABLE IF EXISTS raster_nmapalgebra_in;
  CREATE TABLE raster_nmapalgebra_in (
@@ -11049,10 +11109,10 @@ index edb8e80..3d86f79 100644
  
  DROP FUNCTION IF EXISTS raster_nmapalgebra_test(double precision[], int[], text[]);
  DROP FUNCTION IF EXISTS raster_nmapalgebra_test_bad_return(double precision[], int[], text[]);
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql
 index b12b975..2606dae 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr.sql
 @@ -431,7 +431,8 @@ FROM (
  		ST_Value(rast, 1, 1, 1) AS firstvalue,
  		ST_Value(rast, 1, ST_Width(rast), ST_Height(rast)) AS lastvalue
@@ -11063,10 +11123,10 @@ index b12b975..2606dae 100644
  
  DROP TABLE IF EXISTS raster_mapalgebra;
  DROP TABLE IF EXISTS raster_mapalgebra_out;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected
 index ac33621..d94341f 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebra_expr_expected
 @@ -21,127 +21,127 @@ ERROR:  division by zero
  T11.1|10|2
  T11.2|10|2
@@ -11288,10 +11348,10 @@ index ac33621..d94341f 100644
 +||INTERSECTION||||||||||||||
  ||SECOND||||||||||||||
 +||UNION||||||||||||||
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql
 index ffdb6ca..530703e 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster.sql
 @@ -1,3 +1,5 @@
 +set client_min_messages = warning;
 +
@@ -11308,10 +11368,10 @@ index ffdb6ca..530703e 100644
  
  DROP TABLE IF EXISTS raster_mapalgebra;
  DROP TABLE IF EXISTS raster_mapalgebra_out;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected
 index 3e3e6b4..8e4cbbb 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebraexpr_2raster_expected
 @@ -1,260 +1,124 @@
 -NOTICE:  table "raster_mapalgebra" does not exist, skipping
 -NOTICE:  table "raster_mapalgebra_out" does not exist, skipping
@@ -11666,10 +11726,10 @@ index 3e3e6b4..8e4cbbb 100644
 +||INTERSECTION||||||||||||||
  ||SECOND||||||||||||||
 +||UNION||||||||||||||
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql
 index 7e5fb97..a5c149f 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster.sql
 @@ -1,3 +1,5 @@
 +set client_min_messages = warning;
 +
@@ -11752,10 +11812,10 @@ index 7e5fb97..a5c149f 100644
  
  DROP FUNCTION IF EXISTS raster_mapalgebra_intersection(double precision, double precision, int[], VARIADIC text[]);
  DROP FUNCTION IF EXISTS raster_mapalgebra_union(double precision, double precision, VARIADIC text[]);
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected
 index a658252..60d4292 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_mapalgebrafct_2raster_expected
 @@ -1,270 +1,116 @@
 -NOTICE:  table "raster_mapalgebra" does not exist, skipping
 -NOTICE:  table "raster_mapalgebra_out" does not exist, skipping
@@ -12113,10 +12173,10 @@ index a658252..60d4292 100644
 +||INTERSECTION||||||||||||||
  ||SECOND||||||||||||||
 +||UNION||||||||||||||
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql
 index 91e26d2..330e80e 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_rastertoworldcoord.sql
 @@ -48,106 +48,106 @@ DROP FUNCTION make_test_raster(integer, integer, integer, double precision, doub
  SELECT
  	rid,
@@ -12249,10 +12309,10 @@ index 91e26d2..330e80e 100644
 +FROM raster_raster2world order by rid;
  
  DROP TABLE raster_raster2world;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rotation.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rotation.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_rotation.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_rotation.sql
 index eee5ec9..91d6216 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rotation.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_rotation.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_rotation.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_rotation.sql
 @@ -226,7 +226,7 @@ VALUES ( 5, '1x1, ip:7.5,2.5 scale:5,5 skew:3,7, srid:-1, width:1, height:1',
  
  SELECT 'T1', id, name, skewx
@@ -12314,10 +12374,10 @@ index eee5ec9..91d6216 100644
  
  DELETE FROM rt_properties_test
      WHERE id > 100;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql
 index ac145e0..9ec5da3 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_setvalues_geomval.sql
 @@ -50,11 +50,12 @@ FROM raster_setvalues_rast t1
  CROSS JOIN raster_setvalues_geom t2
  CROSS JOIN raster_setvalues_geom t3
@@ -12358,10 +12418,10 @@ index ac145e0..9ec5da3 100644
  
  DROP TABLE IF EXISTS raster_setvalues_rast;
  DROP TABLE IF EXISTS raster_setvalues_geom;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_union.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_union.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_union.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_union.sql
 index 8b47e87..353a49e 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_union.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_union.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_union.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_union.sql
 @@ -18,13 +18,13 @@ INSERT INTO raster_union_in
  INSERT INTO raster_union_out
  	SELECT
@@ -12467,10 +12527,10 @@ index 8b47e87..353a49e 100644
  	FROM raster_union_in;
  
  SELECT
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_utility.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_utility.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_utility.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_utility.sql
 index 7e016ed..2ddfff8 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_utility.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_utility.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_utility.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_utility.sql
 @@ -166,21 +166,24 @@ SELECT 'test 1.1', id, name
      WHERE COALESCE(ST_WorldTorastercoordx(rast, 
                                  ipx, 
@@ -12735,10 +12795,10 @@ index 7e016ed..2ddfff8 100644
      
  -----------------------------------------------------------------------
  -- Test 11 - st_minpossiblevalue(pixtype text)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql
+diff --git a/postgis/build/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql b/postgis/build/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql
 index 38b1679..fa2141a 100644
---- a/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql
+--- a/postgis/build/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql
++++ b/postgis/build/postgis-2.1.5/raster/test/regress/rt_worldtorastercoord.sql
 @@ -48,137 +48,137 @@ DROP FUNCTION make_test_raster(integer, integer, integer, double precision, doub
  SELECT
  	rid,
@@ -12909,10 +12969,10 @@ index 38b1679..fa2141a 100644
 +FROM raster_world2raster order by rid;
  
  DROP TABLE raster_world2raster;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/regress/Makefile.in
+diff --git a/postgis/build/postgis-2.1.5/regress/Makefile.in b/postgis/build/postgis-2.1.5/regress/Makefile.in
 index d42279c..ce65fd1 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/Makefile.in
+--- a/postgis/build/postgis-2.1.5/regress/Makefile.in
++++ b/postgis/build/postgis-2.1.5/regress/Makefile.in
 @@ -72,7 +72,6 @@ TESTS = \
  	regress \
  	regress_index \
@@ -12980,10 +13040,10 @@ index d42279c..ce65fd1 100644
  
  test check: staged-install
  	$(PERL) run_test.pl $(RUNTESTFLAGS) $(TESTS) && \
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/binary.sql b/cdb-pg/contrib/postgis-2.1.5/regress/binary.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/binary.sql b/postgis/build/postgis-2.1.5/regress/binary.sql
 index 7a36b65..3a451e7 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/binary.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/binary.sql
+--- a/postgis/build/postgis-2.1.5/regress/binary.sql
++++ b/postgis/build/postgis-2.1.5/regress/binary.sql
 @@ -31,9 +31,9 @@ SELECT st_force4d(g) FROM tm.geoms WHERE id < 15 ORDER BY id;
  INSERT INTO tm.geoms(g)
  SELECT st_setsrid(g,4326) FROM tm.geoms ORDER BY id;
@@ -13008,10 +13068,10 @@ index 7a36b65..3a451e7 100644
  SELECT 'geometry', count(*) FROM tm.geogs_in i, tm.geogs o WHERE i.id = o.id
   AND ST_OrderingEquals(i.g::geometry, o.g::geometry);
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/clean.sql b/cdb-pg/contrib/postgis-2.1.5/regress/clean.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/clean.sql b/postgis/build/postgis-2.1.5/regress/clean.sql
 index 4d4e598..ad348a1 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/clean.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/clean.sql
+--- a/postgis/build/postgis-2.1.5/regress/clean.sql
++++ b/postgis/build/postgis-2.1.5/regress/clean.sql
 @@ -42,7 +42,7 @@ SELECT origin,caseno,
         st_equals(st_collectionextract(st_makevalid(orig),3), st_collectionextract(valid,3)), 
         st_isvalid(st_makevalid(orig)), -- paranoia
@@ -13021,10 +13081,88 @@ index 4d4e598..ad348a1 100644
  
  
  SELECT '#1719.1', ST_AsEWKT(ST_MakeValid('POINT(0 0)'));
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/legacy.sql b/cdb-pg/contrib/postgis-2.1.5/regress/legacy.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/geography.sql b/postgis/build/postgis-2.1.5/regress/geography.sql
+index 5ef8f81..811d735 100644
+--- a/postgis/build/postgis-2.1.5/regress/geography.sql
++++ b/postgis/build/postgis-2.1.5/regress/geography.sql
+@@ -8,7 +8,7 @@ VALUES (
+ );
+ 
+ -- Do cached and uncached distance agree?
+-SELECT c, abs(ST_Distance(ply::geography, pt::geography) - _ST_DistanceUnCached(ply::geography, pt::geography)) < 0.01 FROM 
++SELECT c, abs(ST_Distance(ply::geometry::geography, pt::geometry::geography) - _ST_DistanceUnCached(ply::geometry::geography, pt::geometry::geography)) < 0.01 FROM 
+ ( VALUES
+ ('geog_distance_cached_1a', 'POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 'POINT(5 5)'),
+ ('geog_distance_cached_1b', 'POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 'POINT(5 5)'),
+@@ -20,7 +20,7 @@ SELECT c, abs(ST_Distance(ply::geography, pt::geography) - _ST_DistanceUnCached(
+ ) AS u(c,ply,pt);
+ 
+ -- Does tolerance based distance work cached? Inside tolerance
+-SELECT c, ST_DWithin(ply::geography, pt::geography, 3000) from 
++SELECT c, ST_DWithin(ply::geometry::geography, pt::geometry::geography, 3000) from
+ ( VALUES
+ ('geog_dithin_cached_1a', 'POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 'POINT(10.01 5)'),
+ ('geog_dithin_cached_1b', 'POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 'POINT(10.01 5)'),
+@@ -28,7 +28,7 @@ SELECT c, ST_DWithin(ply::geography, pt::geography, 3000) from
+ ) as p(c, ply, pt);
+ 
+ -- Does tolerance based distance work cached? Outside tolerance
+-SELECT c, ST_DWithin(ply::geography, pt::geography, 1000) from 
++SELECT c, ST_DWithin(ply::geometry::geography, pt::geometry::geography, 1000) from
+ ( VALUES
+ ('geog_dithin_cached_2a', 'POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 'POINT(10.01 5)'),
+ ('geog_dithin_cached_2b', 'POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 'POINT(10.01 5)'),
+@@ -36,7 +36,7 @@ SELECT c, ST_DWithin(ply::geography, pt::geography, 1000) from
+ ) as p(c, ply, pt);
+ 
+ -- Do things work when there's cache coherence on the point side but not the poly side?
+-SELECT c, ST_DWithin(ply::geography, pt::geography, 3000) from 
++SELECT c, ST_DWithin(ply::geometry::geography, pt::geometry::geography, 3000) from
+ ( VALUES
+ ('geog_dithin_cached_3a', 'POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))', 'POINT(5 5)'),
+ ('geog_dithin_cached_3b', 'POLYGON((1 1, 1 10, 10 10, 10 1, 1 1))', 'POINT(5 5)'),
+@@ -45,14 +45,14 @@ SELECT c, ST_DWithin(ply::geography, pt::geography, 3000) from
+ 
+ -- Test a precision case near the south pole that came up during development.
+ WITH pt AS ( 
+-    SELECT point::geography FROM ( VALUES 
++    SELECT point::geometry::geography FROM ( VALUES
+     ('0101000020E61000006C5B94D920EB4CC0A0FD481119B24FC0'),
+     ('0101000020E610000097A8DE1AD8524CC09C8A54185B1050C0'),
+     ('0101000020E61000008FC2F5285C4F4CC0E5ED08A7050F50C0'),
+     ('0101000020E61000008FC2F5285C4F4CC0E5ED08A7050F50C0') ) AS p(point)
+ ),
+ ply AS (
+-    SELECT polygon::geography FROM ( VALUES
++    SELECT polygon::geometry::geography FROM ( VALUES
+     ('0106000020E610000001000000010300000001000000A10100005036E50AEF8E4FC0E3FC4D2844A443C000000000008046C000000000000047C033333333335346C000000000000047C066666666662646C000000000000047C09999999999F945C000000000000047C0CDCCCCCCCCCC45C000000000000047C00000000000A045C000000000000047C033333333337345C000000000000047C066666666664645C000000000000047C099999999991945C000000000000047C0CDCCCCCCCCEC44C000000000000047C00000000000C044C000000000000047C033333333339344C000000000000047C066666666666644C000000000000047C099999999993944C000000000000047C0CDCCCCCCCC0C44C000000000000047C00000000000E043C000000000000047C03333333333B343C000000000000047C066666666668643C000000000000047C099999999995943C000000000000047C0CDCCCCCCCC2C43C000000000000047C000000000000043C000000000000047C03333333333D342C000000000000047C06666666666A642C000000000000047C099999999997942C000000000000047C0CDCCCCCCCC4C42C000000000000047C000000000002042C000000000000047C03333333333F341C000000000000047C06666666666C641C000000000000047C099999999999941C000000000000047C0CDCCCCCCCC6C41C000000000000047C000000000004041C000000000000047C033333333331341C000000000000047C06666666666E640C000000000000047C09999999999B940C000000000000047C0CDCCCCCCCC8C40C000000000000047C000000000006040C000000000000047C033333333333340C000000000000047C066666666660640C000000000000047C03333333333B33FC000000000000047C09999999999593FC000000000000047C00000000000003FC000000000000047C06666666666A63EC000000000000047C0CCCCCCCCCC4C3EC000000000000047C03333333333F33DC000000000000047C09999999999993DC000000000000047C00000000000403DC000000000000047C06666666666E63CC000000000000047C0CCCCCCCCCC8C3CC000000000000047C03333333333333CC000000000000047C09999999999D93BC000000000000047C00000000000803BC000000000000047C06666666666263BC000000000000047C0CCCCCCCCCCCC3AC000000000000047C03333333333733AC000000000000047C09999999999193AC000000000000047C00000000000C039C000000000000047C066666666666639C000000000000047C0CCCCCCCCCC0C39C000000000000047C03333333333B338C000000000000047C099999999995938C000000000000047C000000000000038C000000000000047C06666666666A637C000000000000047C0CDCCCCCCCC4C37C000000000000047C03333333333F336C000000000000047C099999999999936C000000000000047C000000000004036C000000000000047C06666666666E635C000000000000047C0CDCCCCCCCC8C35C000000000000047C033333333333335C000000000000047C09999999999D934C000000000000047C000000000008034C000000000000047C066666666662634C000000000000047C0CDCCCCCCCCCC33C000000000000047C033333333337333C000000000000047C099999999991933C000000000000047C00000000000C032C000000000000047C066666666666632C000000000000047C0CDCCCCCCCC0C32C000000000000047C03333333333B331C000000000000047C099999999995931C000000000000047C000000000000031C000000000000047C06666666666A630C000000000000047C0CDCCCCCCCC4C30C000000000000047C06666666666E62FC000000000000047C03333333333332FC000000000000047C00000000000802EC000000000000047C0CCCCCCCCCCCC2DC000000000000047C09999999999192DC000000000000047C06666666666662CC000000000000047C03333333333B32BC000000000000047C00000000000002BC000000000000047C0CCCCCCCCCC4C2AC000000000000047C099999999999929C000000000000047C06666666666E628C000000000000047C033333333333328C000000000000047C000000000008027C000000000000047C0CDCCCCCCCCCC26C000000000000047C099999999991926C000000000000047C066666666666625C000000000000047C03333333333B324C000000000000047C000000000000024C000000000000047C000000000000024C03943F5FFFF7F56C000000000008052C03943F5FFFF7F56C000000000008052C00000000000004EC068774831407A52C00000000000004EC0B8ACC266807452C00000000000004EC020240B98C06E52C00000000000004EC0705985CD006952C00000000000004EC0D9D0CDFE406352C00000000000004EC029064834815D52C00000000000004EC0917D9065C15752C00000000000004EC0E1B20A9B015252C00000000000004EC0492A53CC414C52C00000000000004EC09A5FCD01824652C00000000000004EC002D71533C24052C00000000000004EC0520C9068023B52C00000000000004EC0BA83D899423552C00000000000004EC00AB952CF822F52C00000000000004EC072309B00C32952C00000000000004EC0C3651536032452C00000000000004EC02BDD5D67431E52C00000000000004EC09354A698831852C00000000000004EC0E38920CEC31252C00000000000004EC04B0169FF030D52C00000000000004EC09B36E334440752C00000000000004EC003AE2B66840152C00000000000004EC054E3A59BC4FB51C00000000000004EC0BC5AEECC04F651C00000000000004EC00C90680245F051C00000000000004EC07407B13385EA51C00000000000004EC0C43C2B69C5E451C00000000000004EC02DB4739A05DF51C00000000000004EC07DE9EDCF45D951C00000000000004EC0E560360186D351C00000000000004EC03596B036C6CD51C00000000000004EC09D0DF96706C851C00000000000004EC0EE42739D46C251C00000000000004EC056BABBCE86BC51C00000000000004EC0A6EF3504C7B651C00000000000004EC00E677E3507B151C00000000000004EC076DEC66647AB51C00000000000004EC0C613419C87A551C00000000000004EC02E8B89CDC79F51C00000000000004EC07FC00303089A51C00000000000004EC0E7374C34489451C00000000000004EC0376DC669888E51C00000000000004EC09FE40E9BC88851C00000000000004EC0EF1989D0088351C00000000000004EC05791D101497D51C00000000000004EC0A8C64B37897751C00000000000004EC0103E9468C97151C00000000000004EC060730E9E096C51C00000000000004EC0C8EA56CF496651C00000000000004EC01820D1048A6051C00000000000004EC081971936CA5A51C00000000000004EC0D1CC936B0A5551C00000000000004EC03944DC9C4A4F51C00000000000004EC0A1BB24CE8A4951C00000000000004EC0F1F09E03CB4351C00000000000004EC05968E7340B3E51C00000000000004EC0AA9D616A4B3851C00000000000004EC01215AA9B8B3251C00000000000004EC0624A24D1CB2C51C00000000000004EC0CAC16C020C2751C00000000000004EC01AF7E6374C2151C00000000000004EC0826E2F698C1B51C00000000000004EC0D3A3A99ECC1551C00000000000004EC03B1BF2CF0C1051C00000000000004EC08B506C054D0A51C00000000000004EC0F3C7B4368D0451C00000000000004EC043FD2E6CCDFE50C00000000000004EC0AB74779D0DF950C00000000000004EC0FCA9F1D24DF350C00000000000004EC064213A048EED50C00000000000004EC0CC988235CEE750C00000000000004EC01CCEFC6A0EE250C00000000000004EC08445459C4EDC50C00000000000004EC0D47ABFD18ED650C00000000000004EC0C2340C1F11D150C00000000000004EC0C2340C1F11D150C0FE7DC685032D4DC0C2340C1F11D150C0FE7DC685033D4CC0C2340C1F11D150C0713D0AD7A3304CC02AAC545051CB50C0703D0AD7A3304CC07AE1CE8591C550C0703D0AD7A3304CC0E25817B7D1BF50C0703D0AD7A3304CC0328E91EC11BA50C0703D0AD7A3304CC09A05DA1D52B450C0703D0AD7A3304CC0EB3A545392AE50C0703D0AD7A3304CC053B29C84D2A850C0703D0AD7A3304CC0A3E716BA12A350C0703D0AD7A3304CC00B5F5FEB529D50C0703D0AD7A3304CC05B94D920939750C0703D0AD7A3304CC0C30B2252D39150C0703D0AD7A3304CC014419C87138C50C0703D0AD7A3304CC07CB8E4B8538650C0703D0AD7A3304CC0CCED5EEE938050C0703D0AD7A3304CC03465A71FD47A50C0703D0AD7A3304CC0849A2155147550C0703D0AD7A3304CC0EC116A86546F50C0703D0AD7A3304CC03ECBF3E0EE6E50C0713D0AD7A3304CC0FF3EE3C2816E50C0A2EE0390DAB04BC0EC12D55B038550C01630815B77974BC05BCEA5B8AA9A50C0C173EFE1928F4BC0A5315A4755B550C00000000000804BC0014D840D4FD150C01899DB1896744BC05D05E7421B2A51C0B38EF4B3A2754BC0BB0F406A132751C068E89FE062C94AC03D6B1217DB2851C0413F9D3C76564AC09F268E97491D51C01E55A8C9E72D4AC014AE47E17A5051C05E770481DF154AC0DA531795F95E51C0ADA81CEE7E154AC033333333337351C0EACF7EA488084AC0DA835A1DCA8251C019479B994F014AC00473F4F8BDA551C0CB4A9352D0014AC0AD927EB12DFD51C0848FD2B6AB014AC07F11D9AC1FFF51C0D21D1F8887F249C01D4762388D1B52C06AE27899BCCA49C00AD7A3703D1252C08BAF2C87CCA049C0A323B9FC871A52C0ADCE20F4229449C056760B6E351352C0F866E5A8ED8449C024F83A04E91352C0DCDB8882745249C0F1F44A59863252C0DBCD42F1195049C01A97BBE09D4452C0EEEBC039236449C09A31BBDD014C52C0454B79083E6349C0A59421D8826352C004824AA6542849C04BABC6B71C6252C046216EF36B1449C0A4F55C4BED5D52C01CE7DB27EC0549C0D9BBF550916452C058CE39D3DFF648C0DD0E6844445C52C0937D46D8A6E648C098B4F347E26652C0F6FC1F1620C748C0AB37B412845D52C0D9A2BBDA40A948C048E17A14AE5F52C0D52137C30D9448C04B1A48BCE14B52C0BF901F3BB99848C0B26DAC1FF63552C0E4709CCA587B48C0287E8CB96B2652C0912CBBBB296948C0A59421D8822852C0D49AE61DA74048C0C009E0C1AA1452C0106734A8EC2E48C0A8D94D3ADB1452C004560E2DB21948C0687B4F40EE2452C06ECF3D35A8F047C089022269DC1552C0ADAC23FDACCD47C019B2158FE61652C07BC26DC89AB747C009B3BFA2910A52C095E70B6B74B447C01DF2857F47FF51C01D8AA7C3AF9A47C0F1248EE156F651C0E9482EFF219B47C07A45A6327BFE51C0711706D1FF8747C0A5315A4755FD51C000000000008047C0395BE5AE4AFB51C0CD6152D7356547C0182DF64DD0F451C00CC3EC0A226447C0B6CA5D95D5EA51C098E19A96B34A47C06ABC749318FA51C0E51E5C4B121247C0C1920612EFEE51C0780F2B37AC0847C09D2743FA12EA51C0653FE65EBBF546C01563AAAA61F351C0FA8271CBA2CB46C00775368966E151C08208CC9E5FC346C05DEF4806CAD651C03ECB98277C9C46C03760A12042E551C0FFF1B96EA57B46C073A7CF69710152C090A4FF40147346C03D5C1723B70152C0F46C567DAE6646C03505D78198E051C023DF008E985E46C08351499D80D451C037853A51B76646C09C46A4B789C751C0B515FBCBEE4546C09C33A2B437CF51C0BE82D9A95E3446C066E1462550F651C042CB5FC6B93046C09B6B3DE8FEF551C056212FB5EF0D46C075FBF6BFEDEB51C04E36D4DE96FF45C020578FA01DF251C0C967C3ABF6E845C05CA2C4F87AE651C0E5F21FD26FD745C0FD0978E3EEFB51C06CE3F49AC3BE45C09D11A5BDC1F951C00C11267B3AAB45C08A9DDFE643F051C037EE83E27DA645C0A922CB38FCEF51C0CCBE863B729645C008D5BC99070852C0865EDACB118745C088635DDC460952C01B09D91E624E45C01F85EB51B80652C07D96E7C1DD4D45C0A8188CB6CF0152C018135102513E45C00C7D0B46000852C0166646E4602945C06E2585C31C0352C039B0C167901345C0A499DD497AEF51C0BD1358A5991245C023DBF97E6AF251C0BEF15AAE230045C0EE7C3F355EF151C0F6FC1F1620E944C040529F3FC8F851C0BBF7CB82E4D344C0D27E5AFBF1F751C0F6D61B107CB444C0CA9C23938AF751C0B498EEF4A2B544C0624775BC1FF751C035958D13C7B644C0EA8B637FB1F651C040BEE654E8B744C0AADC49E43FF651C0298B1FA206B944C0AD7CCAF3CAF551C043D796E421BA44C0D6E6CDB652F551C0ECBDE6053ABB44C0532E8236D7F451C06B72E6EF4EBC44C07E585A7C58F451C08F13AC8C60BD44C01EB00D92D6F351C0DE7A8EC66EBE44C02712978151F351C01507278879BF44C0F9333455C9F251C0D96153BC80C044C015E364173EF251C08540374E84C144C0703EEAD2AFF151C0B21F3E2984C244C062E9C5921EF151C088F91C3980C344C0313839628AF051C083F6D36978C444C05856C44CF3EF51C0A018B0A76CC544C09366255E59EF51C0A5E04CDF5CC644C0AE9C57A2BCEE51C08AED95FD48C744C0495192251DEE51C09C95C8EF30C844C0760F48F47AED51C0747975A314C944C0739C251BD6EC51C060108206F4C944C061F910A72EEC51C0372E2A07CFCA44C0385F28A584EB51C066820194A5CB44C0E834C122D8EA51C01010F59B77CC44C0DDFF662D29EA51C0149F4C0E45CD44C0DA4EDAD277E951C0E725ACDA0DCE44C0669F0F21C4E851C0FB2B15F1D1CE44C0C53D2E260EE851C0B124E84191CF44C0A41F8FF055E751C09CC2E5BD4BD044C098B9BB8E9BE651C0F042305601D144C076CF6C0FDFE551C017B14CFCB1D144C0B73F898120E551C0192224A25DD244C0F9C924F45FE451C0E5E7043A04D344C0B2D07E769DE351C03EBCA3B6A5D344C047160118D9E251C039E31C0B42D444C095753EE812E251C01B45F52AD9D444C01596F1F64AE151C09D7F1B0A6BD544C0B79BFB5381E051C048EEE89CF7D544C096D2620FB6DF51C0F7A922D87ED644C0AA565139E9DE51C0497FFAB000D744C097B713E21ADE51C0FBDB0F1D7DD744C0BB98171A4BDD51C0FBB27012F4D744C0AC4DEAF179DC51C02D579A8765D844C03173377AA7DB51C0BC4C7A73D1D844C0FB84C7C3D3DA51C0FD106FCD37D944C027707EDFFED951C095D8488D98D944C0C8225ADE28D951C013444AABF3D944C08B1871D151D851C0B40A292049DA44C0ADE4F0C979D751C0529B0EE598DA44C061B91CD9A0D651C07AB398F3E2DA44C0D4EC4B10C7D551C076ECD94527DB44C0F97BE880ECD451C0633E5AD665DB44C0398B6D3C11D451C01F7917A09EDB44C04CE5655435D351C01FB3859ED1DB44C048786ADA58D251C018AE8FCDFEDB44C022D120E07BD151C05831972926DC44C0C89539779ED051C0F25975AF47DC44C0FEFD6EB1C0CF51C091E07A5C63DC44C02B4B83A0E2CE51C0EE54702E79DC44C03D3F3F5604CE51C0F24E962389DC44C0D69270E425CD51C07E95A53A93DC44C0EE6AE85C47CC51C0A93ACF7297DC44C00BCE79D168CB51C0C6ADBCCB95DC44C04F19F8538ACA51C0D7C28F458EDC44C06D7535F6ABC951C09FAFE2E080DC44C0CD4B01CACDC851C04CFEC79E6DDC44C000BC26E1EFC751C0B675CA8054DC44C09F116B4D12C751C029F7EC8835DC44C0DF3A8C2035C651C0DC51AAB910DC44C0F53F3F6C58C551C0FC0BF515E6DB44C073BB2E427CC451C0632137A1B5DB44C0D153F9B3A0C351C0F7B7515F7FDB44C04D3630D3C5C251C0CDC99C5443DB44C0459355B1EBC151C0F8C4E68501DB44C0451CDB5F12C151C0342174F8B9DA44C0DB8320F039C051C062EBFEB16CDA44C079FF717362BF51C0E546B6B819DA44C078CB06FB8BBE51C0F2E43D13C1D944C06DB1FF97B6BD51C0DC71ADC862D944C0F890655BE2BC51C088F88FE0FED844C03BEB27560FBC51C0E13BE36295D844C014711B993DBB51C09706175826D844C04F94F8346DBA51C02E710CC9B1D744C0F31B5A3A9EB951C04B1E15BF37D744C0C6BBBBB9D0B851C0976DF243B8D644C03FAF78C304B851C014A5D46133D644C0F757CA673AB751C01A115A23A9D544C0DADFC6B671B651C0141B8E9319D544C014DF5FC0AAB551C0FE56E8BD84D444C005066194E5B451C0E6874BAEEAD344C049CB6E4222B451C0629B04714BD344C0E91D05DA60B351C03E9CC912A7D244C0051C766AA1B251C04D9CB8A0FDD144C0D3CDE802E4B151C0CD9556284FD144C058E557B228B151C00E448EB79BD044C0C48290876FB051C0DCF3AE5CE3CF44C0ABFD3091B8AF51C0A54B6B2626CF44C034B3A7DD03AF51C06F0BD82364CE44C048D9317B51AE51C0DEC46A649DCD44C0FC56DA77A1AD51C05A8BF8F7D1CC44C032A278E1F3AC51C0709CB4EE01CC44C0A0A2AFC548AC51C0B9002F592DCB44C03F9AEC31A0AB51C03225534854CA44C05A136633FAAA51C0646D66CD76C944C02DD41AD756AA51C050BE06FA94C844C04CD8D029B6A951C0720229E0AEC744C0D34F143818A951C0DEA61792C4C644C075A4360E7DA851C0AF117122D6C544C082844DB8E4A751C0EE1126A4E3C444C0FDF331424FA751C02849782AEDC344C0B6637FB7BCA651C0B58EF8C8F2C244C0A5CE92232DA651C0FE4C8593F4C144C067DD8991A0A551C0EBD8489EF2C044C01010420C17A551C084C3B7FDECBF44C046EE579E90A451C006268FC6E3BE44C0C53D26520DA451C0AAE8D20DD7BD44C0473FC5318DA351C01B04CCE8C6BC44C0E1F1094710A351C0E0BD066DB3BB44C0E85C859B96A251C000E050B09CBA44C05AE0833820A251C0CAEBB7C882B944C0CF8B0C27ADA151C02F4887CC65B844C00B7CE06F3DA151C0B66B46D245B744C02E3F7A1BD1A051C03B02B7F022B644C0813F0D3268A051C0BA0ED33EFDB444C0E43485BB02A051C02C09CBD3D4B344C0FB9C85BFA09F51C0CBF803C7A9B244C0EB396945429F51C0D58A15307CB144C0E1974154E79E51C0FC25C8264CB044C03299D6F28F9E51C0ADFA12C319AF44C03D09A6273C9E51C076101A1DE5AD44C0EF35E3F8EB9D51C084502C4DAEAC44C0F98F766C9F9D51C0A08DC16B75AB44C09EB70C93849D51C08100BE8003AB44C05036E50AEF8E4FC0E3FC4D2844A443C0')
+     ) as q(polygon)
+ )
+@@ -60,12 +60,12 @@ SELECT 'geog_precision_savffir', _ST_DistanceUnCached(pt.point, ply.polygon), ST
+ 
+ -- Test another precision case near the north poly and over the dateline
+ WITH pt AS ( 
+-    SELECT point::geography FROM ( VALUES 
++    SELECT point::geometry::geography FROM ( VALUES
+     ('0101000020E610000000000000004065400000000000804840'),
+     ('0101000020E610000075C8CD70033965C02176A6D079315040') ) AS p(point)
+ ),
+ ply AS (
+-    SELECT polygon::geography FROM ( VALUES
++    SELECT polygon::geometry::geography FROM ( VALUES
+     ('0103000020E6100000010000004101000078A1B94E231F65C000000000000051400000000000C063C000000000000052400000000000C063C0000000000000524078A1B94E231F65C0000000000000514078A1B94E231F65C000000000008056400000000000A061C000000000008056400000000000A061C0EF940ED6FF7F56400000000000A061C0DD291DACFF7F56400000000000A061C0CBBE2B82FF7F56400000000000A061C0B9533A58FF7F56400000000000A061C0A8E8482EFF7F56400000000000A061C0967D5704FF7F56400000000000A061C072A774B0FE7F56400000000000A061C04FD1915CFE7F56400000000000A061C02BFBAE08FE7F56400000000000A061C0F6B9DA8AFD7F56400000000000A061C0C178060DFD7F56400000000000A061C079CC4065FC7F56400000000000A061C00F4A9869FB7F56400000000000A061C0A4C7EF6DFA7F56400000000000A061C0040473F4F87F56400000000000A061C052D50451F77F56400000000000A061C07DD0B359F57F56400000000000A061C0611F9DBAF27F56400000000000A061C00F2DB29DEF7F56400000000000A061C0642310AFEB7F56400000000000A061C06102B7EEE67F56400000000000A061C0E1F3C308E17F56400000000000A061C0AFB6627FD97F56400000000000A061C0DDB5847CD07F56400000000000A061C013DA722EC57F56400000000000A061C02C4D4A41B77F56400000000000A061C0CFF753E3A57F56400000000000A061C0B72DCA6C907F56400000000000A061C0776C04E2757F56400000000000A061C093C6681D557F56400000000000A061C05B0D897B2C7F56400000000000A061C01B12F758FA7E56400000000000A061C0B8239C16BC7E56400000000000A061C027FC523F6F7E56400000000000A061C0BD9179E40F7E56400000000000A061C0CFDA6D179A7D56400000000000A061C0F0332E1C087D56400000000000A061C07CB8E4B8537C56400000000000A061C0C53D963E747B56400000000000A061C08E40BCAE5F7A56400000000000A061C07F8CB96B097956400000000000A061C0FE65F7E4617756400000000000A061C0C9073D9B557556400000000000A061C0CDCCCCCCCC7256400000000000A061C07A01F6D1A96F56400000000000A061C053616C21C86B56400000000000A061C009A7052FFA6656400000000000A061C0F0332E1C086156400000000000A061C085471B47AC5956400000000000A061C0752497FF905056400000000000A061C08C84B69C4B4556400000000000A061C02C6519E2583756400000000000A061C02B357BA0152656400000000000A061C055C6BFCFB81056400000000000A061C0F988981249F655400000000000A061C08C321B6492D555400000000000A061C0ADC5A70018AD55400000000000A061C02254A9D9037B55400000000000A061C009E1D1C6113D55400000000000A061C0A0E5797077F054400000000000A061C0FA49B54FC79154400000000000A061C043959A3DD01C54400000000000A061C075EACA67798C53400000000000A061C00EE02D90A0DA52400000000000A061C000000000000052400000000000A061C000000000000052400000000000A061C00100000000004F400000000000A061C01730815B77274E408C45D3D9C99D61C04CAB21718F254E40C0120F289B9861C03EB324404D214E40745E6397A89061C0B9AAECBB221C4E406C3997E2AA8E61C09E465A2A6F274E4068666666667F61C0C9EA56CF49174E40F8D005F52D7661C01FF98381E72A4E408499B67F656261C01B69A9BC1D2D4E40C04351A04F6261C01CD82AC1E2284E40EC7C3F355E6661C0097250C24C0B4E40E8525C55F66161C001E31934F4FF4D406431B1F9B86161C0EDDD1FEF55FF4D407C4963B48E5961C06749809A5AF64D40703D0AD7A35661C0D60451F701F44D4080608E1EBF5561C0F22900C633EC4D40008750A5665561C048C49448A2E74D40205036E50A5461C0C481902C60E24D40283108AC1C4161C0C1E78711C2BB4D40B08009DCBA4061C0CA1F0C3CF7BA4D4010751F80D43E61C0029F1F4608B74D40A47EDE54A43E61C03CFC3559A3B64D405C3D27BD6F3361C00938842A359F4D40E85BE674593161C0F7D1A92B9F8D4D409820EA3E003061C019E76F42217E4D402883A3E4D53061C08833BF9A03744D40605E807D742E61C04E7FF62345744D40182B6A300D2961C06B82A8FB00804D40D0FBC6D79E2561C0C8F484251E844D4044DD0720B52261C0E46BCF2C09884D40DC9DB5DB2E2161C0AF47E17A148A4D40303D6189071F61C02A5C8FC2F58C4D40F8F719170E1C61C02259C0046E914D405031CEDF841A61C0AB2B9FE579944D401C649291B31261C077DB85E63A954D40A07A6B60AB0F61C03E963E7441A14D40247F30F0DC0F61C026E99AC937A34D402054A9D9030F61C04EB9C2BB5CA44D40C051F2EA1C0F61C0CE920035B5A84D409CF9D51C200F61C05B2A6F4738A94D40C86C9049460F61C05D8FC2F528B04D4008D3307C440F61C073BF4351A0BB4D40285C8FC2F50B61C03E61890794B94D40080C59DDEA0B61C030FA0AD28CB94D40D8166536C80B61C04C7155D977B94D400079AF5A990B61C005392861A6B94D40F836FDD98F0B61C0E8A4F78DAFB94D40D03FC1C58A0B61C0DA5A5F24B4B94D4058087250C20961C0650113B875BB4D401C5A643BDF0861C0C32FF5F3A6BE4D407862D68BA10761C0E627D53E1DC34D4020680586AC0761C03A5D16139BC74D40D02C0950530B61C07194BC3AC7CC4D4030EBC5504E0961C0988BF84ECCCE4D40CCAFE600C10861C07411DF8959CF4D40B81457957D0861C0EC8B84B69CCF4D400825CCB4FD0761C0F2EF332E1CD04D40703D0AD7A30761C023F8DF4A76D04D403837A6272C0661C0BD3AC780ECD14D40602D3E05C00261C05F2EE23B31D34D4018601F9DBA0161C057F146E691D34D409820EA3E000161C03AEE940ED6D34D406CB2463D440061C041C1C58A1AD44D4010FC6F253B0061C0C8F484251ED44D402CBCCB457CFE60C038328FFCC1D44D40C0BC00FBE8FB60C065AF777FBCD74D4080BC57AD4CFB60C0C7BFCFB870D84D40102DB29DEFF860C0BB490C022BDB4D40242D95B723F760C0E25D2EE23BDD4D402CE7525C55EF60C00B9DD7D825E64D40CC1E680586EB60C0EE9925016ADE4D400C022B8716E860C0B7B9313D61D94D40CC0182397AE760C0FFB7921D1BD94D40C095ECD808E760C0B1389CF9D5D44D40E47E87A240E560C0079E7B0F97D04D401C5036E50AE560C0013ACC9717D04D40C01C3D7E6FE460C03A2861A6EDCF4D40988F6B43C5E360C05665DF15C1CF4D40148733BF9AE360C0252367614FCF4D40D0A5B8AAECE060C040DEAB5626C84D40D4CA845FEAE060C09AB67F65A5C54D40901EBFB7E9E060C01B2FDD2406C54D40B05582C5E1E060C055E3A59BC4BC4D405014E81379E260C0537E52EDD3B94D40483D44A33BE360C08A07944DB9B64D40E8263108ACDF60C09A7CB3CD8DB14D4080F10C1AFAE060C04052448655AC4D40D8D825AAB7DE60C06B65C22FF5A34D40E874594C6CD660C01D5A643BDF9F4D40F82CCF83BBD560C063D68BA19C984D40B0683A3B19D260C046990D32C9904D407047382D78CF60C0CDE9B298D8904D4078978BF84ECE60C017139B8F6B8B4D4008B64AB038CC60C094DE37BEF6844D40303D618907CD60C069CBB914577D4D40140A117008CA60C0E644BB0A297B4D4054E3A59BC4CA60C0763C66A032764D40044CE0D6DDC960C025404D2D5B734D40A818E76F42C860C0FD6F253B366E4D40A41EA2D11DBF60C067F2CD3637624D40D0A92B9FE5BA60C07732384A5E5D4D4030B610E4A0B660C059FFE7305F4E4D40A0BE654E97B560C02CC1E270E64B4D4044813E9127B560C08A5E46B1DC4A4D40C09F1A2FDDB460C044FF04172B4A4D40DCD26A48DCB460C0284EEE77284A4D4028E3DF675CB360C04A29E8F692464D4048D74CBED9B160C05F9D6340F6424D4098395D1613AC60C09F7B0F971C374D40F00390DAC4AE60C0A80018CFA0314D40F8F719170EAB60C0AC730CC85E234D400C5EF415A4A860C01B4CC3F0111D4D4008E1D1C611A760C03208AC1C5A184D40E422BE13B3A660C08221AB5B3D174D404833164D67A660C0FCC6D79E59164D4070641EF983A560C073DC291DAC134D4020E527D53EA260C06B9F8EC70C004D40B0BAD573D29B60C0DEEA39E97DEB4C40F4D6C056099860C07884D38217D94C4064B48EAA269560C0D869A4A5F2CE4C4054C6BFCFB89160C081ECF5EE8FBF4C405CC47762D68B60C02AE8F692C6AC4C40446E861BF08760C0ADA8C1340C9B4C4060C8EA56CF8B60C096CFF23CB88B4C40D005F52D738160C07E5C1B2AC6854C40AC6EF59CF48360C088BF266BD46F4C40D8EBDD1FEF7B60C026CCB4FD2B674C402883A3E4D57C60C040A9F6E978604C40D03FC1C58A7B60C0448B6CE7FB594C40747632384A7B60C07D96E7C1DD554C40D0747632387B60C03815A930B6544C40F8B31F29227B60C074F4F8BD4D534C40D8868A71FE7A60C0FF7DC68503514C40600CE544BB7A60C0F88DAF3DB34C4C40C8D2872EA87960C046F0BF95EC4C4C40E04F8D976E7860C0A2B94E232D4D4C4054910A630B7860C08642041C424D4C40540E2DB29D7760C03ED00A0C594D4C40808B1535987660C005FF5BC98E4D4C40D09B8A54187560C036EA211ADD4D4C406891ED7C3F7460C019ADA3AA094E4C4050EDD3F1987260C059FFE7305F4E4C40446458C51B6F60C02EEC6987BF464C40280AF4893C6A60C0E46BCF2C09404C40E0AFC91AF56960C03A7AFCDEA63F4C408872A25D856960C0ADA8C1340C3F4C4018B2BAD5736960C043EC4CA1F33E4C4044088F368E6560C0C57762D68B394C40CCCCCCCCCC6260C0A4C7EF6DFA334C4058DDEA39E95E60C0613C8386FE314C4034164D67275E60C0709EEA909B314C40C8F99B50885D60C0FE2B2B4D4A314C40E07A14AE475D60C0D4D9C9E028314C4098F56228275C60C0EAEC647094304C40C0D84290835B60C0F246E6913F304C40981C774A075960C0CA1F0C3CF72E4C40900A630B415860C0B1AC3429052D4C40205ED72FD85760C0E44EE960FD2B4C40DC240681955760C0ECDD1FEF552B4C407C74EACA675760C0E6965643E22A4C40B04B546F0D5760C0CBBE2B82FF294C4034936FB6B95660C05B0D897B2C294C40285C8FC2F55560C0C9CD70033E274C40342905DD5E5560C08CA6B393C1254C4098728577B95460C07923F3C81F244C4044C02154A95460C01D9430D3F6234C40A82688BA0F5460C067834C3272224C4030815B77F35360C044FF04172B224C40E422BE13B35360C0DAEBDD1FEF214C40A47EDE54A45260C038A6272CF1204C403C1405FA445260C0079E7B0F97204C40C8681D554D5160C0B3632310AF1F4C4080F10C1AFA4E60C050AA7D3A1E1F4C405C33F9669B4E60C0DE0720B5891B4C409CC420B0724E60C03641D47D001A4C40C0FF56B2634E60C0B7D617096D194C40B46CAD2F124E60C092442FA358164C402891442FA34D60C0AF64C74620124C4090ED7C3F354B60C023F8DF4A76104C405CE15D2EE24760C0C7850321590C4C400CB08F4E5D4760C07177D66EBB0C4C40E097FA79534360C048FE60E0B90F4C40C8D2872EA84260C0EA263108AC0C4C4098395D16134260C052F2EA1C030A4C40902232ACE24160C029D027F224094C40B87EC16ED84160C094DE37BEF6084C40F00703CFBD4160C0EAB298D87C084C40DC9DB5DB2E4160C0DAEBDD1FEF054C40200C3CF71E4160C09AB67F65A5054C40686AD95A5F4060C067F2CD3637024C40A41EA2D11D4060C0A2629CBF09014C40C4724BAB214060C05D8FC2F528004C40F8B31F29224060C00FA14ACD1E004C409C16BCE82B4060C034F9669B1BFF4B40CC457C27664060C04DC3F01131F94B405C5A0D897B4060C0E6ED08A705F74B40DC0720B5894060C0B72DCA6C90F54B40BCD05CA7914060C0EA60FD9FC3F44B4054F146E6914060C07177D66EBBF44B40601A868F884060C07177D66EBBF44B409CF9D51C204060C07177D66EBBF44B409CF9D51C204060C0F20C1AFA27F44B406414CB2DAD4260C077BE9F1A2FE94B40B8533A58FF4360C06D5B94D920E74B40B05582C5E14460C0CBF8F71917E24B40F82CCF83BB4460C0174D672783DB4B40188BA6B3934360C0AC90F2936AD74B4004DD5ED2184460C00B2E56D460CA4B4044D3D9C9E04260C03AB4C876BEBF4B40EC5F5969524160C0E8FBA9F1D2B94B406414CB2DAD4060C05001309E41AB4B40900A630B413F60C0D205F52D73A64B40E4C281902C3F60C096B7239C16A44B4020020EA14A4360C0F870C971A7984B400035B56CAD4460C00BF4893C49924B40E0F3C308E14460C001E31934F48F4B402866BD18CA4560C0B3632310AF8B4B4048ACC5A7004660C0011DE6CB0B884B401881785DBF4860C07FA4880CAB7C4B40B46CAD2F124B60C0B7F3FDD478754B40480C022B874D60C0A553573ECB6F4B40C0D4CF9B8A4E60C0FF60E0B9F76C4B40889D29745E4F60C0F4716DA8186B4B40DC9DB5DB2E5260C0A96F99D365654B4000D9EBDD1F5460C0D678E92631644B4054AEF02E175560C0A81DFE9AAC614B40182FDD24065460C0E06C73637A5E4B403C3F8C101E5460C055E3A59BC45C4B408043A852B35360C0597380608E5A4B40044CE0D6DD9560C0CDCCCCCCCC544B406866666666DE60C01E03B2D7BB1B4B4000000000000061C00100000000004B400000000000E060C01E03B2D7BB5B4A400000000000F862C0132C0E677E614C4000000000002063C00100000000004C4000000000000064C00100000000C04A40F8B31F2922FA64C03433333333B34940F8B31F29221266C0B0C91AF51011494034333333332366401D03B2D7BB1B49402EE7525C555D64409A99999999D946400000000000E063404A63B48EAA0A494000000000002065400100000000004B40000000000040654003F1BA7EC1564B406766666666466540EACF7EA488684B4000000000008066400100000000004E4068666666668665C03433333333035040E8C6F484251F65C00000000000405040E8C6F484251F65C00000000000C0504078A1B94E231F65C00000000000005140')
+     ) as q(polygon)
+ )
+@@ -74,4 +74,3 @@ SELECT 'geog_precision_pazafir', _ST_DistanceUnCached(pt.point, ply.polygon), ST
+ 
+ -- Clean up spatial_ref_sys
+ DELETE FROM spatial_ref_sys WHERE srid = 4326;
+-    
+\ No newline at end of file
+diff --git a/postgis/build/postgis-2.1.5/regress/legacy.sql b/postgis/build/postgis-2.1.5/regress/legacy.sql
 index dc68eee..98b6243 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/legacy.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/legacy.sql
+--- a/postgis/build/postgis-2.1.5/regress/legacy.sql
++++ b/postgis/build/postgis-2.1.5/regress/legacy.sql
 @@ -38,12 +38,12 @@ SELECT 'Geoserver6', "id",substr(encode(asBinary(force_2d("pt"),'XDR'),'base64')
  
  -- MapServer 5.4 tests
@@ -13040,77 +13178,100 @@ index dc68eee..98b6243 100644
  
  -- Drop the data table
  SELECT 'Removing the data table...';
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql b/cdb-pg/contrib/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql b/postgis/build/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql
 index 716254c..9bbaa5b 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql
+--- a/postgis/build/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql
++++ b/postgis/build/postgis-2.1.5/regress/loader/MultiToSinglePoint.select.sql
 @@ -1,2 +1,2 @@
 -select ST_Asewkt(ST_SnapToGrid(the_geom,0.00001)) from loadedshp;
 +select ST_Asewkt(ST_SnapToGrid(the_geom,0.00001)) from loadedshp order by gid;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/NoTransPoint.select.sql b/cdb-pg/contrib/postgis-2.1.5/regress/loader/NoTransPoint.select.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/NoTransPoint.select.sql b/postgis/build/postgis-2.1.5/regress/loader/NoTransPoint.select.sql
 index e680818..99421da 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/NoTransPoint.select.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/NoTransPoint.select.sql
+--- a/postgis/build/postgis-2.1.5/regress/loader/NoTransPoint.select.sql
++++ b/postgis/build/postgis-2.1.5/regress/loader/NoTransPoint.select.sql
 @@ -1,2 +1,2 @@
 -select ST_Asewkt(the_geom) from loadedshp;
 +select ST_Asewkt(the_geom) from loadedshp order by gid;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql b/cdb-pg/contrib/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql b/postgis/build/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql
 index 716254c..9bbaa5b 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql
+--- a/postgis/build/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql
++++ b/postgis/build/postgis-2.1.5/regress/loader/NotReallyMultiPoint.select.sql
 @@ -1,2 +1,2 @@
 -select ST_Asewkt(ST_SnapToGrid(the_geom,0.00001)) from loadedshp;
 +select ST_Asewkt(ST_SnapToGrid(the_geom,0.00001)) from loadedshp order by gid;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-G.select.expected b/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-G.select.expected
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/PointZ-G.select.expected b/postgis/build/postgis-2.1.5/regress/loader/PointZ-G.select.expected
 index 18085a6..538307b 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-G.select.expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-G.select.expected
+--- a/postgis/build/postgis-2.1.5/regress/loader/PointZ-G.select.expected
++++ b/postgis/build/postgis-2.1.5/regress/loader/PointZ-G.select.expected
 @@ -1,3 +1,3 @@
  SRID=4326;POINT(0 1 2 3)
 -SRID=4326;POINT(9 -1 -2 -3)
  SRID=4326;POINT(9 -1 -20 -123)
 +SRID=4326;POINT(9 -1 -2 -3)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-w.select.expected b/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-w.select.expected
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/PointZ-w.select.expected b/postgis/build/postgis-2.1.5/regress/loader/PointZ-w.select.expected
 index ecb3516..ea5ace3 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-w.select.expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ-w.select.expected
+--- a/postgis/build/postgis-2.1.5/regress/loader/PointZ-w.select.expected
++++ b/postgis/build/postgis-2.1.5/regress/loader/PointZ-w.select.expected
 @@ -1,3 +1,3 @@
  POINT(0 1 2 3)
 -POINT(9 -1 -2 -3)
  POINT(9 -1 -20 -123)
 +POINT(9 -1 -2 -3)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ.select.expected b/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ.select.expected
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/PointZ.select.expected b/postgis/build/postgis-2.1.5/regress/loader/PointZ.select.expected
 index ecb3516..ea5ace3 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ.select.expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/PointZ.select.expected
+--- a/postgis/build/postgis-2.1.5/regress/loader/PointZ.select.expected
++++ b/postgis/build/postgis-2.1.5/regress/loader/PointZ.select.expected
 @@ -1,3 +1,3 @@
  POINT(0 1 2 3)
 -POINT(9 -1 -2 -3)
  POINT(9 -1 -20 -123)
 +POINT(9 -1 -2 -3)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPts.select.sql b/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPts.select.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/ReprojectPts.select.sql b/postgis/build/postgis-2.1.5/regress/loader/ReprojectPts.select.sql
 index 0aec069..63903ba 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPts.select.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPts.select.sql
+--- a/postgis/build/postgis-2.1.5/regress/loader/ReprojectPts.select.sql
++++ b/postgis/build/postgis-2.1.5/regress/loader/ReprojectPts.select.sql
 @@ -1,2 +1,2 @@
 -select ST_Asewkt(ST_SnapToGrid(the_geom,0.00000001)) from loadedshp;
 +select ST_Asewkt(ST_SnapToGrid(the_geom,0.00000001)) from loadedshp order by gid;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql b/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql b/postgis/build/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql
 index d1611a5..0bc0e41 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql
+--- a/postgis/build/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql
++++ b/postgis/build/postgis-2.1.5/regress/loader/ReprojectPtsGeog.select.sql
 @@ -1,2 +1,2 @@
 -select ST_Asewkt(ST_SnapToGrid(the_geom::geometry,0.00000001)) from loadedshp;
 +select ST_Asewkt(ST_SnapToGrid(the_geom::geometry,0.00000001)) from loadedshp order by gid;
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/regress_index.sql b/cdb-pg/contrib/postgis-2.1.5/regress/regress_index.sql
-index 8b51160..deb5cb4 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/regress_index.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/regress_index.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/out_geometry.sql b/postgis/build/postgis-2.1.5/regress/out_geometry.sql
+index f3fa4af..6528065 100644
+--- a/postgis/build/postgis-2.1.5/regress/out_geometry.sql
++++ b/postgis/build/postgis-2.1.5/regress/out_geometry.sql
+@@ -146,12 +146,12 @@ SELECT 'geojson_options_15', ST_AsGeoJson(GeomFromEWKT('SRID=0;LINESTRING(1 1, 2
+ SELECT 'geojson_options_16', ST_AsGeoJson(GeomFromEWKT('SRID=4326;LINESTRING(1 1, 2 2, 3 3, 4 4)'), 0, 7);
+ 
+ -- Out and in to PostgreSQL native geometric types
+-WITH p AS ( SELECT '((0,0),(0,1),(1,1),(1,0),(0,0))'::text AS p ) 
+-  SELECT 'pgcast_01', p = p::polygon::geometry::polygon::text FROM p;
+-WITH p AS ( SELECT '[(0,0),(1,1)]'::text AS p ) 
+-  SELECT 'pgcast_02', p = p::path::geometry::path::text FROM p;
+-WITH p AS ( SELECT '(1,1)'::text AS p ) 
+-  SELECT 'pgcast_03', p = p::point::geometry::point::text FROM p;
++WITH p AS ( SELECT '((0,0),(0,1),(1,1),(1,0),(0,0))'::polygon AS p )
++  SELECT 'pgcast_01', p ~= p::geometry::polygon FROM p;
++WITH p AS ( SELECT '[(0,0),(1,1)]'::path AS p )
++  SELECT 'pgcast_02', p = p::geometry::path FROM p;
++WITH p AS ( SELECT '(1,1)'::point AS p )
++  SELECT 'pgcast_03', p ~= p::geometry::point FROM p;
+ SELECT 'pgcast_03','POLYGON EMPTY'::geometry::polygon IS NULL;
+ SELECT 'pgcast_04','LINESTRING EMPTY'::geometry::path IS NULL;
+ SELECT 'pgcast_05','POINT EMPTY'::geometry::point IS NULL;
+diff --git a/postgis/build/postgis-2.1.5/regress/regress_index.sql b/postgis/build/postgis-2.1.5/regress/regress_index.sql
+index 8b51160..cd4e61c 100644
+--- a/postgis/build/postgis-2.1.5/regress/regress_index.sql
++++ b/postgis/build/postgis-2.1.5/regress/regress_index.sql
 @@ -7,10 +7,27 @@
  
  CREATE INDEX quick_gist on test using gist (the_geom);
@@ -13122,7 +13283,7 @@ index 8b51160..deb5cb4 100644
 + select 'test 1: Seq Scan on test';
   select num,ST_astext(the_geom) from test where the_geom && 'BOX3D(125 125,135 135)'::box3d order by num;
  
-+--JIRA: MPP-24904, because Bitmap Index Scan is also supported in GPDB 
++--JIRA: MPP-24904, because Bitmap Index Scan is also supported in GPDB
 +set enable_seqscan = off;
 +set enable_bitmapscan = on;
 +set enable_indexscan = on;
@@ -13139,10 +13300,10 @@ index 8b51160..deb5cb4 100644
   select num,ST_astext(the_geom) from test where the_geom && 'BOX3D(125 125,135 135)'::box3d  order by num;
  
  DROP TABLE test;
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/regress_index_expected b/cdb-pg/contrib/postgis-2.1.5/regress/regress_index_expected
+diff --git a/postgis/build/postgis-2.1.5/regress/regress_index_expected b/postgis/build/postgis-2.1.5/regress/regress_index_expected
 index 19dc436..4dc4621 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/regress_index_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/regress_index_expected
+--- a/postgis/build/postgis-2.1.5/regress/regress_index_expected
++++ b/postgis/build/postgis-2.1.5/regress/regress_index_expected
 @@ -1,6 +1,12 @@
 +test 1: Seq Scan on test
  2594|POINT(130.504303 126.53112)
@@ -13156,10 +13317,10 @@ index 19dc436..4dc4621 100644
  2594|POINT(130.504303 126.53112)
  3618|POINT(130.447205 131.655289)
  7245|POINT(128.10466 130.94133)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/run_test.pl b/cdb-pg/contrib/postgis-2.1.5/regress/run_test.pl
-index e1f84c7..2e9692e 100755
---- a/cdb-pg/contrib/postgis-2.1.5/regress/run_test.pl
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/run_test.pl
+diff --git a/postgis/build/postgis-2.1.5/regress/run_test.pl b/postgis/build/postgis-2.1.5/regress/run_test.pl
+index e1f84c7..f8d4186 100755
+--- a/postgis/build/postgis-2.1.5/regress/run_test.pl
++++ b/postgis/build/postgis-2.1.5/regress/run_test.pl
 @@ -289,9 +289,11 @@ print "\nRunning tests\n\n";
  
  foreach $TEST (@ARGV)
@@ -13172,17 +13333,18 @@ index e1f84c7..2e9692e 100755
  	start_test($TEST);
  
  	# Check for a "-pre.pl" file in case there are setup commands 
-@@ -614,6 +616,9 @@ sub run_simple_test
+@@ -614,6 +616,10 @@ sub run_simple_test
  	@lines = grep(!/^(LOG|SET|TRUNCATE)/, @lines);
  	@lines = grep(!/^LINE \d/, @lines);
  	@lines = grep(!/^\s+$/, @lines);
 +	@lines = grep(!/NOTICE:  Table doesn't have 'distributed by' clause/i, @lines);
 +	@lines = grep(!/NOTICE:  OIDS=TRUE is not recommended for user-created tables/i, @lines);
 +	@lines = grep(!/WARNING:  Referential integrity \(FOREIGN KEY\) constraints are not supported/i, @lines);
++	@lines = grep(!/NOTICE:  no non-null\/empty features, unable to compute statistics/i, @lines);
  
  	# Morph values into expected forms
  	for ( my $i = 0; $i < @lines; $i++ )
-@@ -624,6 +629,12 @@ sub run_simple_test
+@@ -624,6 +630,12 @@ sub run_simple_test
  		$lines[$i] =~ s/[eE]([+-])0+(\d+)/e$1$2/g;
  		$lines[$i] =~ s/Self-intersection .*/Self-intersection/;
  		$lines[$i] =~ s/^ROLLBACK/COMMIT/;
@@ -13195,16 +13357,25 @@ index e1f84c7..2e9692e 100755
  	}
  	
  	# Write out output file
-@@ -840,7 +851,7 @@ sub run_raster_loader_and_check_output
+@@ -776,7 +788,7 @@ sub run_dumper_and_check_output
+ 		}
+ 
+ 		# Compare with expected output if there is any.
+-		
++
+ 		if ( -r $expected_shp_file )
+ 		{
+ 			show_progress();
+@@ -840,7 +852,7 @@ sub run_raster_loader_and_check_output
  		    fail("$description: running raster2pgsql", $errfile);
  		    return 0;
  	    }
 -	    
-+	   
++
  	    if ( -r $expected_sql_file )
  	    {
  	        show_progress();
-@@ -1091,8 +1102,7 @@ sub count_db_objects
+@@ -1091,8 +1103,7 @@ sub count_db_objects
  		select count(*) from pg_operator union all
  		select count(*) from pg_opclass union all
  		select count(*) from pg_namespace
@@ -13214,7 +13385,7 @@ index e1f84c7..2e9692e 100755
  		select sum(count) from counts");
  
   	return $count;
-@@ -1107,11 +1117,13 @@ sub create_spatial
+@@ -1107,11 +1118,13 @@ sub create_spatial
  	my ($cmd, $rv);
  	print "Creating database '$DB' \n";
  
@@ -13231,10 +13402,10 @@ index e1f84c7..2e9692e 100755
  	# Count database objects before installing anything
  	$OBJ_COUNT_PRE = count_db_objects();
  
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-circularstring.sql b/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-circularstring.sql
-index 67a8867..115de08 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-circularstring.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-circularstring.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/sql-mm-circularstring.sql b/postgis/build/postgis-2.1.5/regress/sql-mm-circularstring.sql
+index 67a8867..4e0e618 100644
+--- a/postgis/build/postgis-2.1.5/regress/sql-mm-circularstring.sql
++++ b/postgis/build/postgis-2.1.5/regress/sql-mm-circularstring.sql
 @@ -158,15 +158,15 @@ UPDATE public.circularstring
                  15 0)')
          WHERE id = 2;
@@ -13243,19 +13414,19 @@ index 67a8867..115de08 100644
 -SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring;        
 -SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring;        
 -SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring;        
-+SELECT 'astext01', ST_astext(the_geom_2d) FROM public.circularstring order by 2;        
-+SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring order by 2;        
-+SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring order by 2;        
-+SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring order by 2;        
++SELECT 'astext01', ST_astext(the_geom_2d) FROM public.circularstring order by 2;
++SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring order by 2;
++SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring order by 2;
++SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring order by 2;
  
 -SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring;        
 -SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring;        
 -SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring;        
 -SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring;        
-+SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring order by 2;        
-+SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring order by 2;        
-+SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring order by 2;        
-+SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring order by 2;        
++SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring order by 2;
++SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring order by 2;
++SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring order by 2;
++SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring order by 2;
  
  -- These tests will fail on different architectures
  -- We need a way to handle multiple byte orderings
@@ -13301,18 +13472,18 @@ index 67a8867..115de08 100644
 -SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring;        
 -SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring;        
 +SELECT 'astext01', ST_astext(the_geom_2d) FROM public.circularstring order by 2;
-+SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring order by 2;        
-+SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring order by 2;        
-+SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring order by 2;        
++SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring order by 2;
++SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring order by 2;
++SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring order by 2;
  
 -SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring;        
 -SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring;        
 -SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring;        
 -SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring;        
-+SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring order by 2;        
-+SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring order by 2;        
-+SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring order by 2;        
-+SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring order by 2;        
++SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring order by 2;
++SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring order by 2;
++SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring order by 2;
++SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring order by 2;
  
  -- These tests will fail on different architectures
  -- We need a way to handle multiple byte orderings
@@ -13340,10 +13511,10 @@ index 67a8867..115de08 100644
  
  SELECT DropGeometryColumn('public', 'circularstring', 'the_geom_4d');
  SELECT DropGeometryColumn('public', 'circularstring', 'the_geom_3dz');
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-compoundcurve.sql b/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql b/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
 index 53c9642..d5cd6b1 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
+--- a/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
++++ b/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
 @@ -311,11 +311,11 @@ SELECT 'valid wkt compound curve 5', encode(ST_AsBinary(ST_GeomFromEWKT('COMPOUN
  SELECT 'invalid wkt compound curve 1', ST_GeomFromEWKT('COMPOUNDCURVE((153.72942375 -27.21757040, 152.29285719 -29.23940482, 154.74034096 -30.51635287),(152.39926953 -32.16574411, 155.11278414 -34.08116619, 151.86720784 -35.62414508))');
  SELECT 'invalid wkt compound curve 2', ST_GeomFromEWKT('COMPOUNDCURVE((153.72942375 -27.21757040, 152.29285719 -29.23940482),CIRCULARSTRING(154.74034096 -30.51635287, 154.74034096 -30.51635287, 152.39926953 -32.16574411, 155.11278414 -34.08116619, 151.86720784 -35.62414508))');
@@ -13361,10 +13532,10 @@ index 53c9642..d5cd6b1 100644
  SELECT 'null response', ST_NumPoints(ST_GeomFromEWKT('COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 4 5, 1 4, 0 0))'));
  SELECT 'minpoints issues - pass', encode(ST_AsBinary(ST_GeomFromText('COMPOUNDCURVE((0 0,1 1))'),'ndr'),'hex');
  SELECT 'minpoints issues - pass', encode(ST_AsBinary(ST_GeomFromText('COMPOUNDCURVE(CIRCULARSTRING(0 0,0 1,1 1))'),'ndr'),'hex');
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-curvepoly.sql b/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-curvepoly.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql b/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql
 index a45b882..794580a 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-curvepoly.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/sql-mm-curvepoly.sql
+--- a/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql
++++ b/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql
 @@ -331,11 +331,11 @@ SELECT 'invalid wkt curve polygon 8', ST_GeomFromEWKT('CURVEPOLYGON(CIRCULARSTRI
  SELECT 'invalid wkt curve polygon 9', ST_GeomFromEWKT('CURVEPOLYGON((143.62025166838282 -30.037497356076827, 142.92857147299705 -32.75101196874403, 145.96132309891922 -34.985671061528784, 149.57565307617188 -33.41153335571289, 149.41972407584802 -29.824672680573517, 146.1209416055467 -30.19711586270431, 143.62025166838282 -30.037497356076827),COMPOUNDCURVE(CIRCULARSTRING(144.84399355252685 -31.26123924022086, 144.20551952601693 -32.27215644886158, 145.55230712890625 -33.49203872680664),CIRCULARSTRING(147.97080993652344 -32.03618621826172, 146.38697244992585 -31.47406391572417, 144.84399355252685 -31.26123924022086))');
  SELECT 'invalid wkt curve polygon a', ST_GeomFromEWKT('CURVEPOLYGON((143.62025166838282 -30.037497356076827, 142.92857147299705 -32.75101196874403, 145.96132309891922 -34.985671061528784, 149.57565307617188 -33.41153335571289, 149.41972407584802 -29.824672680573517, 146.1209416055467 -30.19711586270431, 143.62025166838282 -30.037497356076827),COMPOUNDCURVE(CIRCULARSTRING(144.84399355252685 -31.26123924022086, 144.20551952601693 -32.27215644886158, 145.55230712890625 -33.49203872680664),(145.55230712890625 -33.49203872680664, 147.97080993652344 -32.03618621826172),CIRCULARSTRING(147.97080993652344 -32.03618621826172, 146.38697244992585 -31.47406391572417, 144.84399355252685 -30.76123924022086))');
@@ -13382,10 +13553,10 @@ index a45b882..794580a 100644
  SELECT 'valid curve 6', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 4 5, 1 4, 0 0)), CIRCULARSTRING(1.7 1, 1.4 0.4, 1.7 1) )'),'ndr'),'hex');
  SELECT 'valid curve 7', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 4 5, 1 4, 0 0)), (1.7 1, 1.4 0.4, 1.7 1) )'),'ndr'),'hex');
  SELECT 'valid curve 8', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 0 0)), CIRCULARSTRING(1.7 1, 1.4 0.4, 1.7 1) )'),'ndr'),'hex');
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/tickets.sql b/cdb-pg/contrib/postgis-2.1.5/regress/tickets.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/tickets.sql b/postgis/build/postgis-2.1.5/regress/tickets.sql
 index 9e8e698..f8de581 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/tickets.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/tickets.sql
+--- a/postgis/build/postgis-2.1.5/regress/tickets.sql
++++ b/postgis/build/postgis-2.1.5/regress/tickets.sql
 @@ -262,7 +262,7 @@ BEGIN
      RETURN zone+pref;
  END;
@@ -13471,24 +13642,18 @@ index 9e8e698..f8de581 100644
  DROP TABLE images;
  
  SELECT '#2704', ST_AsText(ST_GeomFromGML('<?xml version="1.0"?>
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/tickets_expected b/cdb-pg/contrib/postgis-2.1.5/regress/tickets_expected
-index a36b7dd..8d328d0 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/tickets_expected
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/tickets_expected
-@@ -145,11 +145,10 @@ ERROR:  First argument must be a LINESTRING
+diff --git a/postgis/build/postgis-2.1.5/regress/tickets_expected b/postgis/build/postgis-2.1.5/regress/tickets_expected
+index a36b7dd..85afb10 100644
+--- a/postgis/build/postgis-2.1.5/regress/tickets_expected
++++ b/postgis/build/postgis-2.1.5/regress/tickets_expected
+@@ -145,7 +145,6 @@ ERROR:  First argument must be a LINESTRING
  #1273.1|t
  ERROR:  stats for "t.g" do not exist
  ERROR:  stats for "t.g" do not exist
 -DEBUG:  ST_Estimated_Extent signature was deprecated in 2.1.0. Please use ST_EstimatedExtent
  ERROR:  stats for "t.g" do not exist
  ERROR:  stats for "t.g" do not exist
--#877.4|-10.15000|20.15000|-50.40000|30.40000
--#877.5|-10.15000|20.15000|-50.40000|30.40000
-+ERROR:  stats for "t.g" do not exist
-+ERROR:  stats for "t.g" do not exist
- #1292|GEOMETRYCOLLECTION(POINT(180 90),POLYGON((140 50,150 50,180 50,140 50),(140 60,150 60,180 60,140 60)))
- NOTICE:  Coordinate values were coerced into range [-180 -90, 180 90] for GEOGRAPHY
- NOTICE:  Coordinate values were coerced into range [-180 -90, 180 90] for GEOGRAPHY
+ #877.4|-10.15000|20.15000|-50.40000|30.40000
 @@ -193,7 +192,7 @@ ERROR:  MultiSurface cannot contain MultiPoint element at character 8
  #852.2|1|t|t
  #852.2|2|t|t
@@ -13508,10 +13673,10 @@ index a36b7dd..8d328d0 100644
  #2704|POLYGON((0 0,0 1,1 1,1 0,0 0))
  #2712|LINESTRING EMPTY
  #2788|f|Self-intersection|POINT(1 1)
-diff --git a/cdb-pg/contrib/postgis-2.1.5/regress/wmsservers.sql b/cdb-pg/contrib/postgis-2.1.5/regress/wmsservers.sql
+diff --git a/postgis/build/postgis-2.1.5/regress/wmsservers.sql b/postgis/build/postgis-2.1.5/regress/wmsservers.sql
 index afd47e6..9c96064 100644
---- a/cdb-pg/contrib/postgis-2.1.5/regress/wmsservers.sql
-+++ b/cdb-pg/contrib/postgis-2.1.5/regress/wmsservers.sql
+--- a/postgis/build/postgis-2.1.5/regress/wmsservers.sql
++++ b/postgis/build/postgis-2.1.5/regress/wmsservers.sql
 @@ -23,12 +23,12 @@ SELECT 'Geoserver6', "id",substr(encode(ST_AsBinary(ST_Force_2d("pt"),'XDR'),'ba
  
  -- MapServer 5.4 tests
@@ -13527,43 +13692,10 @@ index afd47e6..9c96064 100644
  
  -- Drop the data table
  SELECT 'Removing the data table...';
-diff --git a/cdb-pg/contrib/postgis-2.1.5/utils/Makefile.in b/cdb-pg/contrib/postgis-2.1.5/utils/Makefile.in
-index 86c736a..2178197 100644
---- a/cdb-pg/contrib/postgis-2.1.5/utils/Makefile.in
-+++ b/cdb-pg/contrib/postgis-2.1.5/utils/Makefile.in
-@@ -22,9 +22,17 @@ MODULEDIR=contrib/$(MODULE_doc)
- DATA_built=postgis_restore.pl
- 
- # PGXS information
-+ifdef USE_PGXS
- PG_CONFIG = @PG_CONFIG@ 
- PGXS := @PGXS@
- include $(PGXS)
-+else
-+# Include common tasks defined in Makefile.global, otherwise
-+# make clean etc will not work.
-+top_builddir=$(shell cd ../../.. && pwd)
-+include $(top_builddir)/src/Makefile.global
-+include $(top_builddir)/contrib/contrib-global.mk
-+endif
- 
- SHELL = @SHELL@
- INSTALL = $(SHELL) ../install-sh
-@@ -38,6 +46,10 @@ SCRIPTS = \
- 	test_estimation.pl \
- 	test_joinestimation.pl
- 
-+# Used for deps-install and deps-uninstall
-+DEP_LIBS=
-+#$(GEOS_LIBS) $(PROJ_LIBS) $(JSON_LIBS) $(GDAL_LIBS)
-+
- SRID_MAXIMUM = @SRID_MAX@
- SRID_USER_MAXIMUM = @SRID_USR_MAX@
- 
-diff --git a/cdb-pg/contrib/postgis-2.1.5/utils/create_undef.pl b/cdb-pg/contrib/postgis-2.1.5/utils/create_undef.pl
+diff --git a/postgis/build/postgis-2.1.5/utils/create_undef.pl b/postgis/build/postgis-2.1.5/utils/create_undef.pl
 index 7ec6568..19eeaab 100755
---- a/cdb-pg/contrib/postgis-2.1.5/utils/create_undef.pl
-+++ b/cdb-pg/contrib/postgis-2.1.5/utils/create_undef.pl
+--- a/postgis/build/postgis-2.1.5/utils/create_undef.pl
++++ b/postgis/build/postgis-2.1.5/utils/create_undef.pl
 @@ -121,7 +121,7 @@ while( my $line = <INPUT>)
  		}
  		push (@ops, $defn)
