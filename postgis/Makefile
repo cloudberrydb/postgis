@@ -10,10 +10,25 @@ POSTGIS_TAR_BALL    = source/postgis-$(POSTGIS_VER).tar.gz
 POSTGIS_PATCH_FILE  = patch/postgis-$(POSTGIS_VER)-GPDB.patch
 
 # entry
-all install uninstall clean distclean maintainer-clean test check installcheck docs docs-install docs-uninstall utils: prepare
-	@echo 'you choose $@, but we reject'
-
-#make -C $(POSTGIS_BLD_DIR) $@
+all install uninstall clean distclean maintainer-clean test check installcheck docs docs-install docs-uninstall utils:
+	@if [ ! -d $(POSTGIS_BLD_DIR) ] ; then \
+		echo "NOTICE: Extract $(POSTGIS_TAR_BALL), patch it, and run configure."; \
+		make prepare ;\
+		if [ x"$$GPHOME" = x ]; then \
+			echo "WARNING: You need to set the 'GPHOME' first."; \
+			echo "WARNING: And PostGIS will be installed into 'GPHOME' dirs."; \
+			make remove; \
+			false ; \
+		else \
+		 	cd $(POSTGIS_BLD_DIR) && $(POSTGIS_BLD_DIR)/configure \
+				--without-raster \
+				--without-topology \
+				--with-pgconfig=$$GPHOME/bin/pg_config \
+				--prefix=$$GPHOME; \
+		fi; \
+	fi
+	@echo "You click $@."
+	make -C $(POSTGIS_BLD_DIR) $@
 
 # prepare the compiling dir
 prepare:
@@ -22,14 +37,15 @@ prepare:
 	@echo "Prepare the compiling directory for postgis-$(POSTGIS_VER)."
 	@echo "-----------------------------------------------------------------------"
 	@if [ -d $(POSTGIS_BLD_DIR) ]; then \
-		echo "WARNING: $(POSTGIS_BLD_DIR) already exists. It's better to run 'make remove' firstly."; \
+		echo "WARNING: $(POSTGIS_BLD_DIR) already exists."; \
+		echo "    It's better to run 'make remove' firstly."; \
 	else \
-		echo "    extract $(POSTGIS_TAR_BALL) to $(POSTGIS_BLD_DIR) ..."; \
+		echo "    1. extract $(POSTGIS_TAR_BALL) to $(POSTGIS_BLD_DIR) ..."; \
 		tar -zxf $(POSTGIS_TAR_BALL) -C $(POSTGIS_BLD_TOP); \
-		echo "    patch it with $(POSTGIS_PATCH_FILE) ..."; \
+		echo "    2. patch it with $(POSTGIS_PATCH_FILE) ..."; \
 		patch -d $(POSTGIS_BLD_DIR) -p 4 --silent < $(POSTGIS_PATCH_FILE); \
-		echo "    copy Makefile.version to $(POSTGIS_BLD_DIR)"; \
-		cp -u Makefile.version $(POSTGIS_BLD_DIR); \
+		echo "    3. copy README.libs to $(POSTGIS_BLD_DIR)"; \
+		cp -u README.libs $(POSTGIS_BLD_DIR); \
 		echo "-----------------------------------------------------------------------"; \
 		echo "Done"; \
 		echo "-----------------------------------------------------------------------"; \
