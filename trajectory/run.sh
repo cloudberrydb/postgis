@@ -148,3 +148,36 @@ psql -d test -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FRO
 
 echo "-------------------------------------------------------------------"
 echo "---- trajectory.DeleteTrajectory() with temporal/spatial constraints ------"
+echo
+
+echo
+echo "---- GetTrip()---------"
+echo "-------------------------------------------------------------------"
+psql -d test -c "SELECT trajectory.CreateTrajectory('taxi', 'B129',  4326, 0.00001)"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:10:00', ST_Point(119.4, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:15:00', ST_Point(119.4, 39.5))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:20:00', ST_Point(119.5, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:25:00', ST_Point(119.5, 39.5))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:30:00', ST_Point(119.6, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:35:00', ST_Point(119.6, 39.5))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:40:00', ST_Point(119.5, 39.6))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:45:00', ST_Point(119.6, 39.6))"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129')";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', NULL, NULL)";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 8:00:00', '2015-10-10 8:05:00')";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 9:00:00', '2015-10-10 9:05:00')";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 8:00:00', '2015-10-10 8:20:00')";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 8:20:00', '2015-10-10 8:40:00')";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 8:20:00', '2015-10-10 9:40:00')";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', NULL, '2015-10-10 9:40:00')";
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 8:20:00', NULL)";
+
+#error
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 8:10:00', '2015-10-10 8:05:00')";
+echo "-------------------------------------------------------------------"
+echo "---- GetTrip()---------"
+echo
+
+echo

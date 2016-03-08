@@ -357,18 +357,15 @@ $$ LANGUAGE 'plpgsql' VOLATILE;
 
 
 --{
---  Delete a trajectory, with given name, return a result in text.
+--  Drop an entire trajectory, with given name, return a result in text.
 --    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
 --    trj_name, name of a trajectory, e.g., 'B123', 'B245', 'C123' etc
 --
---  TODO We do not consider to remove multiple trajectories once a time
---
---CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar)
---RETURNS text AS $$
---	SELECT trajectory.DeleteTrajectory($1, $2,NULL,NULL,NULL); 
---			TIMESTAMP '-infinity', TIMESTAMP 'infinity');
---$$ LANGUAGE 'sql' VOLATILE STRICT;
---} trajectory.DeleteTrajectory
+CREATE OR REPLACE FUNCTION trajectory.DropTrajectory(pool_name varchar, trj_name varchar)
+RETURNS text AS $$
+	SELECT trajectory.DeleteTrajectory($1, $2) 
+$$ LANGUAGE 'sql' VOLATILE STRICT;
+--} trajectory.DropTrajectory
 
 
 --{
@@ -623,7 +620,6 @@ BEGIN
 		sql := sql || ',' || quote_literal(attributes[i]); 
 	END LOOP;
 	sql := sql || ')';
-    RAISE DEBUG ' ---> %', sql;
 	EXECUTE sql;
 
     IF NOT FOUND THEN
@@ -685,6 +681,108 @@ CREATE TYPE trajectory.Trip AS (
 --   WHERE ST_Intersects(t1, t2);
 -- ) foo
 -- WHERE NOT ST_IsEmpty(intgeom);
+
+
+
+
+--{
+--  Retrive a (set of ) trip from a trajectory
+--    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
+--    trj_name, name of a trajectory, e.g., 'B123', 'B245', 'C123' etc
+--    tstart, timestamp of the start to remove, can be NULL, means from initial point
+--    tend, timestamp of the end to remove, can be NULL, means to final point
+--    tregin, geometrical region
+--    coveredby, a flag indicates deleting the trajectory inside (or outside) tregin.
+--      it's useful, because sometime we focus on urban rather than county area.
+--
+CREATE OR REPLACE FUNCTION trajectory.GetTrip(
+    pool_name varchar, trj_name varchar,
+    tstart timestamp  DEFAULT NULL,
+    tend timestamp DEFAULT NULL,
+    tregion geometry DEFAULT NULL,
+    coveredby boolean DEFAULT TRUE)
+RETURNS SETOF trajectory.Trip AS $$
+DECLARE
+    trajectory_id OID;
+    sql text;
+	trip trajectory.Trip;
+	minT timestamp;
+	maxT timestamp;
+BEGIN
+	-- illegal parameters
+	IF tstart IS NOT NULL AND tend IS NOT NULL AND tstart >= tend THEN
+		RAISE WARNING 'Improper parameters, start time (%) not earlier than end time (%)!', tstart, tend;
+		RETURN;
+	END IF;
+
+    -- Verify pool name and trajectory name33
+    IF pool_name = '' OR trj_name = '' THEN
+        RAISE EXCEPTION 'trajectory.GetTrip() - either pool name or trajectory name should NOT be NULL';
+    END IF;
+
+    -- Fetch the table id from trajectory.trajectory
+    BEGIN
+    SELECT id INTO STRICT trajectory_id FROM trajectory.trajectory
+        WHERE poolname = pool_name AND trjname = trj_name;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE EXCEPTION 'trajectory % (%) not found.', pool_name, trj_name;
+        WHEN TOO_MANY_ROWS THEN
+            RAISE EXCEPTION 'trajectory % (%) not unique, it''s impossible.', pool_name, trj_name;
+    END;
+
+    ---- Get lower/upper bound of timestamp 
+	----  lower bound 
+    sql := 'SELECT time FROM trajectory.' || quote_ident(pool_name)
+        || ' WHERE id = ' || trajectory_id || ' ORDER BY time ASC LIMIT 1';
+    EXECUTE sql INTO minT;
+	----  should not reach here, but we insist on checking it
+    IF NOT FOUND THEN
+        RAISE WARNING 'trajectory % (%) may be empty, can''t find lower bound of timestamp.', 
+			pool_name, trj_name;
+        RETURN;
+    END IF;
+
+	----  upper bound 
+    sql := 'SELECT time FROM trajectory.' || quote_ident(pool_name)
+        || ' WHERE id = ' || trajectory_id || ' ORDER BY time DESC LIMIT 1';
+    EXECUTE sql INTO maxT;
+	----  should not reach here, but we insist on checking it
+    IF NOT FOUND THEN
+        RAISE WARNING 'trajectory % (%) may be empty, can''t find upper bound of timestamp.',
+            pool_name, trj_name;
+        RETURN;
+    END IF;
+
+    ---- Generate SQL string according to temporal constraints
+	----   only temporal constraints
+	IF ( (tstart IS NOT NULL AND tstart > maxT) OR
+ 		(tend IS NOT NULL AND tend < minT) ) THEN
+		RAISE WARNING 'Improper parameters, start time (%) or end time (%) are out of range (% ~ %)!', tstart, tend, minT, maxT;
+		RETURN;
+	END IF;
+
+    IF tstart IS NOT NULL AND tstart > minT THEN
+        minT = tstart;
+    END IF;
+    IF tend IS NOT NULL AND tend < maxT THEN
+        maxT = tend;
+    END IF;
+
+	----   TODO： spatial constraints later
+	IF tregion IS NOT NULL THEN
+		RAISE WARNING 'Wrong parameters, start time (%) is later than end time (%)!', minT, maxT;
+	END IF;
+
+	---- Prepare the return value
+	trip.tid = trajectory_id;
+	trip.tstart = minT;
+	trip.tend = maxT;
+	RETURN NEXT trip;
+	RETURN;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE;
+--}trajectory.GetTrip(
 
 
 ------------------------------------------------------------------------------

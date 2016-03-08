@@ -18,6 +18,7 @@ shardir := $(shell $(PG_CONFIG) --sharedir)
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
 EMPTY_GIS_TABLE = gis
+POSTGIS_VERSION = 2.0
 TRJTABLE = regression
 TRJTABLE_PRE = trjregression
 REGRESS_OPTS = --dbname=$(TRJTABLE)
@@ -32,10 +33,13 @@ TEST_IO = \
 	append_trajectory \
 	extra_columns
 
+# trip 
+TEST_BASIC_FUNC = \
+	gettrip
+
 # not used
 TEST_LAST =
 TEST_METADATA =
-TEST_BASIC_FUNC = 
 TEST_OPERATOR =
 TEST_UTILITY =
 TEST_ADVANCED_FUNC =
@@ -69,8 +73,6 @@ endif
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress$(X)
 
-# we choose 'postgis-2.0' rather than 'postgis-2.1' is because we're 
-#   developing and testing on gpdb 4.3.6, not 5.0
 quickprepare pre_install_gis_fast:
 	$(PSQLDIR)/dropdb $(TRJTABLE_PRE)
 	$(PSQLDIR)/createdb $(TRJTABLE_PRE) -T $(EMPTY_GIS_TABLE)
@@ -79,9 +81,9 @@ quickprepare pre_install_gis_fast:
 prepare pre_install_gis:
 	$(PSQLDIR)/dropdb $(EMPTY_GIS_TABLE)
 	$(PSQLDIR)/createdb $(EMPTY_GIS_TABLE)
-	$(PSQLDIR)/psql -d $(EMPTY_GIS_TABLE) -f $(shardir)/contrib/postgis-2.0/postgis.sql > ./pre_install_gis.log
-	$(PSQLDIR)/psql -d $(EMPTY_GIS_TABLE) -f $(shardir)/contrib/postgis-2.0/postgis_comments.sql > ./pre_install_gis.log
-	$(PSQLDIR)/psql -d $(EMPTY_GIS_TABLE) -f $(shardir)/contrib/postgis-2.0/spatial_ref_sys.sql > ./pre_install_gis.log
+	$(PSQLDIR)/psql -d $(EMPTY_GIS_TABLE) -f $(shardir)/contrib/postgis-$(POSTGIS_VERSION)/postgis.sql > ./pre_install_gis.log
+	$(PSQLDIR)/psql -d $(EMPTY_GIS_TABLE) -f $(shardir)/contrib/postgis-$(POSTGIS_VERSION)/postgis_comments.sql > ./pre_install_gis.log
+	$(PSQLDIR)/psql -d $(EMPTY_GIS_TABLE) -f $(shardir)/contrib/postgis-$(POSTGIS_VERSION)/spatial_ref_sys.sql > ./pre_install_gis.log
 
 clean:
 	rm -rf results

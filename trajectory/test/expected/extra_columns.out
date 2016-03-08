@@ -68,7 +68,7 @@ SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B130', TIMESTAMP '2015-10-10
 WARNING:  trajectory.AppendTrajectoryWithAttr() - Input attributes #3 != attribute columns #2.
 ERROR:  INSERT has more expressions than target columns
 CONTEXT:  SQL statement "INSERT INTO trajectory.taxi VALUES (13,'Sat Oct 10 08:25:00 2015','0101000020E61000009A99999999D95D403333333333B34340','3.3','30','30')"
-PL/pgSQL function "appendtrajectorywithattr" line 59 at execute statement
+PL/pgSQL function "appendtrajectorywithattr" line 58 at execute statement
 -- query it now
 SELECT id,time,speed,direction FROM trajectory.taxi ORDER BY id;
  id |           time           | speed | direction 
