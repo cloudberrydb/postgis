@@ -31,16 +31,18 @@ CREATE TYPE trajectory.TPeriod AS (
 
 -- we don't use geometry because Point is lightweight
 CREATE TYPE trajectory.TPoint AS (
+	tid OID,
 	time timestamp,
-	position point
+	position geometry(point) 
 );
 
 -- consideration:
 -- 1. we don't use geometry because Point is lightweight
 -- 2. TODO we need to use JSON instead of XML after 5.0
 CREATE TYPE trajectory.TPointAttr AS (
+	tid OID,
 	time timestamp,
-	position point,
+	position geometry(point),
 	attributes jsonb 
 );
 
@@ -54,7 +56,7 @@ CREATE TYPE trajectory.TRegion AS (
 
 -- similar to Circle type
 CREATE TYPE trajectory.TCircle AS (
-	center point,
+	center geometry(point),
 	radius double precision
 );
 
@@ -894,6 +896,146 @@ RETURNS SETOF trajectory.Trip AS $$
 	SELECT trajectory.GetTrip($1, $2, NULL, NULL, $3);
 $$ LANGUAGE 'sql' VOLATILE STRICT;
 --}trajectory.GetTrip(spatial constraints)
+
+
+
+
+--{
+--  Retrive the head point of a trajectory
+CREATE OR REPLACE FUNCTION trajectory.Head(trip trajectory.Trip) 
+RETURNS trajectory.TPoint AS $$
+DECLARE
+	rec RECORD;
+	rtn trajectory.TPoint;
+BEGIN
+	FOR rec IN SELECT poolname FROM trajectory.trajectory WHERE id = trip.tid
+	LOOP
+		EXECUTE 'SELECT id, time, position FROM trajectory.'
+			|| quote_ident(rec.poolname) 
+			|| ' WHERE id = ' || trip.tid
+			|| ' AND time = TIMESTAMP ' || quote_literal(trip.tstart)
+		INTO rtn;
+		RETURN rtn;
+	END LOOP;
+
+	-- if nothing found
+	RETURN NULL;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE STRICT;
+--}trajectory.Head(trip)
+
+
+--{
+--  Retrive the tail point of a trajectory
+CREATE OR REPLACE FUNCTION trajectory.Tail(trip trajectory.Trip) 
+RETURNS trajectory.TPoint AS $$
+DECLARE
+	rec RECORD;
+	ret trajectory.TPoint;
+BEGIN
+	FOR rec IN SELECT poolname FROM trajectory.trajectory WHERE id = trip.tid
+	LOOP
+		EXECUTE 'SELECT id, time, position FROM trajectory.'
+			|| quote_ident(rec.poolname) 
+			|| ' WHERE id = ' || trip.tid
+			|| ' AND time = TIMESTAMP ' || quote_literal(trip.tend)
+		INTO ret;
+		RETURN ret;
+	END LOOP;
+
+	-- if nothing found
+	RETURN NULL;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE STRICT;
+--}trajectory.Tail(trip)
+
+
+--{
+--  Retrive the ID of a trajectory with given name
+CREATE OR REPLACE FUNCTION trajectory.Name2ID(varchar, varchar)
+RETURNS OID AS $$
+    SELECT id FROM trajectory.trajectory WHERE poolname = $1 AND trjname = $2
+$$ LANGUAGE 'sql' STABLE STRICT;
+--}trajectory.Name2ID(id)
+
+--{
+--  Retrive the name of a trajectory with given ID
+CREATE OR REPLACE FUNCTION trajectory.ID2Name(OID)
+RETURNS text AS $$
+    SELECT poolname || '.' || trjname FROM trajectory.trajectory WHERE id = $1;
+$$ LANGUAGE 'sql' STABLE STRICT;
+--}trajectory.ID2Name(id)
+
+--{
+--  Retrive the ID of a trip
+CREATE OR REPLACE FUNCTION trajectory.GetID(trip trajectory.Trip)
+RETURNS OID AS $$
+BEGIN
+    RETURN trip.tid;
+END;
+$$ LANGUAGE 'plpgsql' STABLE STRICT;
+--}trajectory.Name2ID(id)
+
+--{
+--  Retrive the sampling number of a trip 
+CREATE OR REPLACE FUNCTION trajectory.Count(trip trajectory.Trip)
+RETURNS bigint AS $$
+DECLARE
+	rec RECORD;
+	rtn bigint;
+BEGIN
+    FOR rec IN SELECT poolname FROM trajectory.trajectory WHERE id = trip.tid
+    LOOP
+        EXECUTE 'SELECT count(*) FROM trajectory.'
+            || quote_ident(rec.poolname)
+            || ' WHERE id = ' || trip.tid
+            || ' AND time >= TIMESTAMP ' || quote_literal(trip.tstart)
+            || ' AND time <= TIMESTAMP ' || quote_literal(trip.tend)
+        INTO rtn;
+        RETURN rtn;
+    END LOOP;
+
+    -- if nothing found
+    RETURN NULL;
+END;
+$$ LANGUAGE 'plpgsql' STABLE STRICT;
+--}trajectory.Count(trip)
+
+
+--{
+--  Generate a polyline from a trip
+CREATE OR REPLACE FUNCTION trajectory.MakeLine(trip trajectory.Trip)
+RETURNS geometry AS $$
+DECLARE
+    rec RECORD;
+    rtn geometry;
+BEGIN
+    FOR rec IN SELECT poolname FROM trajectory.trajectory WHERE id = trip.tid
+    LOOP
+        EXECUTE 'SELECT ST_MakeLine(position ORDER BY time) FROM trajectory.'
+            || quote_ident(rec.poolname)
+            || ' WHERE id = ' || trip.tid
+            || ' AND time >= TIMESTAMP ' || quote_literal(trip.tstart)
+            || ' AND time <= TIMESTAMP ' || quote_literal(trip.tend)
+        INTO rtn;
+        RETURN rtn;
+    END LOOP;
+
+    -- if nothing found
+    RETURN NULL;
+END;
+$$ LANGUAGE 'plpgsql' STABLE STRICT;
+--}trajectory.Count(trip)
+
+
+--{
+--  Generate a polyline from a trip
+CREATE OR REPLACE FUNCTION trajectory.MakeGeoJSON(trip trajectory.Trip)
+RETURNS text AS $$
+	SELECT ST_AsGeoJSON(trajectory.MakeLine($1));
+$$ LANGUAGE 'sql' STABLE STRICT;
+--}trajectory.MakeGeoJSON(trip)
+
 
 ------------------------------------------------------------------------------
 -- Point Query

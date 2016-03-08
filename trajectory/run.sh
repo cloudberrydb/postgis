@@ -16,8 +16,8 @@ psql -d test -c "SELECT * from trajectory.trajectory where poolname = 'taxi'"
 # test: Append a trajectory
 psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326))"
 psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B124', LOCALTIMESTAMP(2), ST_Transform(ST_GeomFromText('POINT(119.4 39.4)', 4326),2249))"
-psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B124', row(LOCALTIMESTAMP(2), ST_Point(119.4, 39.4))::trajectory.TPoint)"
-psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B124', row(LOCALTIMESTAMP(2), '(119.4, 39.4)'::point)::trajectory.TPoint)"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B124', row(1,LOCALTIMESTAMP(2), ST_Point(119.4, 39.4))::trajectory.TPoint)"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B124', row(1,LOCALTIMESTAMP(2), '(119.4, 39.4)'::point)::trajectory.TPoint)"
 psql -d test -c "SELECT id, time, ST_AsText(position) as position from trajectory.taxi"
 
 # test: Add a column
@@ -248,8 +248,27 @@ psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 
 psql -d test -aq -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
 
 
+# I/O functions for Trip
+# head/tail
+psql -d test -aq -c "SELECT * FROM gettrip('taxi', 'B130', TIMESTAMP '2015-10-20 08:00:00', TIMESTAMP '2015-10-20 08:20:00')"
+psql -d test -aq -c "SELECT head(trip) FROM gettrip('taxi', 'B130', TIMESTAMP '2015-10-20 08:00:00', TIMESTAMP '2015-10-20 08:20:00') as trip"
+psql -d test -aq -c "SELECT tail(trip) FROM gettrip('taxi', 'B130', TIMESTAMP '2015-10-20 08:00:00', TIMESTAMP '2015-10-20 08:20:00') as trip"
+
+# GetID, ID2Name, Name2ID
+psql -d test -aq -c "SELECT trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326))"
+psql -d test -aq -c "SELECT HEAD(trip) FROM trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326))"
+psql -d test -aq -c "SELECT GetID(trip) as id FROM trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326)) as trip group by id"
+psql -d test -aq -c "SELECT ID2Name(id) FROM (SELECT GetID(trip) as id FROM trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326)) as trip group by id ) foo"
+psql -d test -aq -c "SELECT Name2ID('taxi','B130')"
+
+# Count, MakeLine
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip"
+psql -d test -aq -c "SELECT trip.tid, count(trip) FROM trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip"
+psql -d test -aq -c "SELECT trip.tid, ST_AsText(MakeLine(trip)) FROM trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip"
+psql -d test -aq -c "SELECT trip.tid, MakeGeoJSON(trip) FROM trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip"
+
 #delete all
-#psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B130')"
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B130')"
 echo "-------------------------------------------------------------------"
 echo "---- GetTrip(Spatial)---------"
 echo
