@@ -258,9 +258,13 @@ $$ LANGUAGE 'plpgsql' VOLATILE STRICT;
 --    trj_name, name of a trajectory, e.g., 'B123', 'B245', 'C123' etc
 --	  tstart, timestamp of the start to remove, can be NULL, means from initial point
 --	  tend, timestamp of the end to remove, can be NULL, means to final point
+--	  tregin, geometrical region
 --
 CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(
-	pool_name varchar, trj_name varchar, tstart timestamp, tend timestamp)
+	pool_name varchar, trj_name varchar, 
+	tstart timestamp  DEFAULT NULL,
+	tend timestamp DEFAULT NULL,
+	tregion geometry DEFAULT NULL)
 RETURNS text AS $$
 DECLARE
 	ok boolean;
@@ -284,9 +288,19 @@ BEGIN
     LOOP
 	---- Generate SQL string according to temporal constraints
 		sql := 'DELETE FROM trajectory.' || quote_ident(pool_name) 
-			|| ' WHERE id = ' || rec.id 
-			|| ' AND time >= TIMESTAMP ' || quote_literal(tstart)
-			|| ' AND time <= TIMESTAMP ' || quote_literal(tend);
+			|| ' WHERE id = ' || rec.id;
+
+		IF tstart IS NOT NULL THEN
+			sql := sql || ' AND time >= TIMESTAMP ' || quote_literal(tstart);
+		END IF;
+
+		IF tend IS NOT NULL THEN
+			sql := sql || ' AND time <= TIMESTAMP ' || quote_literal(tend);
+		END IF;
+
+		IF tregion IS NOT NULL THEN
+			sql := sql || ' AND ST_CoveredBy(position,' || quote_literal(tregion) || '::geometry)';
+		END IF;
 
     ---- Delete the sampling data firstly
         EXECUTE sql;
@@ -331,7 +345,7 @@ BEGIN
     -- return the trajectory ID
     return result;
 END;
-$$ LANGUAGE 'plpgsql' VOLATILE STRICT;
+$$ LANGUAGE 'plpgsql' VOLATILE;
 --} trajectory.DeleteTrajectory(with temporal constraints)
 
 
@@ -342,10 +356,25 @@ $$ LANGUAGE 'plpgsql' VOLATILE STRICT;
 --
 --  TODO We do not consider to remove multiple trajectories once a time
 --
-CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar)
+--CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar)
+--RETURNS text AS $$
+--	SELECT trajectory.DeleteTrajectory($1, $2,NULL,NULL,NULL); 
+--			TIMESTAMP '-infinity', TIMESTAMP 'infinity');
+--$$ LANGUAGE 'sql' VOLATILE STRICT;
+--} trajectory.DeleteTrajectory
+
+
+--{
+--  Delete a trajectory, with given name, return a result in text.
+--    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
+--    trj_name, name of a trajectory, e.g., 'B123', 'B245', 'C123' etc
+--
+--  TODO We do not consider to remove multiple trajectories once a time
+--
+CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar,tregion geometry)
 RETURNS text AS $$
-	SELECT trajectory.DeleteTrajectory($1, $2, 
-			TIMESTAMP '-infinity', TIMESTAMP 'infinity');
+    SELECT trajectory.DeleteTrajectory($1, $2, NULL, NULL, $3);
+--    SELECT trajectory.DeleteTrajectory($1, $2, TIMESTAMP '-infinity', TIMESTAMP 'infinity', $3);
 $$ LANGUAGE 'sql' VOLATILE STRICT;
 --} trajectory.DeleteTrajectory
 
@@ -400,7 +429,6 @@ BEGIN
 	-- Append this sampling to the real storage table
 	EXECUTE 'INSERT INTO trajectory.' || quote_ident(pool_name) 
 		|| '(id, time, position) VALUES ('
---		|| 'DEFAULT,'
 		|| trajectory_id || ','
 		|| quote_literal(t) || ','
 		|| quote_literal(cpos)
@@ -532,7 +560,7 @@ CREATE OR REPLACE FUNCTION trajectory.AppendTrajectoryWithAttr(
 	VARIADIC attributes varchar[])
 RETURNS boolean AS $$
 DECLARE
-    _id OID;
+    trajectory_id OID;
     _srid integer;
 	_attrcount integer;
 	in_attrcount integer;
@@ -547,7 +575,7 @@ BEGIN
 
     -- Fetch the table id from trajectory.trajectory
     BEGIN
-    SELECT id, srid, attrcount INTO STRICT _id, _srid, _attrcount
+    SELECT id, srid, attrcount INTO STRICT trajectory_id, _srid, _attrcount
 		FROM trajectory.trajectory
         WHERE poolname = pool_name AND trjname = trj_name;
     EXCEPTION
@@ -581,7 +609,7 @@ BEGIN
     -- Append this sampling to the real storage table
     sql := 'INSERT INTO trajectory.' || quote_ident(pool_name)
         || ' VALUES ('
-        || 'DEFAULT,'
+        || trajectory_id || ','
         || quote_literal(t) || ','
         || quote_literal(col_pos);
 	FOR i in 1..in_attrcount LOOP
