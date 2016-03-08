@@ -259,12 +259,15 @@ $$ LANGUAGE 'plpgsql' VOLATILE STRICT;
 --	  tstart, timestamp of the start to remove, can be NULL, means from initial point
 --	  tend, timestamp of the end to remove, can be NULL, means to final point
 --	  tregin, geometrical region
+--	  coveredby, a flag indicates deleting the trajectory inside (or outside) tregin.
+--		it's useful, because sometime we focus on urban rather than county area.
 --
 CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(
 	pool_name varchar, trj_name varchar, 
 	tstart timestamp  DEFAULT NULL,
 	tend timestamp DEFAULT NULL,
-	tregion geometry DEFAULT NULL)
+	tregion geometry DEFAULT NULL,
+	coveredby boolean DEFAULT TRUE)
 RETURNS text AS $$
 DECLARE
 	ok boolean;
@@ -299,7 +302,11 @@ BEGIN
 		END IF;
 
 		IF tregion IS NOT NULL THEN
-			sql := sql || ' AND ST_CoveredBy(position,' || quote_literal(tregion) || '::geometry)';
+			IF coveredby IS TRUE THEN
+				sql := sql || ' AND ST_CoveredBy(position,' || quote_literal(tregion) || '::geometry)';
+			ELSE
+				sql := sql || ' AND NOT ST_CoveredBy(position,' || quote_literal(tregion) || '::geometry)';
+			END IF;
 		END IF;
 
     ---- Delete the sampling data firstly
@@ -371,9 +378,9 @@ $$ LANGUAGE 'plpgsql' VOLATILE;
 --
 --  TODO We do not consider to remove multiple trajectories once a time
 --
-CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar,tregion geometry)
+CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar,tregion geometry, coveredby boolean DEFAULT TRUE)
 RETURNS text AS $$
-    SELECT trajectory.DeleteTrajectory($1, $2, NULL, NULL, $3);
+    SELECT trajectory.DeleteTrajectory($1, $2, NULL, NULL, $3, $4);
 --    SELECT trajectory.DeleteTrajectory($1, $2, TIMESTAMP '-infinity', TIMESTAMP 'infinity', $3);
 $$ LANGUAGE 'sql' VOLATILE STRICT;
 --} trajectory.DeleteTrajectory

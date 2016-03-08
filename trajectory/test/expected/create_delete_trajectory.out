@@ -296,6 +296,7 @@ SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. i
 
 ---- trajectory.DeleteTrajectory() with spatial constraints ------
 -------------------------------------------------------------------
+-- SET 1: NOT coveredby
 -- add 8 samplings with different spatial column
 --   they forms a shape looks like
 --
@@ -418,7 +419,126 @@ SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, t
 ----------+---------+------+-----------
 (0 rows)
 
----- trajectory.DeleteTrajectory() with spatial constraints ------
+-- SET 2: NOT coveredby
+-- add 8 samplings with different spatial column
+--   they forms a shape looks like
+--
+--           o--------o      #            x--------x
+--           |        |      #            |        |
+--           |        |      #            |        |
+--   o-------o--------o     ==>   x-------o--------o
+--   |       |        |      #    |       |        |
+--   |       |        |      #    |       |        |
+--   o-------o--------o      #    x-------o--------o
+--
+SELECT trajectory.CreateTrajectory('taxi', 'B127',  4326, 0.00001);
+ERROR:  trajectory.CreateTrajectory() - Trajectory taxi (B127) exists!
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:10:00', ST_Point(119.4, 39.4));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:15:00', ST_Point(119.4, 39.5));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:20:00', ST_Point(119.5, 39.4));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:25:00', ST_Point(119.5, 39.5));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:30:00', ST_Point(119.6, 39.4));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:35:00', ST_Point(119.6, 39.5));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:40:00', ST_Point(119.5, 39.6));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:45:00', ST_Point(119.6, 39.6));
+WARNING:  Geometry SRID (0) does not match column SRID (4326)
+WARNING:  We update the position's Geometry SRID to 4326
+ appendtrajectory 
+------------------
+ t
+(1 row)
+
+SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
+ poolname | trjname |           time           |     st_astext     
+----------+---------+--------------------------+-------------------
+ taxi     | B127    | Sat Oct 10 08:10:00 2015 | POINT(119.4 39.4)
+ taxi     | B127    | Sat Oct 10 08:15:00 2015 | POINT(119.4 39.5)
+ taxi     | B127    | Sat Oct 10 08:20:00 2015 | POINT(119.5 39.4)
+ taxi     | B127    | Sat Oct 10 08:25:00 2015 | POINT(119.5 39.5)
+ taxi     | B127    | Sat Oct 10 08:30:00 2015 | POINT(119.6 39.4)
+ taxi     | B127    | Sat Oct 10 08:35:00 2015 | POINT(119.6 39.5)
+ taxi     | B127    | Sat Oct 10 08:40:00 2015 | POINT(119.5 39.6)
+ taxi     | B127    | Sat Oct 10 08:45:00 2015 | POINT(119.6 39.6)
+(8 rows)
+
+-- delete centrial
+SELECT trajectory.DeleteTrajectory('taxi', 'B127', ST_SetSRID(ST_MakeBox2D(ST_Point(119.5, 39.4),ST_Point(119.6, 39.5)),4326));
+                      deletetrajectory                      
+------------------------------------------------------------
+ Trajectory taxi (B127) (with id = 10) remains 4 samplings.
+(1 row)
+
+SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
+ poolname | trjname |           time           |     st_astext     
+----------+---------+--------------------------+-------------------
+ taxi     | B127    | Sat Oct 10 08:10:00 2015 | POINT(119.4 39.4)
+ taxi     | B127    | Sat Oct 10 08:15:00 2015 | POINT(119.4 39.5)
+ taxi     | B127    | Sat Oct 10 08:40:00 2015 | POINT(119.5 39.6)
+ taxi     | B127    | Sat Oct 10 08:45:00 2015 | POINT(119.6 39.6)
+(4 rows)
+
+-- delete remaining
+SELECT trajectory.DeleteTrajectory('taxi', 'B127');
+                        deletetrajectory                        
+----------------------------------------------------------------
+ Trajectory taxi (B127) (with id = 10) is removed successfully.
+(1 row)
+
+SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
+ poolname | trjname | time | st_astext 
+----------+---------+------+-----------
+(0 rows)
+
+---- trajectory.DeleteTrajectory() with spatio-temporal constraints ------
 -------------------------------------------------------------------
 SELECT trajectory.CreateTrajectory('taxi', 'B128',  4326, 0.00001);
  createtrajectory 

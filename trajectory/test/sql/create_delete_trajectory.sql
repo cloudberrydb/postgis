@@ -90,6 +90,7 @@ SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. i
 
 ---- trajectory.DeleteTrajectory() with spatial constraints ------
 -------------------------------------------------------------------
+-- SET 1: NOT coveredby
 -- add 8 samplings with different spatial column
 --   they forms a shape looks like
 --
@@ -120,8 +121,38 @@ SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, t
 SELECT trajectory.DeleteTrajectory('taxi', 'B127');
 SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
 
+-- SET 2: NOT coveredby
+-- add 8 samplings with different spatial column
+--   they forms a shape looks like
+--
+--           o--------o      #            x--------x
+--           |        |      #            |        |
+--           |        |      #            |        |
+--   o-------o--------o     ==>   x-------o--------o
+--   |       |        |      #    |       |        |
+--   |       |        |      #    |       |        |
+--   o-------o--------o      #    x-------o--------o
+--
+SELECT trajectory.CreateTrajectory('taxi', 'B127',  4326, 0.00001);
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:10:00', ST_Point(119.4, 39.4));
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:15:00', ST_Point(119.4, 39.5));
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:20:00', ST_Point(119.5, 39.4));
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:25:00', ST_Point(119.5, 39.5));
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:30:00', ST_Point(119.6, 39.4));
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:35:00', ST_Point(119.6, 39.5));
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:40:00', ST_Point(119.5, 39.6));
+SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:45:00', ST_Point(119.6, 39.6));
+SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
 
----- trajectory.DeleteTrajectory() with spatial constraints ------
+-- delete centrial
+SELECT trajectory.DeleteTrajectory('taxi', 'B127', ST_SetSRID(ST_MakeBox2D(ST_Point(119.5, 39.4),ST_Point(119.6, 39.5)),4326));
+SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
+
+-- delete remaining
+SELECT trajectory.DeleteTrajectory('taxi', 'B127');
+SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
+
+---- trajectory.DeleteTrajectory() with spatio-temporal constraints ------
 -------------------------------------------------------------------
 SELECT trajectory.CreateTrajectory('taxi', 'B128',  4326, 0.00001);
 SELECT trajectory.AppendTrajectory('taxi', 'B128', '2015-10-10 8:10:00', ST_Point(119.4, 39.4));

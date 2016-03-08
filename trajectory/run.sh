@@ -116,5 +116,35 @@ psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B127')"
 psql -d test -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
 
 
+# add 8 samplings with different spatial column
+#   they forms a shape looks like
+#
+#           o--------o      #            x--------x
+#           |        |      #            |        |
+#           |        |      #            |        |
+#   o-------o--------o     ==>   x-------o--------o
+#   |       |        |      #    |       |        |
+#   |       |        |      #    |       |        |
+#   o-------o--------o      #    x-------o--------o
+#
+psql -d test -c "SELECT trajectory.CreateTrajectory('taxi', 'B127',  4326, 0.00001)"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:10:00', ST_Point(119.4, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:15:00', ST_Point(119.4, 39.5))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:20:00', ST_Point(119.5, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:25:00', ST_Point(119.5, 39.5))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:30:00', ST_Point(119.6, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:35:00', ST_Point(119.6, 39.5))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:40:00', ST_Point(119.5, 39.6))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B127', '2015-10-10 8:45:00', ST_Point(119.6, 39.6))"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+# delete centrial
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B127', ST_SetSRID(ST_MakeBox2D(ST_Point(119.5, 39.4),ST_Point(119.6, 39.5)),4326), false)"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+# delete remaining
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B127')"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
 echo "-------------------------------------------------------------------"
 echo "---- trajectory.DeleteTrajectory() with temporal/spatial constraints ------"
