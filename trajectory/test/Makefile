@@ -1,12 +1,13 @@
 #Makefile for Geospatial/Traje/testdirctory/Regression
 
-top_builddir = ../../../../cdb-pg
+top_builddir = ../../../../../
 testdir = .
 
 # ape from cdb-pg/src/Makefile.global
 ifndef PG_CONFIG
 PG_CONFIG = pg_config
 endif
+libdir := $(shell $(PG_CONFIG) --libdir)
 bindir := $(shell $(PG_CONFIG) --bindir)
 shardir := $(shell $(PG_CONFIG) --sharedir)
 
@@ -51,8 +52,16 @@ REGRESS = $(TEST_FIRST) \
 
 all check: installcheck
 
-installcheck: submake pre_install_gis_fast
+FAST_TEST = yes
+ifdef FAST_TEST
+# now we use compiled 'pg_regress' for test
+installcheck: pre_install_gis_fast
+	$(libdir)/postgresql/pgxs/src/test/regress/pg_regress --inputdir=$(testdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+else
+# we need to compile 'pg_regress' firstly and install postgis in time
+installcheck: submake pre_install_gis
 	$(top_builddir)/src/test/regress/pg_regress --inputdir=$(testdir) --psqldir=$(PSQLDIR) $(REGRESS_OPTS) $(REGRESS)
+endif
 
 .PHONY: submake
 submake:
@@ -76,17 +85,18 @@ clean:
 	rm -rf results
 	rm -f regression.diffs regression.out optimizer_status.out
 
-
-	#for file in $(shell ls sql); do \
-#update: pre_install_gis_fast
-SQL_FILES = $(foreach n, $(testdir)/sql, $(wildcard $(n)/*.sql)) 
-OUT_FILES = $(SQL_FILES:.sql=.out)
-update:
-	@echo sql:$(SQL_FILES) 
-	@echo out:$(OUT_FILES) 
-	for f in $(SQL_FILES); do \
-		echo $(PSQLDIR)/psql -d $(TRJTABLE_PRE) -f $$f -a -q > $$f; \
+# ------------------------------------------------------------------------
+# for developing use. 
+#	Update: generate expected/*.out from sql/*.sql for the 1st time; 
+#	Backup: copy result/*.out to expected/*.out
+# -----------------------------------------------------------------------
+update: quickprepare 
+	@for f in $(REGRESS); do \
+		mv $(testdir)/expected/$$f.out $(testdir)/expected/$$f.out.bak; \
+		$(PSQLDIR)/psql -d $(TRJTABLE_PRE) -f $(testdir)/sql/$$f.sql -X -a -q > $(testdir)/expected/$$f.out 2>&1; \
 	done
 
-#echo $(PSQLDIR)/psql -d $(TRJTABLE_PRE) -f $$f -a -q > $($$f:sql=expected) 2>&1; \
-#$(PSQLDIR)/psql -d $(TRJTABLE_PRE) -f sql/$(f) -a -q > expected/*.out; \
+backup: 
+	@for f in $(REGRESS); do \
+		cp $(testdir)/results/$$f.out $(testdir)/expected/$$f.out; \
+	done

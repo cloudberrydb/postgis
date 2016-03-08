@@ -17,21 +17,21 @@ BEGIN
     WHERE p.proname = 'postgis_version'
     AND p.pronamespace = n.oid)
   LOOP
-	ok1 = true;
+    ok1 = true;
 --    RAISE NOTICE 'PostGIS is already installed in schema ''%''', rec.nspname;
   END LOOP;
 
   FOR rec IN
     SELECT nspname FROM pg_namespace WHERE nspname = 'trajectory'
   LOOP
-	ok2 = true;
+    ok2 = true;
 --    RAISE NOTICE 'Trajectory is already installed in schema ''%''', rec.nspname;
   END LOOP;
 
   IF ( ok1 AND ok2 ) THEN
-	RETURN 'Both PostGIS and Trajectory are already installed';
+    RETURN 'Both PostGIS and Trajectory are already installed';
   ELSE
-	RETURN 'We need to install both PostGIS and Trajectory';
+    RETURN 'We need to install both PostGIS and Trajectory';
   END IF;
 END;
 $$ LANGUAGE 'plpgsql';
