@@ -1,0 +1,37 @@
+# pg_hilbert
+Geohashing functionality for HAWQ, Greenplum DB, PostgreSQL
+
+* Motivated by the need to compute aggregates based on geographic location
+* Geohash background: http://en.wikipedia.org/wiki/Geohash
+* C based user defined functions
+* Based on this C language hilberting library: https://github.com/lyokato/libhilbert.git
+* Install (everthing shown here was run on the Pivotal HD single node VM, CentOS release 6.5):
+NOTE: the user running the `make install` requires write permission into the installation
+directory of the target database.
+
+```
+[gpadmin@pivotalvm pg_hilbert]$ make
+... output deleted
+[gpadmin@pivotalvm pg_hilbert]$ make install
+... output deleted
+[gpadmin@pivotalvm pg_hilbert]$ psql demo -f ./pg_hilbert.sql
+Timing is on.
+CREATE FUNCTION
+Time: 12.904 ms
+```
+
+* Usage example: compute the hilbert based on latitude and longitude values
+
+```
+demo=# SELECT ST_Hilbert(geom)/10, count(*)
+demo-# FROM crimes
+demo-# GROUP BY 1
+demo-# ORDER BY 2 DESC
+demo-# LIMIT 20;
+ hilbert | count
+---------+-------
+ 2054878 | 1061
+(20 rows)
+
+Time: 7556.363 ms
+```
