@@ -201,7 +201,7 @@ BEGIN
 	------}
 
 	ELSE
-		-- Create a BIG table for this pool is it's the 1st time
+		-- Make sure this trajectory is the 1st time being created.
 		trj_name_count := 0;
 		SELECT count(*) INTO trj_name_count
 			FROM trajectory.trajectory WHERE poolname = pool_name AND trjname = trj_name;
@@ -253,20 +253,21 @@ $$ LANGUAGE 'plpgsql' VOLATILE STRICT;
 
 
 --{
---  Create a trajectory, obtain an unique id
+--	Delete a trajectory, with given name and temporal constraints, return a result in text.
 --    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
 --    trj_name, name of a trajectory, e.g., 'B123', 'B245', 'C123' etc
+--	  tstart, timestamp of the start to remove, can be NULL, means from initial point
+--	  tend, timestamp of the end to remove, can be NULL, means to final point
 --
---  TODO We do not consider to remove multiple trajectories once a time
---
-CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar)
+CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(
+	pool_name varchar, trj_name varchar, tstart timestamp, tend timestamp)
 RETURNS text AS $$
 DECLARE
 	ok boolean;
     rec RECORD;
 	result text;
 	tid OID;
-	trj_count integer;
+	trj_samplings_count integer;
 	sql text;
 BEGIN
 	result = 'trajectory.DeleteTrajectory() - you can never see this line';
@@ -278,14 +279,29 @@ BEGIN
 
     -- Fetch the table id from trajectory.trajectory
 	ok = false;
-    FOR rec IN SELECT id FROM trajectory.trajectory WHERE poolname = pool_name AND trjname = trj_name
+    FOR rec IN SELECT id FROM trajectory.trajectory 
+		WHERE poolname = pool_name AND trjname = trj_name
     LOOP
-    ---- Delete the sampling data firstly
-        EXECUTE 'DELETE FROM trajectory.' || quote_ident(pool_name) || ' WHERE id = ' || rec.id;
+	---- Generate SQL string according to temporal constraints
+		sql := 'DELETE FROM trajectory.' || quote_ident(pool_name) 
+			|| ' WHERE id = ' || rec.id 
+			|| ' AND time >= TIMESTAMP ' || quote_literal(tstart)
+			|| ' AND time <= TIMESTAMP ' || quote_literal(tend);
 
-    ---- Delete the metadata secondly 
-        EXECUTE 'DELETE FROM trajectory.trajectory WHERE poolname = ' 
-			|| quote_literal(pool_name) || ' AND trjname = ' || quote_literal(trj_name);
+    ---- Delete the sampling data firstly
+        EXECUTE sql;
+
+    ---- Delete the metadata secondly if all its samplings are removed
+		trj_samplings_count := 0;
+		sql := 'SELECT count(*) FROM trajectory.' || quote_ident(pool_name)
+			|| ' WHERE id = ' || rec.id; 
+        EXECUTE sql INTO trj_samplings_count;
+
+		IF FOUND AND trj_samplings_count = 0 THEN
+	        EXECUTE 'DELETE FROM trajectory.trajectory WHERE poolname = ' 
+				|| quote_literal(pool_name) || ' AND trjname = ' 
+				|| quote_literal(trj_name);
+		END IF;
 
     ---- Remove the pool table if the table is empty
         SELECT id INTO tid FROM trajectory.trajectory WHERE poolname = pool_name;
@@ -302,16 +318,36 @@ BEGIN
 	IF NOT ok THEN
 		RAISE EXCEPTION 'trajectory.DeleteTrajectory() - Trajectory % (%) not found', pool_name, trj_name;
 	ELSE
-		result = 'Trajectory ' || pool_name || ' (' || trj_name || ') (with id = ' 
-				|| rec.id || ') is removed successfully.';
+		IF trj_samplings_count = 0 THEN
+		result = 'Trajectory ' || pool_name || ' (' || trj_name 
+				|| ') (with id = ' || rec.id || ') is removed successfully.';
+		ELSE
+		result = 'Trajectory ' || pool_name || ' (' || trj_name 
+				|| ') (with id = ' || rec.id || ') remains ' 
+				|| trj_samplings_count || ' samplings.';
+		END IF;
 	END IF;
 
     -- return the trajectory ID
     return result;
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE STRICT;
---} trajectory.DeleteTrajectory
+--} trajectory.DeleteTrajectory(with temporal constraints)
 
+
+--{
+--  Delete a trajectory, with given name, return a result in text.
+--    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
+--    trj_name, name of a trajectory, e.g., 'B123', 'B245', 'C123' etc
+--
+--  TODO We do not consider to remove multiple trajectories once a time
+--
+CREATE OR REPLACE FUNCTION trajectory.DeleteTrajectory(pool_name varchar, trj_name varchar)
+RETURNS text AS $$
+	SELECT trajectory.DeleteTrajectory($1, $2, 
+			TIMESTAMP '-infinity', TIMESTAMP 'infinity');
+$$ LANGUAGE 'sql' VOLATILE STRICT;
+--} trajectory.DeleteTrajectory
 
 
 --{ 
@@ -325,7 +361,7 @@ CREATE OR REPLACE FUNCTION trajectory.AppendTrajectory(pool_name varchar, trj_na
 RETURNS boolean AS $$
 DECLARE
     ok boolean;
-    tid OID;
+    trajectory_id OID;
 	tsrid integer;
 	csrid integer;
 	cpos geometry; -- the parameter is not editable sometime
@@ -337,7 +373,7 @@ BEGIN
 
     -- Fetch the table id from trajectory.trajectory
 	BEGIN
-    SELECT id, srid INTO STRICT tid, tsrid FROM trajectory.trajectory 
+    SELECT id, srid INTO STRICT trajectory_id, tsrid FROM trajectory.trajectory 
 		WHERE poolname = pool_name AND trjname = trj_name;
 	EXCEPTION
 		WHEN NO_DATA_FOUND THEN
@@ -364,7 +400,8 @@ BEGIN
 	-- Append this sampling to the real storage table
 	EXECUTE 'INSERT INTO trajectory.' || quote_ident(pool_name) 
 		|| '(id, time, position) VALUES ('
-		|| 'DEFAULT,'
+--		|| 'DEFAULT,'
+		|| trajectory_id || ','
 		|| quote_literal(t) || ','
 		|| quote_literal(cpos)
 		|| ')';

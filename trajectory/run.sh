@@ -46,4 +46,40 @@ psql -d test -c "SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B124', LOCA
 psql -d test -c "SELECT id,time,direction FROM trajectory.taxi ORDER BY id"
 
 
+echo "---- trajectory.DeleteTrajectory() with temporal constraints ------"
+echo "-------------------------------------------------------------------"
+# remove others
+psql -d test -c "SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B124')"
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B125')"
 
+# create new one
+psql -d test -c "SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+psql -d test -c "SELECT trajectory.CreateTrajectory('taxi', 'B126',  4326, 0.00001)"
+
+# add 5 samplings
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B126', '2015-10-10 8:00:00', ST_Point(119.4, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B126', '2015-10-10 8:05:00', ST_Point(119.4, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B126', '2015-10-10 8:10:00', ST_Point(119.4, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B126', '2015-10-10 8:15:00', ST_Point(119.4, 39.4))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B126', '2015-10-10 8:20:00', ST_Point(119.4, 39.4))"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+# delete 1st
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B126', '-infinity'::timestamp, '2015-10-10 8:03:00'::timestamp)"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+# delete last
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B126', '2015-10-10 8:18:00'::timestamp, 'infinity'::timestamp)"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+# delete middle 
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B126', '2015-10-10 8:08:00'::timestamp, '2015-10-10 8:13:00'::timestamp)"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+# delete remaining 
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B126')"
+psql -d test -c "SELECT M.poolname, M.trjname, T.time FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+echo "-------------------------------------------------------------------"
+echo "---- trajectory.DeleteTrajectory() with temporal constraints ------"
