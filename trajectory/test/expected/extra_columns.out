@@ -7,7 +7,7 @@ SET client_min_messages TO warning;
 SELECT trajectory.CreateTrajectory('taxi', 'B130',  4326, 0.00001);
  createtrajectory 
 ------------------
-               13
+               12
 (1 row)
 
 -- step 1: Add a column
@@ -68,15 +68,15 @@ SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B130', TIMESTAMP '2015-10-10
 SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B130', TIMESTAMP '2015-10-10 8:25:00', ST_GeomFromText('POINT(119.4 39.4)', 4326), '3.3', '30', '30' );
 WARNING:  trajectory.AppendTrajectoryWithAttr() - Input attributes #3 != attribute columns #2.
 ERROR:  INSERT has more expressions than target columns
-CONTEXT:  SQL statement "INSERT INTO trajectory.taxi VALUES (13,'Sat Oct 10 08:25:00 2015','0101000020E61000009A99999999D95D403333333333B34340','3.3','30','30')"
+CONTEXT:  SQL statement "INSERT INTO trajectory.taxi VALUES (12,'Sat Oct 10 08:25:00 2015','0101000020E61000009A99999999D95D403333333333B34340','3.3','30','30')"
 PL/pgSQL function "appendtrajectorywithattr" line 58 at execute statement
 -- query it now
 SELECT id,time,speed,direction FROM trajectory.taxi ORDER BY id;
  id |           time           | speed | direction 
 ----+--------------------------+-------+-----------
- 13 | Sat Oct 10 08:15:00 2015 |   1.1 |         0
- 13 | Sat Oct 10 08:20:00 2015 |   2.2 |        20
- 13 | Sat Oct 10 08:10:00 2015 |     0 |         0
+ 12 | Sat Oct 10 08:15:00 2015 |   1.1 |         0
+ 12 | Sat Oct 10 08:20:00 2015 |   2.2 |        20
+ 12 | Sat Oct 10 08:10:00 2015 |     0 |         0
 (3 rows)
 
 -- step 4: Drop a column
@@ -120,15 +120,15 @@ LINE 1: ...tr('taxi', 'B130', TIMESTAMP '2015-10-10 8:35:00',, ST_GeomF...
 SELECT id,time,direction FROM trajectory.taxi ORDER BY id;
  id |           time           | direction 
 ----+--------------------------+-----------
- 13 | Sat Oct 10 08:15:00 2015 |         0
- 13 | Sat Oct 10 08:20:00 2015 |        20
- 13 | Sat Oct 10 08:10:00 2015 |         0
+ 12 | Sat Oct 10 08:15:00 2015 |         0
+ 12 | Sat Oct 10 08:20:00 2015 |        20
+ 12 | Sat Oct 10 08:10:00 2015 |         0
 (3 rows)
 
 -- drop it
 SELECT trajectory.DeleteTrajectory('taxi', 'B130');
                         deletetrajectory                        
 ----------------------------------------------------------------
- Trajectory taxi (B130) (with id = 13) is removed successfully.
+ Trajectory taxi (B130) (with id = 12) is removed successfully.
 (1 row)
 

@@ -29,13 +29,13 @@ TEST_FIRST = \
 
 # trajectory construction 
 TEST_IO = \
-	create_delete_trajectory \
-	append_trajectory \
+	trajectory_basic \
 	extra_columns
 
 # trip 
 TEST_BASIC_FUNC = \
-	gettrip
+	gettrip \
+	trip_io
 
 # not used
 TEST_LAST =
