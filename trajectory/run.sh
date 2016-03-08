@@ -151,7 +151,7 @@ echo "---- trajectory.DeleteTrajectory() with temporal/spatial constraints -----
 echo
 
 echo
-echo "---- GetTrip()---------"
+echo "---- GetTrip(Time)---------"
 echo "-------------------------------------------------------------------"
 psql -d test -c "SELECT trajectory.CreateTrajectory('taxi', 'B129',  4326, 0.00001)"
 psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B129', '2015-10-10 8:10:00', ST_Point(119.4, 39.4))"
@@ -176,8 +176,80 @@ psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-1
 
 #error
 psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B129', '2015-10-10 8:10:00', '2015-10-10 8:05:00')";
+
+#delete all
+psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B129')"
 echo "-------------------------------------------------------------------"
-echo "---- GetTrip()---------"
+echo "---- GetTrip(Time)---------"
 echo
 
+echo
+echo "---- GetTrip(Spatial)---------"
+echo "-------------------------------------------------------------------"
+psql -d test -c "SELECT trajectory.CreateTrajectory('taxi', 'B130',  4326, 0.00001)"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:00:00', ST_SetSRID(ST_Point(119.6, 39.2),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:05:00', ST_SetSRID(ST_Point(119.5, 39.2),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:10:00', ST_SetSRID(ST_Point(119.4, 39.2),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:15:00', ST_SetSRID(ST_Point(119.3, 39.2),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:20:00', ST_SetSRID(ST_Point(119.3, 39.3),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:25:00', ST_SetSRID(ST_Point(119.4, 39.3),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:30:00', ST_SetSRID(ST_Point(119.5, 39.3),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:35:00', ST_SetSRID(ST_Point(119.6, 39.3),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:40:00', ST_SetSRID(ST_Point(119.6, 39.4),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:45:00', ST_SetSRID(ST_Point(119.5, 39.4),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:50:00', ST_SetSRID(ST_Point(119.4, 39.4),4326))"
+psql -d test -aq -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+# query temporal
+psql -d test -aq -c "SELECT * FROM trajectory.GetTrip('taxi', 'B130', '2015-10-20 8:13:00', '2015-10-20 8:33:00')";
+
+# case 1:
+#
+#           10------9------8      #             x-------x------x
+#                          |      #                            |
+#                          |      #  ***********************
+#   4-------5-------6------7     ==> *  4-------5-------6--*---x
+#   |                             #  *  |                  * 
+#   |                             #  *  |                  *
+#   3-------2-------1------0      #  *  3-------2-------1--*---x
+#                                    ***********************
+#
+psql -d test -aq -c "SELECT trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.25, 39.15),ST_Point(119.65, 39.35)),4326))"
+
+# case 2:
+#
+#           10------9------8      #             x-------x------x
+#                          |      #                            |
+#                          |      #         ****************
+#   4-------5-------6------7     ==>    x---*---5-------6--*---x
+#   |                             #     |   *              *
+#   |                             #     |   *              *
+#   3-------2-------1------0      #     x---*---2-------1--*---x
+#                                           ****************
+#
+psql -d test -aq -c "SELECT trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.65, 39.35)),4326))"
+
+# case 3:
+#                                           *********
+#           10------9------8      #         *   10--*---x------x
+#                          |      #         *       *          |
+#                          |      #         *       *          |
+#   4-------5-------6------7     ==>    x---*---5---*---x------x
+#   |                             #     |   *       *       
+#   |                             #     |   *       *       
+#   3-------2-------1------0      #     x---*---2---*---x------x
+#                                           *********
+#
+psql -d test -aq -c "SELECT trajectory.GetTrip('taxi', 'B130', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326))"
+
+# add 2 redundant samplings
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:55:00', ST_SetSRID(ST_Point(119.3, 39.4),4326))"
+psql -d test -c "SELECT trajectory.AppendTrajectory('taxi', 'B130', '2015-10-20 8:55:00', ST_SetSRID(ST_Point(119.3, 39.4),4326))"
+psql -d test -aq -c "SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time"
+
+
+#delete all
+#psql -d test -c "SELECT trajectory.DeleteTrajectory('taxi', 'B130')"
+echo "-------------------------------------------------------------------"
+echo "---- GetTrip(Spatial)---------"
 echo

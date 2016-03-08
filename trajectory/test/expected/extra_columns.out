@@ -38,7 +38,8 @@ Compression Level: 0
 Block Size: 32768
 Checksum: t
 Indexes:
-    "pool_taxi_gist" gist ("position")
+    "pool_taxi_position_gist" gist ("position")
+    "pool_taxi_time_btree" btree ("time")
 Check constraints:
     "taxi_direction_check" CHECK (direction <= 360::double precision)
 Distributed by: (id)
@@ -99,7 +100,8 @@ Compression Level: 0
 Block Size: 32768
 Checksum: t
 Indexes:
-    "pool_taxi_gist" gist ("position")
+    "pool_taxi_position_gist" gist ("position")
+    "pool_taxi_time_btree" btree ("time")
 Check constraints:
     "taxi_direction_check" CHECK (direction <= 360::double precision)
 Distributed by: (id)

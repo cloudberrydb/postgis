@@ -195,7 +195,12 @@ BEGIN
 		|| 'DISTRIBUTED BY (id);';
 
 	---- GiST index on (position)
-		EXECUTE 'CREATE INDEX pool_' || quote_ident(pool_name) || '_gist ON '
+		EXECUTE 'CREATE INDEX pool_' || quote_ident(pool_name) || '_time_btree ON '
+		|| 'trajectory.' || quote_ident(pool_name) || ' '
+    	|| 'using btree(time);';
+
+	---- GiST index on (position)
+		EXECUTE 'CREATE INDEX pool_' || quote_ident(pool_name) || '_position_gist ON '
 		|| 'trajectory.' || quote_ident(pool_name) || ' '
     	|| 'using gist(position);';
 	------}
@@ -313,6 +318,7 @@ BEGIN
         EXECUTE sql;
 
     ---- Delete the metadata secondly if all its samplings are removed
+	----	FIXME: count() is not an efficient way to judge a table being empty
 		trj_samplings_count := 0;
 		sql := 'SELECT count(*) FROM trajectory.' || quote_ident(pool_name)
 			|| ' WHERE id = ' || rec.id; 
@@ -697,7 +703,7 @@ CREATE TYPE trajectory.Trip AS (
 --
 CREATE OR REPLACE FUNCTION trajectory.GetTrip(
     pool_name varchar, trj_name varchar,
-    tstart timestamp  DEFAULT NULL,
+    tstart timestamp DEFAULT NULL,
     tend timestamp DEFAULT NULL,
     tregion geometry DEFAULT NULL,
     coveredby boolean DEFAULT TRUE)
@@ -708,9 +714,15 @@ DECLARE
 	trip trajectory.Trip;
 	minT timestamp;
 	maxT timestamp;
+	currrec timestamp;
+	lastrec timestamp;
+	startrec timestamp;
+	endrec timestamp;
+	prefrec timestamp;
+	continuous boolean;
 BEGIN
 	-- illegal parameters
-	IF tstart IS NOT NULL AND tend IS NOT NULL AND tstart >= tend THEN
+	IF tstart IS NOT NULL AND tend IS NOT NULL AND tstart > tend THEN
 		RAISE WARNING 'Improper parameters, start time (%) not earlier than end time (%)!', tstart, tend;
 		RETURN;
 	END IF;
@@ -731,7 +743,7 @@ BEGIN
             RAISE EXCEPTION 'trajectory % (%) not unique, it''s impossible.', pool_name, trj_name;
     END;
 
-    ---- Get lower/upper bound of timestamp 
+    ---- Get lower/upper bound of timestamp, i.e., [minT,maxT] 
 	----  lower bound 
     sql := 'SELECT time FROM trajectory.' || quote_ident(pool_name)
         || ' WHERE id = ' || trajectory_id || ' ORDER BY time ASC LIMIT 1';
@@ -754,8 +766,7 @@ BEGIN
         RETURN;
     END IF;
 
-    ---- Generate SQL string according to temporal constraints
-	----   only temporal constraints
+    ---- refine bounds with the temporal constraints if given
 	IF ( (tstart IS NOT NULL AND tstart > maxT) OR
  		(tend IS NOT NULL AND tend < minT) ) THEN
 		RAISE WARNING 'Improper parameters, start time (%) or end time (%) are out of range (% ~ %)!', tstart, tend, minT, maxT;
@@ -771,19 +782,118 @@ BEGIN
 
 	----   TODO： spatial constraints later
 	IF tregion IS NOT NULL THEN
-		RAISE WARNING 'Wrong parameters, start time (%) is later than end time (%)!', minT, maxT;
-	END IF;
+		-- Generate the basic sql for re-using
+	    sql := 'SELECT time FROM trajectory.' || quote_ident(pool_name)
+    	    || ' WHERE id = ' || trajectory_id 
+			|| ' AND ST_CoveredBy(position,' || quote_literal(tregion) || '::geometry)';
 
-	---- Prepare the return value
-	trip.tid = trajectory_id;
-	trip.tstart = minT;
-	trip.tend = maxT;
-	RETURN NEXT trip;
-	RETURN;
+		-- Obtain all the sampling points with time constraints firstly
+        IF tstart IS NOT NULL THEN
+            sql := sql || ' AND time >= TIMESTAMP ' || quote_literal(minT);
+        END IF;
+        IF tend IS NOT NULL THEN
+            sql := sql || ' AND time <= TIMESTAMP ' || quote_literal(maxT);
+		END IF;
+		sql := sql || ' ORDER BY time ASC';
+
+		-- Judge them one by one
+		lastrec := NULL;
+		startrec := NULL;
+		endrec := NULL;
+		continuous = false;
+		FOR currrec IN EXECUTE sql LOOP
+
+			-- First point
+			IF lastrec IS NULL THEN
+				lastrec := currrec;
+				CONTINUE;
+			END IF;
+
+            -- new trip start
+            IF NOT continuous THEN
+                startrec := lastrec;
+                continuous := true;
+            END IF;
+
+			-- Neithor the 1st point anymore
+			-- sometimes it happens
+			IF lastrec = currrec THEN
+				RAISE NOTICE 'Duplicate sampling is detected, skip it.';
+				CONTINUE;
+			END IF;
+
+			-- Fetch next point before last one
+			sql := 'SELECT time FROM trajectory.' || quote_ident(pool_name)
+            	|| ' WHERE id = ' || trajectory_id
+	    		|| ' AND time > TIMESTAMP ' || quote_literal(lastrec)
+				|| ' ORDER BY time ASC LIMIT 1';
+			EXECUTE sql LOOP INTO prefrec;
+
+			-- Nor the last point inner this trajectory
+			IF prefrec IS NULL OR prefrec <> currrec THEN
+				-- record it as the last point of this trip
+				endrec := lastrec;
+
+				-- generate a new trip
+				trip.tid = trajectory_id;
+			    trip.tstart = startrec;
+			    trip.tend = endrec;
+			    RETURN NEXT trip;
+
+				-- prepare for next trip
+				continuous := false;
+			END IF;
+
+			-- prepare for next round
+			lastrec := currrec;
+		END LOOP;
+
+		-- process the last trip 
+		IF continuous THEN
+			endrec := lastrec;
+
+			trip.tid = trajectory_id;
+			trip.tstart = startrec;
+			trip.tend = endrec;
+			RETURN NEXT trip;
+		ELSE
+            IF currrec > endrec THEN
+                startrec := currrec;
+                endrec := currrec;
+ 	   			trip.tid = trajectory_id;
+    	        trip.tstart = startrec;
+        	    trip.tend = endrec;
+            	RETURN NEXT trip;
+			END IF;
+		END IF;
+
+	-- temproal constraint only
+	ELSE
+		---- Prepare the return value
+		trip.tid = trajectory_id;
+		trip.tstart = minT;
+		trip.tend = maxT;
+		RETURN NEXT trip;
+	END IF;
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE;
---}trajectory.GetTrip(
+--}trajectory.GetTrip(temporal constraints)
 
+
+--{
+--  Retrive a (set of ) trip from a trajectory
+--    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
+--    trj_name, name of a trajectory, e.g., 'B123', 'B245', 'C123' etc
+--    tregin, geometrical region
+--    coveredby, a flag indicates deleting the trajectory inside (or outside) tregin.
+--      it's useful, because sometime we focus on urban rather than county area.
+--
+CREATE OR REPLACE FUNCTION trajectory.GetTrip(
+    pool_name varchar, trj_name varchar, tregion geometry)
+RETURNS SETOF trajectory.Trip AS $$
+	SELECT trajectory.GetTrip($1, $2, NULL, NULL, $3);
+$$ LANGUAGE 'sql' VOLATILE STRICT;
+--}trajectory.GetTrip(spatial constraints)
 
 ------------------------------------------------------------------------------
 -- Point Query
