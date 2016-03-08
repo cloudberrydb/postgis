@@ -1,0 +1,106 @@
+--
+-- check_postgis_installed
+--
+\c trjregression
+SET client_min_messages TO warning;
+-----------------------------------------
+--	add a new trajectory            -----
+-----------------------------------------
+-- add TAXI
+SELECT trajectory.CreateTrajectory('taxi', 'T001',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:14: ERROR:  trajectory.CreateTrajectory() - Trajectory taxi (T001) exists!
+SELECT trajectory.CreateTrajectory('taxi', 'T002',  4326, 0.00001);
+ createtrajectory 
+------------------
+               20
+(1 row)
+
+SELECT trajectory.CreateTrajectory('taxi', 'T003',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:16: ERROR:  trajectory.CreateTrajectory() - Trajectory taxi (T003) exists!
+-- add BUS
+SELECT trajectory.CreateTrajectory('bus', 'B001',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:19: ERROR:  trajectory.CreateTrajectory() - Trajectory bus (B001) exists!
+SELECT trajectory.CreateTrajectory('bus', 'B002',  4326, 0.00001);
+ createtrajectory 
+------------------
+               21
+(1 row)
+
+SELECT trajectory.CreateTrajectory('bus', 'B003',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:21: ERROR:  trajectory.CreateTrajectory() - Trajectory bus (B003) exists!
+-- add trajectories with conflict name but different pool
+SELECT trajectory.CreateTrajectory('bus', 'T001',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:24: ERROR:  trajectory.CreateTrajectory() - Trajectory bus (T001) exists!
+SELECT trajectory.CreateTrajectory('taxi', 'B001',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:25: ERROR:  trajectory.CreateTrajectory() - Trajectory taxi (B001) exists!
+-- ERROR: add trajectories with conflict <pool, name>, not unique
+SELECT trajectory.CreateTrajectory('taxi', 'T001',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:28: ERROR:  trajectory.CreateTrajectory() - Trajectory taxi (T001) exists!
+SELECT trajectory.CreateTrajectory('bus', 'B001',  4326, 0.00001);
+psql:sql/create_delete_trajectory.sql:30: ERROR:  trajectory.CreateTrajectory() - Trajectory bus (B001) exists!
+-- query them
+SELECT * from trajectory.trajectory ORDER BY id;
+ id | poolname | trjname | srid | precision | tableid | attrcount 
+----+----------+---------+------+-----------+---------+-----------
+  1 | bus      | B001    | 4326 |     1e-05 |   39720 |         0
+  3 | bus      | B003    | 4326 |     1e-05 |   39720 |         0
+  4 | bus      | T001    | 4326 |     1e-05 |   39720 |         0
+  5 | taxi     | B001    | 4326 |     1e-05 |   39777 |         0
+  6 | taxi     | T001    | 4326 |     1e-05 |   39777 |         0
+ 10 | taxi     | T003    | 4326 |     1e-05 |   39777 |         0
+ 20 | taxi     | T002    | 4326 |     1e-05 |   39777 |         0
+ 21 | bus      | B002    | 4326 |     1e-05 |   39720 |         0
+(8 rows)
+
+-----------------------------------------
+--	delete a new trajectory         -----
+-----------------------------------------
+-- remove one TAXI trajectory
+SELECT trajectory.DeleteTrajectory('taxi', 'T002');
+                        deletetrajectory                        
+----------------------------------------------------------------
+ Trajectory taxi (T002) (with id = 20) is removed successfully.
+(1 row)
+
+SELECT * from trajectory.trajectory where poolname = 'taxi' ORDER BY id;
+ id | poolname | trjname | srid | precision | tableid | attrcount 
+----+----------+---------+------+-----------+---------+-----------
+  5 | taxi     | B001    | 4326 |     1e-05 |   39777 |         0
+  6 | taxi     | T001    | 4326 |     1e-05 |   39777 |         0
+ 10 | taxi     | T003    | 4326 |     1e-05 |   39777 |         0
+(3 rows)
+
+-- remove one BUS trajectory
+SELECT trajectory.DeleteTrajectory('bus', 'B002');
+                       deletetrajectory                        
+---------------------------------------------------------------
+ Trajectory bus (B002) (with id = 21) is removed successfully.
+(1 row)
+
+SELECT * from trajectory.trajectory where poolname = 'bus' ORDER BY id;
+ id | poolname | trjname | srid | precision | tableid | attrcount 
+----+----------+---------+------+-----------+---------+-----------
+  1 | bus      | B001    | 4326 |     1e-05 |   39720 |         0
+  3 | bus      | B003    | 4326 |     1e-05 |   39720 |         0
+  4 | bus      | T001    | 4326 |     1e-05 |   39720 |         0
+(3 rows)
+
+-- remove one trajectory NOT exists
+SELECT trajectory.DeleteTrajectory('taxi', 'T002');
+psql:sql/create_delete_trajectory.sql:48: ERROR:  trajectory.DeleteTrajectory() - taxi (T002) not found
+SELECT trajectory.DeleteTrajectory('bus', 'B002');
+psql:sql/create_delete_trajectory.sql:49: ERROR:  trajectory.DeleteTrajectory() - bus (B002) not found
+SELECT trajectory.DeleteTrajectory('metro', 'M001');
+psql:sql/create_delete_trajectory.sql:50: ERROR:  trajectory.DeleteTrajectory() - metro (M001) not found
+-- query them
+SELECT * from trajectory.trajectory ORDER BY id;
+ id | poolname | trjname | srid | precision | tableid | attrcount 
+----+----------+---------+------+-----------+---------+-----------
+  1 | bus      | B001    | 4326 |     1e-05 |   39720 |         0
+  3 | bus      | B003    | 4326 |     1e-05 |   39720 |         0
+  4 | bus      | T001    | 4326 |     1e-05 |   39720 |         0
+  5 | taxi     | B001    | 4326 |     1e-05 |   39777 |         0
+  6 | taxi     | T001    | 4326 |     1e-05 |   39777 |         0
+ 10 | taxi     | T003    | 4326 |     1e-05 |   39777 |         0
+(6 rows)
+
