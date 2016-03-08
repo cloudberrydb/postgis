@@ -1,0 +1,92 @@
+--
+-- check_postgis_installed
+--
+\c trjregression
+SET client_min_messages TO warning;
+-- step 1: Add a column
+SELECT trajectory.AddTrajectoryColumns('taxi', 'speed real DEFAULT 0.0');
+     addtrajectorycolumns     
+------------------------------
+ trajectory.taxi.speed added.
+(1 row)
+
+SELECT trajectory.AddTrajectoryColumns('taxi', 'direction real DEFAULT 0.0 CHECK (direction <= 360)');
+       addtrajectorycolumns       
+----------------------------------
+ trajectory.taxi.direction added.
+(1 row)
+
+-- query it now
+\d trajectory.taxi
+                             Append-Only Table "trajectory.taxi"
+  Column   |            Type             |                     Modifiers                     
+-----------+-----------------------------+---------------------------------------------------
+ id        | bigint                      | not null default nextval('taxi_id_seq'::regclass)
+ time      | timestamp without time zone | not null
+ position  | geometry(Point,4326)        | not null
+ speed     | real                        | default 0.0
+ direction | real                        | default 0.0
+Compression Type: None
+Compression Level: 0
+Block Size: 32768
+Checksum: t
+Indexes:
+    "pool_taxi_gist" gist ("position")
+Check constraints:
+    "taxi_direction_check" CHECK (direction <= 360::double precision)
+Distributed by: (id)
+
+-- step 2: Append with old function
+SELECT trajectory.AppendTrajectory('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326));
+ERROR:  trajectory taxi (B124) not found.
+-- step 3: Append with new function
+SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326), '1.1' );
+ERROR:  trajectory taxi (B124) not found.
+SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326), '2.2', '20' );
+ERROR:  trajectory taxi (B124) not found.
+SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326), '3.3', '30', '30' );
+ERROR:  trajectory taxi (B124) not found.
+-- query it now
+SELECT id,time,speed,direction FROM trajectory.taxi ORDER BY id;
+ id | time | speed | direction 
+----+------+-------+-----------
+(0 rows)
+
+-- step 4: Drop a column
+SELECT trajectory.DropTrajectoryColumns('taxi', 'speed');
+     droptrajectorycolumns      
+--------------------------------
+ trajectory.taxi.speed removed.
+(1 row)
+
+-- query it now
+\d trajectory.taxi
+                             Append-Only Table "trajectory.taxi"
+  Column   |            Type             |                     Modifiers                     
+-----------+-----------------------------+---------------------------------------------------
+ id        | bigint                      | not null default nextval('taxi_id_seq'::regclass)
+ time      | timestamp without time zone | not null
+ position  | geometry(Point,4326)        | not null
+ direction | real                        | default 0.0
+Compression Type: None
+Compression Level: 0
+Block Size: 32768
+Checksum: t
+Indexes:
+    "pool_taxi_gist" gist ("position")
+Check constraints:
+    "taxi_direction_check" CHECK (direction <= 360::double precision)
+Distributed by: (id)
+
+-- step 5: Append with new function
+SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326), '40' );
+ERROR:  trajectory taxi (B124) not found.
+-- step 6: error test
+SELECT trajectory.AppendTrajectoryWithAttr('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326), '500' );
+ERROR:  trajectory taxi (B124) not found.
+-- query it now
+SELECT id,time,direction FROM trajectory.taxi ORDER BY id;
+ id | time | direction 
+----+------+-----------
+(0 rows)
+

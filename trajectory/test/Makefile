@@ -24,10 +24,9 @@ TEST_FIRST = \
 
 # trajectory construction 
 TEST_IO = \
-	create_delete_trajectory #\
+	create_delete_trajectory \
 	append_trajectory \
-	add_extra_columns \
-	append_with_attrs
+	extra_columns
 
 # not used
 TEST_LAST =
@@ -84,6 +83,8 @@ prepare pre_install_gis:
 clean:
 	rm -rf results
 	rm -f regression.diffs regression.out optimizer_status.out
+	rm -f expected/*.out.bak
+	rm -f pre_install_gis.log
 
 # ------------------------------------------------------------------------
 # for developing use. 

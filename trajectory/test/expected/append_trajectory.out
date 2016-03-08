@@ -1,0 +1,27 @@
+--
+-- check_postgis_installed
+--
+\c trjregression
+SET client_min_messages TO warning;
+-----------------------------------------
+--  add a new trajectory            -----
+-----------------------------------------
+-- add TAXI
+SELECT trajectory.AppendTrajectory('taxi', 'B124', LOCALTIMESTAMP(2), ST_GeomFromText('POINT(119.4 39.4)', 4326));
+ERROR:  trajectory taxi (B124) not found.
+SELECT trajectory.AppendTrajectory('taxi', 'B124', LOCALTIMESTAMP(2), ST_Transform(ST_GeomFromText('POINT(119.4 39.4)', 4326),2249));
+ERROR:  trajectory taxi (B124) not found.
+SELECT trajectory.AppendTrajectory('taxi', 'B124', row(LOCALTIMESTAMP(2), ST_Point(119.4, 39.4))::trajectory.TPoint);
+ERROR:  trajectory taxi (B124) not found.
+CONTEXT:  SQL function "appendtrajectory" statement 1
+SELECT trajectory.AppendTrajectory('taxi', 'B124', row(LOCALTIMESTAMP(2), '(119.4, 39.4)'::point)::trajectory.TPoint);
+ERROR:  trajectory taxi (B124) not found.
+CONTEXT:  SQL function "appendtrajectory" statement 1
+SELECT trajectory.AppendTrajectory('taxi', 'B246', row(LOCALTIMESTAMP(2), '(119.3, 39.3)'::point)::trajectory.TPoint);
+ERROR:  trajectory taxi (B246) not found.
+CONTEXT:  SQL function "appendtrajectory" statement 1
+SELECT id, time, ST_AsText(position) as position FROM trajectory.taxi ORDER BY id;
+ id | time | position 
+----+------+----------
+(0 rows)
+
