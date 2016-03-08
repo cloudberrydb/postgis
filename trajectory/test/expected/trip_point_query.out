@@ -7,7 +7,7 @@ SET client_min_messages TO warning;
 SELECT trajectory.CreateTrajectory('taxi', 'B134',  4326, 0.00001);
  createtrajectory 
 ------------------
-               16
+               19
 (1 row)
 
 -- insert 11 samplings
@@ -115,7 +115,7 @@ WHERE id = name2id('taxi', 'B134') ORDER BY time;
 SELECT trajectory.GetTrip('taxi', 'B134', ST_SetSRID(ST_MakeBox2D(ST_Point(119.25, 39.15),ST_Point(119.65, 39.35)),4326));
                           gettrip                           
 ------------------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015")
 (1 row)
 
 -- inner range (given exact time point)
@@ -131,7 +131,7 @@ SELECT trip, time, row((atInstant).time, ST_AsText((atInstant).position)) atInst
     ) foo;
                             trip                            |           time           |                    atinstant                     
 ------------------------------------------------------------+--------------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:35:00 2015 | ("Tue Oct 20 08:35:00 2015","POINT(119.6 39.3)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:35:00 2015 | ("Tue Oct 20 08:35:00 2015","POINT(119.6 39.3)")
 (1 row)
 
 -- inner range (given intermedia time point)
@@ -147,7 +147,7 @@ SELECT trip, time, row((atInstant).time, ST_AsText((atInstant).position)) atInst
     ) foo;
                             trip                            |           time           |                     atinstant                     
 ------------------------------------------------------------+--------------------------+---------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:03:00 2015 | ("Tue Oct 20 08:03:00 2015","POINT(119.54 39.2)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:03:00 2015 | ("Tue Oct 20 08:03:00 2015","POINT(119.54 39.2)")
 (1 row)
 
 -- trip query wth spatial constraints
@@ -165,8 +165,8 @@ SELECT trip, time, row((atInstant).time, ST_AsText((atInstant).position)) atInst
 SELECT * FROM trajectory.GetTrip('taxi', 'B134', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.65, 39.35)),4326));
  tid |          tstart          |           tend           
 -----+--------------------------+--------------------------
-  16 | Tue Oct 20 08:00:00 2015 | Tue Oct 20 08:10:00 2015
-  16 | Tue Oct 20 08:25:00 2015 | Tue Oct 20 08:35:00 2015
+  19 | Tue Oct 20 08:00:00 2015 | Tue Oct 20 08:10:00 2015
+  19 | Tue Oct 20 08:25:00 2015 | Tue Oct 20 08:35:00 2015
 (2 rows)
 
 -- inner range (given exact time point of one trip)
@@ -182,8 +182,8 @@ SELECT trip, time, row((atInstant).time, ST_AsText((atInstant).position)) atInst
     ) foo;
                             trip                            |           time           |                    atinstant                     
 ------------------------------------------------------------+--------------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | Tue Oct 20 08:35:00 2015 | ("Tue Oct 20 08:10:00 2015","POINT(119.4 39.2)")
- (16,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:35:00 2015 | ("Tue Oct 20 08:35:00 2015","POINT(119.6 39.3)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | Tue Oct 20 08:35:00 2015 | ("Tue Oct 20 08:10:00 2015","POINT(119.4 39.2)")
+ (19,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:35:00 2015 | ("Tue Oct 20 08:35:00 2015","POINT(119.6 39.3)")
 (2 rows)
 
 -- inner range (given intermedia time point of one trip)
@@ -199,8 +199,8 @@ SELECT trip, time, row((atInstant).time, ST_AsText((atInstant).position)) atInst
     ) foo;
                             trip                            |           time           |                     atinstant                     
 ------------------------------------------------------------+--------------------------+---------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | Tue Oct 20 08:03:00 2015 | ("Tue Oct 20 08:03:00 2015","POINT(119.54 39.2)")
- (16,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:03:00 2015 | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | Tue Oct 20 08:03:00 2015 | ("Tue Oct 20 08:03:00 2015","POINT(119.54 39.2)")
+ (19,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:03:00 2015 | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
 (2 rows)
 
 -- out of range (given time point between trips)
@@ -216,8 +216,8 @@ SELECT trip, time, row((atInstant).time, ST_AsText((atInstant).position)) atInst
     ) foo;
                             trip                            |           time           |                    atinstant                     
 ------------------------------------------------------------+--------------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | Tue Oct 20 08:20:00 2015 | ("Tue Oct 20 08:10:00 2015","POINT(119.4 39.2)")
- (16,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:20:00 2015 | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | Tue Oct 20 08:20:00 2015 | ("Tue Oct 20 08:10:00 2015","POINT(119.4 39.2)")
+ (19,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | Tue Oct 20 08:20:00 2015 | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
 (2 rows)
 
 ---------------------------------------------------------------
@@ -238,7 +238,7 @@ SELECT trip, time, row((atInstant).time, ST_AsText((atInstant).position)) atInst
 SELECT trajectory.GetTrip('taxi', 'B134', ST_SetSRID(ST_MakeBox2D(ST_Point(119.25, 39.15),ST_Point(119.65, 39.35)),4326));
                           gettrip                           
 ------------------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015")
 (1 row)
 
 -- trip case #1 and query point #5 and default precision
@@ -254,7 +254,7 @@ SELECT trip, ST_AsText(position) position, row((atInstant).time, ST_AsText((atIn
     ) foo;
                             trip                            |     position      |                    atinstant                     
 ------------------------------------------------------------+-------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
 (1 row)
 
 -- trip case #1 and query point near #5 and default precision
@@ -285,7 +285,7 @@ SELECT trip, ST_AsText(position) position, row((atInstant).time, ST_AsText((atIn
     ) foo;
                             trip                            |      position      |                    atinstant                     
 ------------------------------------------------------------+--------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.42 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.42 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
 (1 row)
 
 -- trip query wth spatial constraints
@@ -303,8 +303,8 @@ SELECT trip, ST_AsText(position) position, row((atInstant).time, ST_AsText((atIn
 SELECT * FROM trajectory.GetTrip('taxi', 'B134', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.65, 39.35)),4326));
  tid |          tstart          |           tend           
 -----+--------------------------+--------------------------
-  16 | Tue Oct 20 08:00:00 2015 | Tue Oct 20 08:10:00 2015
-  16 | Tue Oct 20 08:25:00 2015 | Tue Oct 20 08:35:00 2015
+  19 | Tue Oct 20 08:00:00 2015 | Tue Oct 20 08:10:00 2015
+  19 | Tue Oct 20 08:25:00 2015 | Tue Oct 20 08:35:00 2015
 (2 rows)
 
 -- trip case #1 and query point #5 and default precision
@@ -320,7 +320,7 @@ SELECT trip, ST_AsText(position) position, row((atInstant).time, ST_AsText((atIn
     ) foo;
                             trip                            |     position      |                    atinstant                     
 ------------------------------------------------------------+-------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
+ (19,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
 (1 row)
 
 -- trip case #1 and query point #5 and given precision 0.1
@@ -336,9 +336,9 @@ SELECT trip, ST_AsText(position) position, row((atInstant).time, ST_AsText((atIn
     ) foo;
                             trip                            |     position      |                    atinstant                     
 ------------------------------------------------------------+-------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:10:00 2015","POINT(119.4 39.2)")
- (16,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
- (16,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:30:00 2015","POINT(119.5 39.3)")
+ (19,"Tue Oct 20 08:00:00 2015","Tue Oct 20 08:10:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:10:00 2015","POINT(119.4 39.2)")
+ (19,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
+ (19,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.4 39.3) | ("Tue Oct 20 08:30:00 2015","POINT(119.5 39.3)")
 (3 rows)
 
 -- trip case #1 and query point near #5 and given precision 0.03
@@ -354,13 +354,13 @@ SELECT trip, ST_AsText(position) position, row((atInstant).time, ST_AsText((atIn
     ) foo;
                             trip                            |      position      |                    atinstant                     
 ------------------------------------------------------------+--------------------+--------------------------------------------------
- (16,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.41 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
+ (19,"Tue Oct 20 08:25:00 2015","Tue Oct 20 08:35:00 2015") | POINT(119.41 39.3) | ("Tue Oct 20 08:25:00 2015","POINT(119.4 39.3)")
 (1 row)
 
 -- drop it
 SELECT trajectory.DeleteTrajectory('taxi', 'B134');
                         deletetrajectory                        
 ----------------------------------------------------------------
- Trajectory taxi (B134) (with id = 16) is removed successfully.
+ Trajectory taxi (B134) (with id = 19) is removed successfully.
 (1 row)
 

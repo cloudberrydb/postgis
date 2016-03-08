@@ -21,7 +21,12 @@ SELECT trajectory.AppendTrajectory('taxi', 'B133', '2015-10-20 8:35:00', ST_SetS
 SELECT trajectory.AppendTrajectory('taxi', 'B133', '2015-10-20 8:40:00', ST_SetSRID(ST_Point(119.6, 39.4),4326));
 SELECT trajectory.AppendTrajectory('taxi', 'B133', '2015-10-20 8:45:00', ST_SetSRID(ST_Point(119.5, 39.4),4326));
 SELECT trajectory.AppendTrajectory('taxi', 'B133', '2015-10-20 8:50:00', ST_SetSRID(ST_Point(119.4, 39.4),4326));
-SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
+
+-- query all the samplings 
+SELECT 'taxi' as pool, 'B133' as taxi, time, ST_AsText(position) as position
+FROM trajectory.taxi
+WHERE id = name2id('taxi', 'B133') ORDER BY time;
+
 
 -- trip query wth temporal constraints
 SELECT * FROM trajectory.GetTrip('taxi', 'B133', '2015-10-20 8:13:00', '2015-10-20 8:33:00');
@@ -39,9 +44,10 @@ SELECT * FROM trajectory.GetTrip('taxi', 'B133', '2015-10-20 8:13:00', '2015-10-
 --
 SELECT trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.65, 39.35)),4326));
 
--- query all 
-SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
-
+-- query all the samplings 
+SELECT 'taxi' as pool, 'B133' as taxi, time, ST_AsText(position) as position
+FROM trajectory.taxi
+WHERE id = name2id('taxi', 'B133') ORDER BY time;
 
 
 -- I/O functions for Trip

@@ -75,18 +75,20 @@ WARNING:  We update the position's Geometry SRID to 4326
  t
 (1 row)
 
--- query it
-SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
- poolname | trjname |           time           |     st_astext     
-----------+---------+--------------------------+-------------------
- taxi     | B131    | Sat Oct 10 08:10:00 2015 | POINT(119.4 39.4)
- taxi     | B131    | Sat Oct 10 08:15:00 2015 | POINT(119.4 39.5)
- taxi     | B131    | Sat Oct 10 08:20:00 2015 | POINT(119.5 39.4)
- taxi     | B131    | Sat Oct 10 08:25:00 2015 | POINT(119.5 39.5)
- taxi     | B131    | Sat Oct 10 08:30:00 2015 | POINT(119.6 39.4)
- taxi     | B131    | Sat Oct 10 08:35:00 2015 | POINT(119.6 39.5)
- taxi     | B131    | Sat Oct 10 08:40:00 2015 | POINT(119.5 39.6)
- taxi     | B131    | Sat Oct 10 08:45:00 2015 | POINT(119.6 39.6)
+-- query all the samplings
+SELECT 'taxi' as pool, 'B131' as taxi, time, ST_AsText(position) as position
+FROM trajectory.taxi
+WHERE id = name2id('taxi', 'B131') ORDER BY time;
+ pool | taxi |           time           |     position      
+------+------+--------------------------+-------------------
+ taxi | B131 | Sat Oct 10 08:10:00 2015 | POINT(119.4 39.4)
+ taxi | B131 | Sat Oct 10 08:15:00 2015 | POINT(119.4 39.5)
+ taxi | B131 | Sat Oct 10 08:20:00 2015 | POINT(119.5 39.4)
+ taxi | B131 | Sat Oct 10 08:25:00 2015 | POINT(119.5 39.5)
+ taxi | B131 | Sat Oct 10 08:30:00 2015 | POINT(119.6 39.4)
+ taxi | B131 | Sat Oct 10 08:35:00 2015 | POINT(119.6 39.5)
+ taxi | B131 | Sat Oct 10 08:40:00 2015 | POINT(119.5 39.6)
+ taxi | B131 | Sat Oct 10 08:45:00 2015 | POINT(119.6 39.6)
 (8 rows)
 
 -----------------------------------------------------------
@@ -235,29 +237,24 @@ SELECT trajectory.AppendTrajectory('taxi', 'B132', '2015-10-20 8:50:00', ST_SetS
  t
 (1 row)
 
-SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, taxi T WHERE M.id = T. id ORDER BY T.time;
- poolname | trjname |           time           |     st_astext     
-----------+---------+--------------------------+-------------------
- taxi     | B131    | Sat Oct 10 08:10:00 2015 | POINT(119.4 39.4)
- taxi     | B131    | Sat Oct 10 08:15:00 2015 | POINT(119.4 39.5)
- taxi     | B131    | Sat Oct 10 08:20:00 2015 | POINT(119.5 39.4)
- taxi     | B131    | Sat Oct 10 08:25:00 2015 | POINT(119.5 39.5)
- taxi     | B131    | Sat Oct 10 08:30:00 2015 | POINT(119.6 39.4)
- taxi     | B131    | Sat Oct 10 08:35:00 2015 | POINT(119.6 39.5)
- taxi     | B131    | Sat Oct 10 08:40:00 2015 | POINT(119.5 39.6)
- taxi     | B131    | Sat Oct 10 08:45:00 2015 | POINT(119.6 39.6)
- taxi     | B132    | Tue Oct 20 08:00:00 2015 | POINT(119.6 39.2)
- taxi     | B132    | Tue Oct 20 08:05:00 2015 | POINT(119.5 39.2)
- taxi     | B132    | Tue Oct 20 08:10:00 2015 | POINT(119.4 39.2)
- taxi     | B132    | Tue Oct 20 08:15:00 2015 | POINT(119.3 39.2)
- taxi     | B132    | Tue Oct 20 08:20:00 2015 | POINT(119.3 39.3)
- taxi     | B132    | Tue Oct 20 08:25:00 2015 | POINT(119.4 39.3)
- taxi     | B132    | Tue Oct 20 08:30:00 2015 | POINT(119.5 39.3)
- taxi     | B132    | Tue Oct 20 08:35:00 2015 | POINT(119.6 39.3)
- taxi     | B132    | Tue Oct 20 08:40:00 2015 | POINT(119.6 39.4)
- taxi     | B132    | Tue Oct 20 08:45:00 2015 | POINT(119.5 39.4)
- taxi     | B132    | Tue Oct 20 08:50:00 2015 | POINT(119.4 39.4)
-(19 rows)
+-- query all the samplings
+SELECT 'taxi' as pool, 'B132' as taxi, time, ST_AsText(position) as position
+FROM trajectory.taxi
+WHERE id = name2id('taxi', 'B132') ORDER BY time;
+ pool | taxi |           time           |     position      
+------+------+--------------------------+-------------------
+ taxi | B132 | Tue Oct 20 08:00:00 2015 | POINT(119.6 39.2)
+ taxi | B132 | Tue Oct 20 08:05:00 2015 | POINT(119.5 39.2)
+ taxi | B132 | Tue Oct 20 08:10:00 2015 | POINT(119.4 39.2)
+ taxi | B132 | Tue Oct 20 08:15:00 2015 | POINT(119.3 39.2)
+ taxi | B132 | Tue Oct 20 08:20:00 2015 | POINT(119.3 39.3)
+ taxi | B132 | Tue Oct 20 08:25:00 2015 | POINT(119.4 39.3)
+ taxi | B132 | Tue Oct 20 08:30:00 2015 | POINT(119.5 39.3)
+ taxi | B132 | Tue Oct 20 08:35:00 2015 | POINT(119.6 39.3)
+ taxi | B132 | Tue Oct 20 08:40:00 2015 | POINT(119.6 39.4)
+ taxi | B132 | Tue Oct 20 08:45:00 2015 | POINT(119.5 39.4)
+ taxi | B132 | Tue Oct 20 08:50:00 2015 | POINT(119.4 39.4)
+(11 rows)
 
 -- case 1:
 --

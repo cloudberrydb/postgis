@@ -498,7 +498,6 @@ BEGIN
 	-- Add one extra column
 	sql := 'ALTER TABLE trajectory.' || quote_ident(pool_name)
 		|| ' ADD COLUMN ' || column_info; 
-	RAISE DEBUG ' ---> %', sql;
 	EXECUTE sql;
 
 	-- update the attribute number
@@ -506,7 +505,6 @@ BEGIN
 	sql := 'UPDATE trajectory.trajectory'
 		|| ' SET attrcount = ' || attr_count 
 		|| ' WHERE poolname = ' || quote_literal(pool_name);
-	RAISE DEBUG ' ---> %', sql;
 	EXECUTE sql;
 
 	RETURN 'trajectory.' || pool_name || '.' || split_part(column_info, ' ', 1) || ' added.'; 
@@ -540,7 +538,6 @@ BEGIN
     -- Drop one extra column
     sql := 'ALTER TABLE trajectory.' || quote_ident(pool_name)
         || ' DROP COLUMN ' || column_info;
-    RAISE DEBUG ' ---> %', sql;
     EXECUTE sql;
 
     -- update the attribute number
@@ -548,7 +545,6 @@ BEGIN
     sql := 'UPDATE trajectory.trajectory'
         || ' SET attrcount = ' || attr_count
         || ' WHERE poolname = ' || quote_literal(pool_name);
-    RAISE DEBUG ' ---> %', sql;
     EXECUTE sql;
 
     RETURN 'trajectory.' || pool_name || '.' || split_part(column_info, ' ', 1) || ' removed.';
@@ -713,6 +709,7 @@ RETURNS SETOF trajectory.Trip AS $$
 DECLARE
     trajectory_id OID;
     sql text;
+    sql2 text;
 	trip trajectory.Trip;
 	minT timestamp;
 	maxT timestamp;
@@ -782,7 +779,7 @@ BEGIN
         maxT = tend;
     END IF;
 
-	----   TODO： spatial constraints later
+	----  spatial constraints later
 	IF tregion IS NOT NULL THEN
 		-- Generate the basic sql for re-using
 	    sql := 'SELECT time FROM trajectory.' || quote_ident(pool_name)
@@ -829,7 +826,7 @@ BEGIN
             	|| ' WHERE id = ' || trajectory_id
 	    		|| ' AND time > TIMESTAMP ' || quote_literal(lastrec)
 				|| ' ORDER BY time ASC LIMIT 1';
-			EXECUTE sql LOOP INTO prefrec;
+			EXECUTE sql INTO prefrec;
 
 			-- Nor the last point inner this trajectory
 			IF prefrec IS NULL OR prefrec <> currrec THEN
@@ -899,6 +896,62 @@ $$ LANGUAGE 'sql' VOLATILE STRICT;
 
 
 
+--{
+--  Retrive a (set of ) trip from a set of trajectories
+--    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
+--    tstart, timestamp of the start to remove, can be NULL, means from initial point
+--    tregin, geometrical region
+--    coveredby, a flag indicates deleting the trajectory inside (or outside) tregin.
+--      it's useful, because sometime we focus on urban rather than county area.
+--
+CREATE OR REPLACE FUNCTION trajectory.GetTrips(
+    pool_name varchar,
+    tstart timestamp DEFAULT NULL,
+    tend timestamp DEFAULT NULL,
+    tregion geometry DEFAULT NULL,
+    coveredby boolean DEFAULT TRUE)
+RETURNS SETOF trajectory.Trip AS $$
+DECLARE
+	rec RECORD;
+	rec2 RECORD;
+BEGIN
+	-- illegal parameters
+	IF tstart IS NOT NULL AND tend IS NOT NULL AND tstart > tend THEN
+		RAISE WARNING 'Improper parameters, start time (%) not earlier than end time (%)!', tstart, tend;
+		RETURN;
+	END IF;
+
+    -- Verify pool name and trajectory name33
+    IF pool_name = '' THEN
+        RAISE EXCEPTION 'Pool name should NOT be empty';
+    END IF;
+
+    -- get meta-data of this trip
+    FOR rec IN SELECT trjname FROM trajectory.trajectory WHERE poolname = pool_name ORDER BY id LOOP
+		FOR rec2 IN SELECT * FROM trajectory.GetTrip(pool_name, rec.trjname, $2, $3, $4, $5) LOOP
+			RETURN NEXT rec2;
+		END LOOP;
+	END LOOP;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE;
+--}trajectory.GetTrips(pool_name, temporal, spatial)
+
+
+--{
+--  Retrive a (set of ) trip from a set of trajectories
+--    pool_name, name of trajectory set, e.g, 'taxi', 'bus', 'ferry' etc
+--    tregin, geometrical region
+--    coveredby, a flag indicates deleting the trajectory inside (or outside) tregin.
+--      it's useful, because sometime we focus on urban rather than county area.
+--
+CREATE OR REPLACE FUNCTION trajectory.GetTrips(
+    pool_name varchar,
+    tregion geometry,
+    coveredby boolean DEFAULT TRUE)
+RETURNS SETOF trajectory.Trip AS $$
+	SELECT trajectory.GetTrips($1, NULL, NULL, $2, $3); 
+$$ LANGUAGE 'sql' VOLATILE STRICT;
+--}trajectory.GetTrips(pool_name, spatial)
 
 --{
 --  Retrive the head point of a trajectory
