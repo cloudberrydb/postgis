@@ -1,5 +1,9 @@
 #Makefile for Geospatial/Traje/testdirctory/Regression
 
+# TODO: comment out this line when merging to main branch
+#   because this line takes a short cut for developing
+FAST_TEST = yes
+
 top_builddir = ../../../../../
 testdir = .
 
@@ -51,7 +55,6 @@ REGRESS = $(TEST_FIRST) \
 
 all check: installcheck
 
-FAST_TEST = yes
 ifdef FAST_TEST
 # now we use compiled 'pg_regress' for test
 installcheck: pre_install_gis_fast

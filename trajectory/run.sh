@@ -3,6 +3,9 @@ dropdb test
 createdb test -T gis
 psql -d test -f /home/gpadmin/greenplum-db-devel/share/postgresql/contrib/trajectory.sql
 
+# regressing
+# make check
+
 # test: prepare datasets
 psql -d test -c "SELECT trajectory.CreateTrajectory('taxi', 'B123',  4326, 0.00001)"
 psql -d test -c "SELECT trajectory.CreateTrajectory('taxi', 'B124',  4326, 0.00001)"

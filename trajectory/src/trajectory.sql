@@ -41,7 +41,7 @@ CREATE TYPE trajectory.TPoint AS (
 CREATE TYPE trajectory.TPointAttr AS (
 	time timestamp,
 	position point,
-	attribute xml
+	attributes jsonb 
 );
 
 -- similar to Box type
@@ -68,28 +68,10 @@ CREATE TYPE trajectory.TPillar AS (
 	circle trajectory.TCircle
 );
 
--- Composite Types used in SQL as 
---    the argument or return type of UDFs
-CREATE TYPE trajectory.TripHead AS (
-	name varchar,
-	lifespan trajectory.TPeriod,
-	extent trajectory.TRegion,
-	npoint integer
-);
-
-CREATE TYPE trajectory.TripBody AS (
-	head trajectory.TripHead,
-	trace integer[][3]
-
--- FIXME: GPDB 4.3 doesn't support UDT array
---	trace trajectory.TPoint []
-);
-
-
 
 ------------------------------------------------------------------------------
--- Functions to  create trajectory pool which is composed with a BIG spatio-temporal
---    sequence, so that we could retrival it.
+-- Functions to  create trajectory pool which is composed with a BIG 
+--    spatio-temporal sequence, so that we could retrival it.
 ------------------------------------------------------------------------------
 
 -- check Postgis is installed
@@ -581,6 +563,76 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql' VOLATILE STRICT;
 --} trajectory.AppendTrajectoryWithAttr
+
+
+-----------------------------------------------------------------------
+-- TRIP is the basic type for understanding the trajectories, e.g,
+--    we wanna 
+-----------------------------------------------------------------------
+-- Composite Types used in SQL as 
+--    the argument or return type of UDFs
+CREATE TYPE trajectory.TripHead AS (
+	name varchar,
+	lifespan trajectory.TPeriod,
+	extent trajectory.TRegion,
+	npoint integer
+);
+
+CREATE TYPE trajectory.TripBody AS (
+	head trajectory.TripHead,
+	trace trajectory.TPoint []
+);
+
+-- Expend it to flat
+CREATE TYPE trajectory.Trip AS (
+	tid OID,
+    tstart timestamp,
+    tend timestamp
+);
+
+
+------------------------------------------------------------------------------
+-- Trip
+--	We treat a subsegment truncted by temporal and/or spatial constraints
+--  An illustration on trajectory concepts is:
+--		Routes 1-->n Trajectories 1-->n Trips
+--			where '1-->n' is a one-to-many relationship
+--
+--	In this version we focus on trip-related operations. A trajectory can
+--		be treated as one trip. 
+------------------------------------------------------------------------------
+
+
+-- Trip in/out functions
+-- Example of GetTrip():
+-- SELECT intgeom
+-- FROM (
+--   SELECT ST_Intersection(t1, t2) AS intgeom
+--   FROM GetTrip('taxi','b1234', period) t1,
+--		  GetTrip('taxi','b4567', period) t2
+--   WHERE ST_Intersects(t1, t2);
+-- ) foo
+-- WHERE NOT ST_IsEmpty(intgeom);
+
+
+------------------------------------------------------------------------------
+-- Point Query
+------------------------------------------------------------------------------
+
+--{
+--  Retrive a trajectory with a 'point' constrain
+--    Here 'point' may be a time point, or a spatial point
+--    Usecases:
+--		Select atinstant(Trip, time)
+--		FROM GetTrip('taxi','b1234') t1;
+--    e.g, 'taxi', 'bus', 'ferry' etc
+--CREATE OR REPLACE FUNCTION trajectory.atInstant()
+
+
+-- Range Query
+--{
+--  Retrive a trajectory with a 'range' constrain
+--    e.g, 'taxi', 'bus', 'ferry' etc
 
 
 ------------------------------------------------------------------------------
