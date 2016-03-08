@@ -35,7 +35,8 @@ TEST_IO = \
 # trip 
 TEST_BASIC_FUNC = \
 	gettrip \
-	trip_io
+	trip_io \
+	trip_point_query
 
 # not used
 TEST_LAST =

@@ -7,7 +7,7 @@
  */
 
 
-SET client_min_messages TO warning;
+SET client_min_messages TO notice; --warning;
 
 CREATE SCHEMA trajectory;
 
@@ -1039,16 +1039,179 @@ $$ LANGUAGE 'sql' STABLE STRICT;
 
 ------------------------------------------------------------------------------
 -- Point Query
-------------------------------------------------------------------------------
-
---{
 --  Retrive a trajectory with a 'point' constrain
 --    Here 'point' may be a time point, or a spatial point
 --    Usecases:
 --		Select atinstant(Trip, time)
 --		FROM GetTrip('taxi','b1234') t1;
---    e.g, 'taxi', 'bus', 'ferry' etc
---CREATE OR REPLACE FUNCTION trajectory.atInstant()
+------------------------------------------------------------------------------
+
+--{
+--  Retrive a trajectory with a temproal constrain
+--    _trip: a trajecotry trip
+--    _time: time point to query
+--    _alg: algorithm to calculate the intermedia point
+--		default value is 0, means Euclidean distance, the
+--		only method we support now.
+--
+--	TODO: consider to import a "Time Threshold" for cases
+--		query instant is far from nearest time points, e.g.,
+--		we consider the sampling interval 30s or 1m of taxis
+--		as a possible threshold, query time with interval larger
+--		than this threshold will return NULL. 
+CREATE OR REPLACE FUNCTION trajectory.atInstant(
+			_trip trajectory.Trip, _time timestamp,
+			_alg integer DEFAULT 0 )
+RETURNS trajectory.TPoint AS $$
+DECLARE
+	rec RECORD;
+	upper trajectory.TPoint;
+	lower trajectory.TPoint;
+	rate float;
+	ret trajectory.TPoint%ROWTYPE;
+BEGIN
+	-- Euclidean measurement is supported only 
+	IF _alg <> 0 THEN
+		RAISE NOTICE 'We support Euclidean measurement only currently.';
+		RETURN NULL;
+	END IF;
+
+	--  out of range [lower bound, upper bound]
+	----  for a trip with single point, it's returned here.
+	---
+	----  I've craeted an issue on this:
+	----    https://github.com/greenplum-db/gpdb/issues/158
+	IF _time >= _trip.tend THEN
+		ret = trajectory.Tail(_trip);
+		RETURN ret;
+
+	ELSIF _time <= _trip.tstart THEN
+		ret = trajectory.Head(_trip); 
+		RETURN ret;
+
+	END IF;
+
+	-- at least two point inner a trip and the query time is inbounds
+	FOR rec IN SELECT poolname,srid FROM trajectory.trajectory WHERE id = _trip.tid
+	LOOP
+		EXECUTE 'SELECT id, time, position FROM trajectory.'
+			|| quote_ident(rec.poolname) 
+			|| ' WHERE id = ' || _trip.tid
+			|| ' AND time <= TIMESTAMP ' || quote_literal(_time)
+			|| ' ORDER BY time DESC LIMIT 1'
+		INTO lower;
+
+		---- lowerbound found
+		IF lower IS NOT NULL THEN
+			------ if a sampling matchs the given time exactly
+			IF lower.time = _time THEN
+				RETURN lower;
+			ELSE
+				EXECUTE 'SELECT id, time, position FROM trajectory.'
+					|| quote_ident(rec.poolname) 
+					|| ' WHERE id = ' || _trip.tid
+					|| ' AND time > TIMESTAMP ' || quote_literal(_time)
+					|| ' ORDER BY time ASC LIMIT 1'
+				INTO upper;
+		
+				---- upperbound found
+				IF upper IS NOT NULL THEN
+					-- intermedia point according to time given
+					IF upper.time <= lower.time THEN
+						RAISE NOTICE 'Upper bound equals to lower bound, skip it.', _time;
+						RETURN NULL;
+					END IF;
+		
+					-- interpolation	
+					ret.tid = upper.tid;
+					ret.time = _time;
+					rate = (_time - lower.time)/(upper.time - lower.time);
+					ret.position = ST_SetSRID(
+						ST_MakePoint(
+							(ST_X(upper.position) - ST_X(lower.position)) * rate + ST_X(lower.position),
+							(ST_Y(upper.position) - ST_Y(lower.position)) * rate + ST_Y(lower.position)
+						), rec.srid);
+					RETURN ret;	
+				ELSE
+					---- shall not happend
+					RAISE NOTICE 'Upper bound of timestamp % is NULL, skip it.', _time;
+					RETURN NULL;
+				END IF;
+			END IF;
+		END IF;
+		
+		---- shall not happend
+		RAISE NOTICE 'Lower bound of timestamp % is NULL, skip it.', _time;
+		RETURN NULL;
+	END LOOP;
+
+	-- if nothing found
+	RETURN NULL;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE STRICT;
+--}trajectory.atInstant()
+
+
+--{
+--  Retrive a trajectory with a spatial constrain
+--    _trip: a trajecotry trip
+--    _location: geographic point to query
+--    _threshold: redius to calculate the intermedia point
+CREATE OR REPLACE FUNCTION trajectory.atInstant(
+            _trip trajectory.Trip,
+			_position geometry,
+            _threshold float DEFAULT 0 )
+RETURNS SETOF trajectory.TPoint AS $$
+DECLARE
+    rec RECORD;
+	threshold float;
+	position geometry;
+	ret trajectory.TPoint%ROWTYPE;
+BEGIN
+	-- store the input parameters, because GPDB doesn't allow to modify input
+	threshold = _threshold;
+	position = _position;
+
+    -- threshold should >= 0
+    IF threshold < 0 THEN
+        RAISE NOTICE 'threshold (%) is NOT great than or equal to zero.', threshold;
+        RETURN;
+    END IF;
+
+    -- get meta-data of this trip
+    FOR rec IN SELECT * FROM trajectory.trajectory WHERE id = _trip.tid
+    LOOP
+	----  theshold less than the precision doesn't make sense
+		IF threshold < rec.precision THEN
+			threshold = rec.precision;
+		END IF;
+
+	----  the spatial coordination of given position should match the trajectory
+	----	otherwise transform its SRID to the trajectory's: Transform() not SetSRID();
+		IF ST_SRID(position) <> rec.srid THEN
+			position = ST_Transform(position, rec.srid);
+		END IF; 
+
+
+	----  theshold less than the precision doesn't make sense
+        FOR ret IN EXECUTE 'SELECT id, time, position FROM trajectory.'
+            || quote_ident(rec.poolname)
+            || ' WHERE id = ' || _trip.tid
+            || ' AND time >= TIMESTAMP ' || quote_literal(_trip.tstart)
+            || ' AND time <= TIMESTAMP ' || quote_literal(_trip.tend)
+            || ' AND ST_Distance(position, ' || quote_literal(position) || '::geometry) <= ' || threshold
+			|| ' ORDER BY time'
+		LOOP
+			RETURN NEXT ret;
+		END LOOP;
+	END LOOP;
+
+	-- if nothing found
+	RETURN;
+END;
+$$ LANGUAGE 'plpgsql' VOLATILE STRICT;
+--}trajectory.atInstant()
+
 
 
 -- Range Query

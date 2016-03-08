@@ -120,6 +120,26 @@ SELECT M.poolname, M.trjname, T.time, ST_AsText(T.position) FROM trajectory M, t
 -----------------------------------------------------------
 ---  spatio-temporal constraints
 -----------------------------------------------------------
+-- trip query wth temporal constraints
+SELECT * FROM trajectory.GetTrip('taxi', 'B132', '2015-10-20 8:13:00', '2015-10-20 8:33:00');
+
+-- trip query wth spatial constraints
+--
+--          10------9------8      #             x-------x------x
+--                         |      #                            |
+--                         |      #         ****************
+--  4-------5-------6------7     ==>    x---*---5-------6--*---x
+--  |                             #     |   *              *
+--  |                             #     |   *              *
+--  3-------2-------1------0      #     x---*---2-------1--*---x
+--                                          ****************
+--
+SELECT * FROM trajectory.GetTrip('taxi', 'B132', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.65, 39.35)),4326));
+
+-- trip query wth both temporal and spatial constraints
+SELECT * FROM trajectory.GetTrip('taxi', 'B132', 
+	TIMESTAMP '2015-10-20 8:13:00', TIMESTAMP '2015-10-20 8:33:00', 
+	ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.65, 39.35)),4326));
 
 
 -- drop it

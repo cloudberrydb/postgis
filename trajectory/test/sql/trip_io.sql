@@ -73,16 +73,24 @@ SELECT trajectory.Name2ID('taxi','B134');
 
 -- Count, MakeLine
 SELECT * FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip;
+	-- public.count()
+SELECT count(*) FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip;
+
+	-- trajectory.count()
+SELECT trip, trajectory.Count(trip) FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip;
+
 	-- 3 trips, each of which has 2 point2
 SELECT trip.tid AS ID, ST_AsText(MakeLine(trip)) AS Line FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip;
-SELECT trajectory.ID2Name(trip.tid) AS Name, count(trip) Points FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip;
+SELECT trajectory.ID2Name(trip.tid) AS Name, trajectory.Count(trip) Points FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip;
 
 	-- 3 trips, each of which has 1 point
 SELECT trip.tid AS ID, ST_AsText(MakeLine(trip)) AS Line FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326)) as trip;
-SELECT trajectory.ID2Name(trip.tid) AS Name, count(trip) Points FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326)) as trip;
+SELECT trajectory.ID2Name(trip.tid) AS Name, trajectory.Count(trip) Points FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326)) as trip;
 
+	-- 3 trips, each of which has 2 points
 SELECT trajectory.ID2Name(trip.tid) AS Name, ST_AsText(MakeLine(trip)) AS Line FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.45, 39.45)),4326)) as trip;
 SELECT trajectory.ID2Name(trip.tid) AS Name, MakeGeoJSON(trip) AS JSON FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.55, 39.45)),4326)) as trip;
+
 	-- 2 trips, each of which has 3 point
 SELECT trajectory.ID2Name(trip.tid) AS Name, MakeGeoJSON(trip) AS JSON FROM trajectory.GetTrip('taxi', 'B133', ST_SetSRID(ST_MakeBox2D(ST_Point(119.35, 39.15),ST_Point(119.65, 39.35)),4326)) as trip;
 
