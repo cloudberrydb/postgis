@@ -13661,3 +13661,18 @@ index 86df62a..70a3d24 100644
 +	sed -i "s|export POSTGIS_GDAL_ENABLED_DRIVERS=DISABLE_ALL||g" $$GPHOME/greenplum_path.sh
 +	sed -i '$${/^$$/d}' $$GPHOME/greenplum_path.sh
 +	sed -i '$${/^$$/d}' $$GPHOME/greenplum_path.sh
+diff --git a/postgis/build/postgis-2.1.5/raster/loader/raster2pgsql.c b/postgis/build/postgis-2.1.5/raster/loader/raster2pgsql.c
+index 15828f8..3bf1606 100644
+--- a/postgis/build/postgis-2.1.5/raster/loader/raster2pgsql.c
++++ b/postgis/build/postgis-2.1.5/raster/loader/raster2pgsql.c
+@@ -1075,7 +1075,9 @@ create_index(
+ 		rtdealloc(_column);
+ 		return 0;
+ 	}
+-	sprintf(sql, "CREATE INDEX ON %s%s USING gist (st_convexhull(%s))%s%s;",
++	sprintf(sql, "CREATE INDEX %s_%s_index ON %s%s USING gist (st_convexhull(%s))%s%s;",
++		_table,
++		_column,
+ 		(schema != NULL ? schema : ""),
+ 		table,
+ 		column,
