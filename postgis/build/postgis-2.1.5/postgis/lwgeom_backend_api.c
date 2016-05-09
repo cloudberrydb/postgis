@@ -79,7 +79,7 @@ struct lwgeom_backend_definition lwgeom_backends[LWGEOM_NUM_BACKENDS] = {
 char* lwgeom_backend_name;
 struct lwgeom_backend_definition* lwgeom_backend = &lwgeom_backends[0];
 
-static void lwgeom_backend_switch( const char* newvalue, void* extra )
+static void lwgeom_backend_switch( const char* newvalue, bool doit, GucSource source)
 {
     int i;
 
@@ -100,13 +100,8 @@ void lwgeom_init_backend()
 				"Sets the PostGIS Geometry Backend.", /* short_desc */
 				"Sets the PostGIS Geometry Backend (allowed values are 'geos' or 'sfcgal')", /* long_desc */
 				&lwgeom_backend_name, /* valueAddr */
-				(char *)lwgeom_backends[0].name, /* bootValue */
 				PGC_USERSET, /* GucContext context */
-				0, /* int flags */
-#if POSTGIS_PGSQL_VERSION >= 91
-				NULL, /* GucStringCheckHook check_hook */
-#endif
-				lwgeom_backend_switch, /* GucStringAssignHook assign_hook */
+				(GucStringAssignHook)lwgeom_backend_switch, /* GucStringAssignHook assign_hook */
 				NULL  /* GucShowHook show_hook */
 				);
 }

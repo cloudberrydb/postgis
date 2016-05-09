@@ -22,6 +22,7 @@
 #include "lwgeom_pg.h"
 #include "liblwgeom.h"
 #include "lwgeom_export.h"
+#include "libsrid.h"
 
 Datum LWGEOM_asGML(PG_FUNCTION_ARGS);
 Datum LWGEOM_asKML(PG_FUNCTION_ARGS);
@@ -41,6 +42,17 @@ char * getSRSbySRID(int srid, bool short_crs)
 	char query[256];
 	char *srs, *srscopy;
 	int size, err;
+
+    /* In GPDB, we don't support the SRID retrieving from spatial_ref_sys,
+     *  otherwise we will meet the known issue: cannot access relation from segments.
+     *  so we search static hash table firstly to by-pass this issue issue.
+     */
+    if (getSRSbySRIDbyRule(srid, short_crs, query) != NULL) {
+        size = strlen(query) + 1;
+        srscopy = SPI_palloc(size);
+        memcpy(srscopy, query, size);
+        return srscopy;
+    }
 
 	if (SPI_OK_CONNECT != SPI_connect ())
 	{
@@ -102,6 +114,11 @@ int getSRIDbySRS(const char* srs)
 {
 	char query[256];
 	int srid, err;
+
+        srid = getSRIDbySRSbyRule(srs);
+        if (srid != 0) {
+            return srid;
+        }
 
 	if (srs == NULL)
 		return 0;

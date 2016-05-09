@@ -3,8 +3,9 @@ SET client_min_messages TO warning;
 DROP TABLE IF EXISTS raster_nmapalgebra_in;
 CREATE TABLE raster_nmapalgebra_in (
 	rid integer,
-	rast raster
-);
+	rast raster,
+	sid integer	DEFAULT 1 --segment id to generate sorted NOTICE msgs.
+) DISTRIBUTED BY (sid);
 
 INSERT INTO raster_nmapalgebra_in
 	SELECT 0, NULL::raster AS rast UNION ALL
@@ -58,7 +59,8 @@ SELECT
 		1, 1, 1
 	) = 255
 FROM raster_nmapalgebra_in
-WHERE rid IN (2,3,4);
+WHERE rid IN (2,3,4)
+ORDER BY rid;
 
 SELECT
 	rid,
@@ -74,7 +76,8 @@ SELECT
 		1, 1, 1
 	)::numeric, 2) = 3.14
 FROM raster_nmapalgebra_in
-WHERE rid IN (3,4);
+WHERE rid IN (3,4)
+ORDER BY rid;
 
 WITH foo AS (
 	SELECT
@@ -94,7 +97,8 @@ SELECT
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1)),
 	ST_Value(rast, 1, 1, 1)
-FROM foo;
+FROM foo
+ORDER BY rid;
 
 INSERT INTO raster_nmapalgebra_in
 	SELECT 10, ST_AddBand(ST_MakeEmptyRaster(2, 2, 0, 0, 1, -1, 0, 0, 0), 1, '16BUI', 1, 0) AS rast UNION ALL
@@ -343,7 +347,8 @@ SELECT
 	rid2,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2;
 
 WITH foo AS (
 	SELECT
@@ -363,7 +368,8 @@ SELECT
 	rid2,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2;
 
 WITH foo AS (
 	SELECT
@@ -386,7 +392,8 @@ SELECT
 	rid2,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2;
 
 WITH foo AS (
 	SELECT
@@ -409,7 +416,8 @@ SELECT
 	rid2,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2;
 
 WITH foo AS (
 	SELECT
@@ -436,7 +444,8 @@ SELECT
 	rid3,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2,3;
 
 WITH foo AS (
 	SELECT
@@ -463,7 +472,8 @@ SELECT
 	rid3,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2,3;
 
 WITH foo AS (
 	SELECT
@@ -490,7 +500,8 @@ SELECT
 	rid3,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2,3;
 
 WITH foo AS (
 	SELECT
@@ -517,7 +528,8 @@ SELECT
 	rid3,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2,3;
 
 WITH foo AS (
 	SELECT
@@ -541,7 +553,8 @@ SELECT
 	rid3,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2,3;
 
 INSERT INTO raster_nmapalgebra_in
 	SELECT 30, ST_AddBand(ST_AddBand(ST_AddBand(ST_MakeEmptyRaster(2, 2, 0, 0, 1, -1, 0, 0, 0), 1, '16BUI', 1, 0), 2, '8BUI', 10, 0), 3, '32BUI', 100, 0) AS rast UNION ALL
@@ -562,7 +575,8 @@ SELECT
 	rid,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY rid;
 
 WITH foo AS (
 	SELECT
@@ -578,7 +592,8 @@ SELECT
 	rid,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY rid;
 
 WITH foo AS (
 	SELECT
@@ -595,7 +610,8 @@ SELECT
 	rid,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY rid;
 
 WITH foo AS (
 	SELECT
@@ -616,7 +632,8 @@ SELECT
 	rid2,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY 1,2;
 
 WITH foo AS (
 	SELECT
@@ -632,7 +649,8 @@ SELECT
 	rid,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY rid;
 
 WITH foo AS (
 	SELECT
@@ -648,7 +666,8 @@ SELECT
 	rid,
 	(ST_Metadata(rast)),
 	(ST_BandMetadata(rast, 1))
-FROM foo;
+FROM foo
+ORDER BY rid;
 
 -- Ticket #2803
 -- http://trac.osgeo.org/postgis/ticket/2803
@@ -695,7 +714,8 @@ SELECT
 		1, 1, 1
 	) = 255
 FROM raster_nmapalgebra_in
-WHERE rid IN (2);
+WHERE rid IN (2)
+ORDER BY rid;
 
 DROP FUNCTION IF EXISTS raster_nmapalgebra_test(double precision[], int[], text[]);
 DROP FUNCTION IF EXISTS raster_nmapalgebra_test_bad_return(double precision[], int[], text[]);

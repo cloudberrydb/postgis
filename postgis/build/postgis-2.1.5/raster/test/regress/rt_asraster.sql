@@ -493,8 +493,8 @@ FROM (
 		END AS same_alignment
 	FROM raster_asraster_dst d
 	CROSS JOIN raster_asraster_rast r
-	ORDER BY d.rid
-) foo;
+) foo
+ORDER BY rid;
 
 DELETE FROM "spatial_ref_sys" WHERE srid = 992163;
 DELETE FROM "spatial_ref_sys" WHERE srid = 993309;

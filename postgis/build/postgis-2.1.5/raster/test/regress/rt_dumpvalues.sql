@@ -7,7 +7,7 @@ CREATE TABLE raster_dumpvalues (
 CREATE OR REPLACE FUNCTION make_raster(
 	rast raster DEFAULT NULL,
 	pixtype text DEFAULT '8BUI',
-	rows integer DEFAULT 3,
+	nrows integer DEFAULT 3,
 	columns integer DEFAULT 3,
 	nodataval double precision DEFAULT 0,
 	start_val double precision DEFAULT 1,
@@ -28,17 +28,17 @@ CREATE OR REPLACE FUNCTION make_raster(
 	BEGIN
 		IF rast IS NULL THEN
 			nband := 1;
-			_rast := ST_AddBand(ST_MakeEmptyRaster(columns, rows, 0, 0, 1, -1, 0, 0, 0), nband, pixtype, 0, nodataval);
+			_rast := ST_AddBand(ST_MakeEmptyRaster(columns, nrows, 0, 0, 1, -1, 0, 0, 0), nband, pixtype, 0, nodataval);
 		ELSE
 			nband := ST_NumBands(rast) + 1;
 			_rast := ST_AddBand(rast, nband, pixtype, 0, nodataval);
 		END IF;
 
 		value := start_val;
-		values := array_fill(NULL::double precision, ARRAY[columns, rows]);
+		values := array_fill(NULL::double precision, ARRAY[columns, nrows]);
 
 		FOR y IN 1..columns LOOP
-			FOR x IN 1..rows LOOP
+			FOR x IN 1..nrows LOOP
 				IF skip_expr IS NULL OR length(skip_expr) < 1 THEN
 					result := TRUE;
 				ELSE
@@ -87,14 +87,14 @@ SELECT
 	rid,
 	(ST_DumpValues(rast)).*
 FROM raster_dumpvalues
-ORDER BY rid;
+ORDER BY 1, 2;
 
 SELECT
 	rid,
 	(ST_DumpValues(rast, ARRAY[3,2,1])).*
 FROM raster_dumpvalues
 WHERE rid > 20
-ORDER BY rid;
+ORDER BY 1, 2 DESC;
 
 DROP TABLE IF EXISTS raster_dumpvalues;
 

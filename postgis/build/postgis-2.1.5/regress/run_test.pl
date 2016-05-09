@@ -289,8 +289,10 @@ print "\nRunning tests\n\n";
 
 foreach $TEST (@ARGV)
 {
+
 	# catch a common mistake (strip trailing .sql)
 	$TEST =~ s/.sql$//;
+
 
 	start_test($TEST);
 
@@ -614,6 +616,10 @@ sub run_simple_test
 	@lines = grep(!/^(LOG|SET|TRUNCATE)/, @lines);
 	@lines = grep(!/^LINE \d/, @lines);
 	@lines = grep(!/^\s+$/, @lines);
+	@lines = grep(!/NOTICE:  Table doesn't have 'distributed by' clause/i, @lines);
+	@lines = grep(!/NOTICE:  OIDS=TRUE is not recommended for user-created tables/i, @lines);
+	@lines = grep(!/WARNING:  Referential integrity \(FOREIGN KEY\) constraints are not supported/i, @lines);
+	@lines = grep(!/NOTICE:  no non-null\/empty features, unable to compute statistics/i, @lines);
 
 	# Morph values into expected forms
 	for ( my $i = 0; $i < @lines; $i++ )
@@ -624,6 +630,12 @@ sub run_simple_test
 		$lines[$i] =~ s/[eE]([+-])0+(\d+)/e$1$2/g;
 		$lines[$i] =~ s/Self-intersection .*/Self-intersection/;
 		$lines[$i] =~ s/^ROLLBACK/COMMIT/;
+		# kick off boring DEBUG info: (sourcefile.c line)
+		$lines[$i] =~ s/\s+\([^(]*\.c:\d+\)//g;
+		# kick off boring DEBUG info: (segN sliceN hostname:port pid=NN)
+		$lines[$i] =~ s/\s+\([^(]*seg\d+ slice\d+ [^)]* pid=\d+\)//g;
+		# kick off boring DEBUG info: (segN hostname:port pid=NN)
+		$lines[$i] =~ s/\s+\([^(]*seg\d+ [^)]* pid=\d+\)//g;
 	}
 	
 	# Write out output file
@@ -776,7 +788,7 @@ sub run_dumper_and_check_output
 		}
 
 		# Compare with expected output if there is any.
-		
+
 		if ( -r $expected_shp_file )
 		{
 			show_progress();
@@ -840,7 +852,7 @@ sub run_raster_loader_and_check_output
 		    fail("$description: running raster2pgsql", $errfile);
 		    return 0;
 	    }
-	    
+
 	    if ( -r $expected_sql_file )
 	    {
 	        show_progress();
@@ -1091,8 +1103,7 @@ sub count_db_objects
 		select count(*) from pg_operator union all
 		select count(*) from pg_opclass union all
 		select count(*) from pg_namespace
-			where nspname NOT LIKE 'pg_%' union all
-		select count(*) from pg_opfamily ) 
+			where nspname NOT LIKE 'pg_%')
 		select sum(count) from counts");
 
  	return $count;
@@ -1107,10 +1118,12 @@ sub create_spatial
 	my ($cmd, $rv);
 	print "Creating database '$DB' \n";
 
-	$cmd = "createdb --encoding=UTF-8 --template=template0 --lc-collate=C $DB > $REGRESS_LOG";
+	$cmd = "createdb --encoding=UTF-8 --template=template0 $DB > $REGRESS_LOG";
 	$rv = system($cmd);
-	$cmd = "createlang plpgsql $DB >> $REGRESS_LOG 2>&1";
-	$rv = system($cmd);
+
+#	Greenplum has installed plpqsel already.
+#	$cmd = "createlang plpgsql $DB >> $REGRESS_LOG 2>&1";
+#	$rv = system($cmd);
 
 	# Count database objects before installing anything
 	$OBJ_COUNT_PRE = count_db_objects();

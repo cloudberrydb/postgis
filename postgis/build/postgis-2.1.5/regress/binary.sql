@@ -31,9 +31,9 @@ SELECT st_force4d(g) FROM tm.geoms WHERE id < 15 ORDER BY id;
 INSERT INTO tm.geoms(g)
 SELECT st_setsrid(g,4326) FROM tm.geoms ORDER BY id;
 
-COPY tm.geoms TO :tmpfile WITH BINARY;
+COPY tm.geoms TO :tmpfile; -- WITH BINARY;
 CREATE TABLE tm.geoms_in AS SELECT * FROM tm.geoms LIMIT 0;
-COPY tm.geoms_in FROM :tmpfile WITH BINARY;
+COPY tm.geoms_in FROM :tmpfile; -- WITH BINARY;
 SELECT 'geometry', count(*) FROM tm.geoms_in i, tm.geoms o WHERE i.id = o.id
  AND ST_OrderingEquals(i.g, o.g);
 
@@ -45,9 +45,9 @@ WHERE geometrytype(g) NOT LIKE '%CURVE%'
   AND geometrytype(g) NOT LIKE 'TIN%'
 ;
 
-COPY tm.geogs TO :tmpfile WITH BINARY;
+COPY tm.geogs TO :tmpfile; -- WITH BINARY;
 CREATE TABLE tm.geogs_in AS SELECT * FROM tm.geogs LIMIT 0;
-COPY tm.geogs_in FROM :tmpfile WITH BINARY;
+COPY tm.geogs_in FROM :tmpfile; -- WITH BINARY;
 SELECT 'geometry', count(*) FROM tm.geogs_in i, tm.geogs o WHERE i.id = o.id
  AND ST_OrderingEquals(i.g::geometry, o.g::geometry);
 

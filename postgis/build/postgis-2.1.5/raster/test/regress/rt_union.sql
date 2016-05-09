@@ -18,13 +18,13 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast, 1) AS rast
+		ST_Union(rast, 1 order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
 	SELECT
 		'FIRST',
-		ST_Union(rast, 1, 'FIRST') AS rast
+		ST_Union(rast, 1, 'FIRST' order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
@@ -96,13 +96,13 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast, 1) AS rast
+		ST_Union(rast, 1 order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
 	SELECT
 		'FIRST',
-		ST_Union(rast, 1, 'FIRST') AS rast
+		ST_Union(rast, 1, 'FIRST' order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
@@ -165,13 +165,13 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast, 2) AS rast
+		ST_Union(rast, 2 order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
 	SELECT
 		'FIRST',
-		ST_Union(rast, 2, 'FIRST') AS rast
+		ST_Union(rast, 2, 'FIRST' order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
@@ -234,7 +234,7 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast, 1) AS rast
+		ST_Union(rast, 1 order by rid) AS rast
 	FROM raster_union_in;
 
 SELECT
@@ -263,13 +263,13 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast, ARRAY[ROW(1, 'LAST'), ROW(2, 'LAST')]::unionarg[]) AS rast
+		ST_Union(rast, ARRAY[ROW(1, 'LAST'), ROW(2, 'LAST')]::unionarg[]  order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
 	SELECT
 		'FIRST',
-		ST_Union(rast, ARRAY[ROW(1, 'FIRST'), ROW(2, 'FIRST')]::unionarg[]) AS rast
+		ST_Union(rast, ARRAY[ROW(1, 'FIRST'), ROW(2, 'FIRST')]::unionarg[] order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
@@ -350,19 +350,19 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST-1',
-		ST_Union(rast) AS rast
+		ST_Union(rast order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
 	SELECT
 		'LAST-2',
-		ST_Union(rast, 'last') AS rast
+		ST_Union(rast, 'last' order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
 	SELECT
 		'FIRST-2',
-		ST_Union(rast, 'first') AS rast
+		ST_Union(rast, 'first' order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
@@ -431,7 +431,7 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast) AS rast
+		ST_Union(rast order by rid) AS rast
 	FROM raster_union_in;
 
 SELECT

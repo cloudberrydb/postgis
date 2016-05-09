@@ -226,7 +226,7 @@ VALUES ( 5, '1x1, ip:7.5,2.5 scale:5,5 skew:3,7, srid:-1, width:1, height:1',
 
 SELECT 'T1', id, name, skewx
     FROM rt_properties_test
-    WHERE st_skewx(rast) != skewx;
+    WHERE st_skewx(rast) != skewx order by id;
 
 -----------------------------------------------------------------------
 -- st_skewy
@@ -234,7 +234,7 @@ SELECT 'T1', id, name, skewx
 
 SELECT 'T2', id, name, skewy
     FROM rt_properties_test
-    WHERE st_skewy(rast) != skewy;
+    WHERE st_skewy(rast) != skewy order by id;
 
 -----------------------------------------------------------------------
 -- st_setrotation
@@ -242,13 +242,13 @@ SELECT 'T2', id, name, skewy
 
 SELECT 'T3', id, name, round(st_rotation(rast)*1000000000000) as rotation
     FROM rt_properties_test
-    WHERE st_rotation(rast) != 0;
+    WHERE st_rotation(rast) != 0 order by id;
 
 INSERT INTO rt_properties_test
     (id, name, srid, width, height, scalex, scaley, ipx, ipy, skewx, skewy, rast)
     (SELECT id + 100, name, srid, width, height, scalex, scaley, ipx, ipy, skewx, skewy, st_setrotation(rast,0)
     FROM rt_properties_test
-    WHERE st_rotation(rast) != 0);
+    WHERE st_rotation(rast) != 0)  order by id;
 
 UPDATE rt_properties_test
     SET scalex = round(st_scalex(rast)*1000000000000),
@@ -261,7 +261,7 @@ UPDATE rt_properties_test
 
 SELECT 'T4', id, scalex, scaley, abs(skewx), abs(skewy), st_rotation(rast)
     FROM rt_properties_test
-    WHERE id > 100;
+    WHERE id > 100  order by id;
 
 UPDATE rt_properties_test
     SET rast = st_setrotation(rast,pi()/4)
@@ -279,7 +279,7 @@ UPDATE rt_properties_test
 SELECT 'T5', id, scalex, scaley, skewx, skewy, 
     round(st_rotation(rast)*1000000000000)
     FROM rt_properties_test
-    WHERE id > 100;
+    WHERE id > 100 order by id;
 
 UPDATE rt_properties_test
     SET rast = st_setrotation(rast,pi()/6)
@@ -297,7 +297,7 @@ UPDATE rt_properties_test
 SELECT 'T6', id, scalex, scaley, skewx, skewy, 
     round(st_rotation(rast)*1000000000000)
     FROM rt_properties_test
-    WHERE id > 100;
+    WHERE id > 100 order by id;
 
 DELETE FROM rt_properties_test
     WHERE id > 100;

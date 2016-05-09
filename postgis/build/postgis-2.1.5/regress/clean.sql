@@ -42,7 +42,7 @@ SELECT origin,caseno,
        st_equals(st_collectionextract(st_makevalid(orig),3), st_collectionextract(valid,3)), 
        st_isvalid(st_makevalid(orig)), -- paranoia
        (st_isvaliddetail(orig)).valid
-  FROM clean_cases;
+  FROM clean_cases order by origin desc,caseno;
 
 
 SELECT '#1719.1', ST_AsEWKT(ST_MakeValid('POINT(0 0)'));

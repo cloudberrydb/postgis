@@ -20,7 +20,6 @@
 #include "fmgr.h"
 
 #include "liblwgeom.h"
-#include "pgsql_compat.h"
 
 /* Install PosgreSQL handlers for liblwgeom use */
 void pg_install_lwgeom_handlers(void);

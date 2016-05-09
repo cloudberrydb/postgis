@@ -17040,8 +17040,8 @@ PGSQL_SHAREDIR=`$PG_CONFIG --sharedir`
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking PostgreSQL version... $PGSQL_FULL_VERSION" >&5
 $as_echo "checking PostgreSQL version... $PGSQL_FULL_VERSION" >&6; }
-if test ! "$PGSQL_MAJOR_VERSION" -ge 9; then
-	as_fn_error $? "PostGIS requires PostgreSQL >= 9.0" "$LINENO" 5
+if test ! "$PGSQL_MAJOR_VERSION" -ge 8; then
+	as_fn_error $? "PostGIS requires PostgreSQL >= 8.3" "$LINENO" 5
 fi
 
 PGXSOVERRIDE=0
@@ -17059,7 +17059,8 @@ PGSQL_FE_CPPFLAGS=-I`$PG_CONFIG --includedir`
 
 
 PGSRV_INC=`$PG_CONFIG --includedir-server`
-PGSQL_BE_CPPFLAGS="-I${PGSRV_INC}"
+PGPKG_INC=`$PG_CONFIG --pkgincludedir`
+PGSQL_BE_CPPFLAGS="-I${PGSRV_INC} -I${PGPKG_INC}/internal"
 case $host in
 	*mingw32*)
 		PGSQL_BE_CPPFLAGS="${PGSQL_BE_CPPFLAGS} -I${PGSRV_INC}/port/win32"

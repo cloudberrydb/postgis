@@ -114,14 +114,6 @@
 #define WKB_TRIANGLE_TYPE 17
 
 /**
-* Macro for reading the size from the GSERIALIZED size attribute.
-* Cribbed from PgSQL, top 30 bits are size. Use VARSIZE() when working
-* internally with PgSQL.
-*/
-#define SIZE_GET(varsize) (((varsize) >> 2) & 0x3FFFFFFF)
-#define SIZE_SET(varsize, size) (((varsize) & 0x00000003)|(((size) & 0x3FFFFFFF) << 2 ))
-
-/**
 * Tolerance used to determine equality.
 */
 #define EPSILON_SQLMM 1e-8

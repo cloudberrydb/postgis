@@ -2,13 +2,16 @@ DROP TABLE IF EXISTS raster_colormap_out;
 CREATE TABLE raster_colormap_out (
 	testid integer,
 	rid integer,
-	rast raster
-);
+	rast raster,
+    sid integer DEFAULT 1 --segment id to generate sorted NOTICE msgs.
+) DISTRIBUTED BY (sid);
+
 DROP TABLE IF EXISTS raster_colormap_in;
 CREATE TABLE raster_colormap_in (
 	rid integer,
-	rast raster
-);
+	rast raster,
+    sid integer DEFAULT 1 --segment id to generate sorted NOTICE msgs.
+) DISTRIBUTED BY (sid);
 
 INSERT INTO raster_colormap_in
 SELECT
@@ -127,7 +130,7 @@ SELECT
 	rid,
 	(ST_DumpValues(rast)).*
 FROM raster_colormap_out
-ORDER BY 1, 2;
+ORDER BY 1, 2, 3;
 
 DROP TABLE IF EXISTS raster_colormap_in;
 DROP TABLE IF EXISTS raster_colormap_out;

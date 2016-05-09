@@ -13,7 +13,6 @@
 #ifndef PG_LIBCOMMON_H
 #define PG_LIBCOMMON_H
 
-#include "pgsql_compat.h"
 #include "lwgeom_pg.h"
 #include "lwgeom_transform.h"
 

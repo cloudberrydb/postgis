@@ -450,7 +450,9 @@ AC_SUBST([PGSQL_FE_CPPFLAGS])
 
 dnl Extract the include flags for the backend (libpgcommon)
 PGSRV_INC=`$PG_CONFIG --includedir-server`
-PGSQL_BE_CPPFLAGS="-I${PGSRV_INC}"
+dnl 'cdb/cdbpublic.h' is store in 'internal' rather than 'server' in GPDB
+PGPKG_INC=`$PG_CONFIG --pkgincludedir`
+PGSQL_BE_CPPFLAGS="-I${PGSRV_INC} -I${PGPKG_INC}/internal"
 dnl Add $PGSRV_INC/port/win32 to MinGW build to pick up netdb.h
 case $host in
 	*mingw32*)

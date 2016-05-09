@@ -50,7 +50,6 @@
 
 #include "lwgeom_pg.h"
 #include "rt_pg.h"
-#include "pgsql_compat.h"
 
 #include "utils/lsyscache.h" /* for get_typlenbyvalalign */
 #include "utils/array.h" /* for ArrayType */
@@ -59,6 +58,8 @@
 #if POSTGIS_PGSQL_VERSION > 92
 #include "access/htup_details.h"
 #endif
+
+#include "libsrid.h" /* getSRSbySRIDbyRule() */
 
 /* maximum char length required to hold any double or long long value */
 #define MAX_DBL_CHARLEN (3 + DBL_MANT_DIG - DBL_MIN_EXP)
@@ -846,6 +847,7 @@ rtpg_getSR(int srid)
 	HeapTuple tuple;
 	char *tmp = NULL;
 	char *srs = NULL;
+    char query[256];
 
 /*
 SELECT
@@ -863,6 +865,20 @@ WHERE srid = X
 LIMIT 1
 */
 
+    //Greenplum
+    if (getSRSbySRIDbyRule(srid, true, query) != NULL) {
+        len = strlen(query) + 1;
+        srs = SPI_palloc(len);
+
+        if (NULL == srs) {
+            elog(ERROR, "rtpg_getSR: Could not allocate memory for spatial reference text\n");
+            return NULL;
+        }
+
+        memcpy(srs, query, len);
+        return srs;
+    }
+   
 	len = sizeof(char) * (strlen("SELECT CASE WHEN (upper(auth_name) = 'EPSG' OR upper(auth_name) = 'EPSGA') AND length(COALESCE(auth_srid::text, '')) > 0 THEN upper(auth_name) || ':' || auth_srid WHEN length(COALESCE(auth_name, '') || COALESCE(auth_srid::text, '')) > 0 THEN COALESCE(auth_name, '') || COALESCE(auth_srid::text, '') ELSE '' END, proj4text, srtext FROM spatial_ref_sys WHERE srid =  LIMIT 1") + MAX_INT_CHARLEN + 1);
 	sql = (char *) palloc(len);
 	if (NULL == sql) {
@@ -2750,15 +2766,16 @@ static rtpg_dumpvalues_arg rtpg_dumpvalues_arg_init() {
 static void rtpg_dumpvalues_arg_destroy(rtpg_dumpvalues_arg arg) {
 	int i = 0;
 
+/* Here we found a bug of PostGIS Raster */
 	if (arg->numbands) {
 		if (arg->nbands != NULL)
 			pfree(arg->nbands);
 
 		for (i = 0; i < arg->numbands; i++) {
-			if (arg->values[i] != NULL)
+			if (arg->values != NULL && arg->values[i] != NULL)
 				pfree(arg->values[i]);
 
-			if (arg->nodata[i] != NULL)
+			if (arg->nodata != NULL && arg->nodata[i] != NULL)
 				pfree(arg->nodata[i]);
 		}
 
@@ -3535,7 +3552,7 @@ Datum RASTER_setPixelValuesArray(PG_FUNCTION_ARGS)
 		pfree(nulls);
 	}
 	/* hasnosetvalue and nosetvalue */
-	else if (!PG_ARGISNULL(6) & PG_GETARG_BOOL(6)) {
+	else if (!PG_ARGISNULL(6) && PG_GETARG_BOOL(6)) {
 		hasnosetval = TRUE;
 		if (PG_ARGISNULL(7))
 			nosetvalisnull = TRUE;
@@ -16016,7 +16033,7 @@ Datum RASTER_mapAlgebraFctNgb(PG_FUNCTION_ARGS)
     memcpy((void *)VARDATA(txtCallbackParam), (void *)VARDATA(txtNodataMode), VARSIZE(txtNodataMode) - VARHDRSZ);
 
     /* pass the nodata mode into the user function */
-    cbdata.arg[1] = CStringGetDatum(txtCallbackParam);
+    cbdata.arg[1] = CStringGetDatum((char*)txtCallbackParam);
 
     strFromText = text_to_cstring(txtNodataMode);
     strFromText = rtpg_strtoupper(strFromText);
@@ -18039,8 +18056,8 @@ static int rtpg_union_noarg(rtpg_union_arg arg, rt_raster raster) {
 PG_FUNCTION_INFO_V1(RASTER_union_transfn);
 Datum RASTER_union_transfn(PG_FUNCTION_ARGS)
 {
-	MemoryContext aggcontext;
-	MemoryContext oldcontext;
+	MemoryContext aggcontext = NULL;
+	MemoryContext oldcontext = NULL;
 	rtpg_union_arg iwr = NULL;
 	int skiparg = 0;
 
@@ -18089,8 +18106,8 @@ Datum RASTER_union_transfn(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0)) {
 		POSTGIS_RT_DEBUG(3, "Creating state variable");
 		/* allocate container in aggcontext */
-		iwr = palloc(sizeof(struct rtpg_union_arg_t));
-		if (iwr == NULL) {
+		iwr = (rtpg_union_arg) palloc(sizeof(struct rtpg_union_arg_t));
+		if (NULL == iwr) {
 			MemoryContextSwitchTo(oldcontext);
 			elog(ERROR, "RASTER_union_transfn: Could not allocate memory for state variable");
 			PG_RETURN_NULL();
@@ -18722,7 +18739,7 @@ Datum RASTER_union_transfn(PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(RASTER_union_finalfn);
 Datum RASTER_union_finalfn(PG_FUNCTION_ARGS)
 {
-	rtpg_union_arg iwr;
+	rtpg_union_arg iwr = NULL;
 	rt_raster _rtn = NULL;
 	rt_raster _raster = NULL;
 	rt_pgraster *pgraster = NULL;

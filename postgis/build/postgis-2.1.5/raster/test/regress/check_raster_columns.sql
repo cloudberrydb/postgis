@@ -99,6 +99,12 @@ DELETE FROM test_raster_columns;
 
 -- regular_blocking
 
+--	NOTICE:
+--		Greenplum doesn't support EXCLUDE (exclusion constraint) now,
+--		so we can't claim EXLUCDE(UNIQUE) on UDTs, which is invoked in 
+--		the constraint of 'regular_blocking'.
+
+
 SELECT make_test_raster(1, 3, 3, 0, 0);
 SELECT make_test_raster(2, 3, 3, 3, 0);
 SELECT make_test_raster(3, 3, 3, 0, 3);
@@ -106,7 +112,14 @@ SELECT make_test_raster(4, 3, 3, 3, 3);
 
 SELECT AddRasterConstraints(current_schema(), 'test_raster_columns', 'rast'::name);
 SELECT AddRasterConstraints(current_schema(), 'test_raster_columns', 'rast'::name, 'regular_blocking');
-SELECT r_table_name, r_raster_column, srid, scale_x, scale_y, blocksize_x, blocksize_y, same_alignment, regular_blocking, num_bands, pixel_types, nodata_values, ST_AsEWKT(extent) FROM raster_columns WHERE r_table_name = 'test_raster_columns';
+
+--The textual result of ST_Union() relys on the sort of inputs, so we try to verifty it in semantic domain
+SELECT r_table_name, r_raster_column, srid, scale_x, scale_y, blocksize_x, blocksize_y, same_alignment, regular_blocking, num_bands, pixel_types, nodata_values, 
+	CASE WHEN ST_Equals(extent,'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'::geometry) 
+		THEN 'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'
+		ELSE ST_AsEWKT(extent)
+	END
+FROM raster_columns WHERE r_table_name = 'test_raster_columns';
 
 -- spatially unique, this should fail 
 SELECT make_test_raster(0, 3, 3, 0, 0);
@@ -115,7 +128,14 @@ SELECT make_test_raster(0, 3, 3, 0, 0);
 SELECT make_test_raster(0, 3, 3, 1, 0);
 
 SELECT DropRasterConstraints(current_schema(), 'test_raster_columns', 'rast'::name, 'regular_blocking');
-SELECT r_table_name, r_raster_column, srid, scale_x, scale_y, blocksize_x, blocksize_y, same_alignment, regular_blocking, num_bands, pixel_types, nodata_values, ST_AsEWKT(extent) FROM raster_columns WHERE r_table_name = 'test_raster_columns';
+
+--The textual result of ST_Union() relays on the sort of inputs, so we try to verify it in semantic domain
+SELECT r_table_name, r_raster_column, srid, scale_x, scale_y, blocksize_x, blocksize_y, same_alignment, regular_blocking, num_bands, pixel_types, nodata_values, 
+	CASE WHEN ST_Equals(extent,'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'::geometry) 
+		THEN 'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'
+		ELSE ST_AsEWKT(extent)
+	END
+FROM raster_columns WHERE r_table_name = 'test_raster_columns';
 
 -- ticket #2215
 CREATE TABLE test_raster_columns_2 AS
@@ -124,5 +144,8 @@ SELECT AddRasterConstraints(current_schema(), 'test_raster_columns_2', 'rast'::n
 SELECT AddRasterConstraints(current_schema(), 'test_raster_columns', 'rast'::name, 'regular_blocking');
 DROP TABLE IF EXISTS test_raster_columns_2;
 
+
+
 DROP FUNCTION make_test_raster(integer, integer, integer, double precision, double precision, double precision, double precision, double precision, double precision);
 DROP TABLE IF EXISTS test_raster_columns;
+

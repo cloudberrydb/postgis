@@ -26,6 +26,7 @@
 #include "lwgeom_pg.h"
 #include "lwgeom_cache.h"
 #include "lwgeom_transform.h"
+#include "libsrid.h"
 
 /* C headers */
 #include <float.h>
@@ -92,7 +93,18 @@ static void PROJ4SRSCacheInit(MemoryContext context);
 static void PROJ4SRSCacheDelete(MemoryContext context);
 static void PROJ4SRSCacheReset(MemoryContext context);
 static bool PROJ4SRSCacheIsEmpty(MemoryContext context);
-static void PROJ4SRSCacheStats(MemoryContext context, int level);
+
+static void
+#ifdef GP_VERSION
+PROJ4SRSCacheStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
+                uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld);
+#else
+PROJ4SRSCacheStats(MemoryContext context, int level);
+#endif
+
+static void PROJ4SRSCacheReleaseAccounting(MemoryContext context);
+static void PROJ4SRSCacheUpdateGeneration(MemoryContext context);
+
 #ifdef MEMORY_CONTEXT_CHECKING
 static void PROJ4SRSCacheCheck(MemoryContext context);
 #endif
@@ -109,7 +121,15 @@ static MemoryContextMethods PROJ4SRSCacheContextMethods =
 	PROJ4SRSCacheDelete,
 	NULL,
 	PROJ4SRSCacheIsEmpty,
-	PROJ4SRSCacheStats
+	PROJ4SRSCacheStats,
+
+        /*
+         * The PROJ4SRSCacheReleaseAccounting and PROJ4SRSCacheUpdateGeneration are
+         * required for the MemoryContextMethods changes due to memory monitoring
+         * framework (MPP-23033)
+         */
+        PROJ4SRSCacheReleaseAccounting,
+        PROJ4SRSCacheUpdateGeneration
 #ifdef MEMORY_CONTEXT_CHECKING
 	,PROJ4SRSCacheCheck
 #endif
@@ -165,14 +185,51 @@ PROJ4SRSCacheIsEmpty(MemoryContext context)
 }
 
 static void
+#ifdef GP_VERSION
+PROJ4SRSCacheStats(MemoryContext context, uint64 *nBlocks, uint64 *nChunks,
+                uint64 *currentAvailable, uint64 *allAllocated, uint64 *allFreed, uint64 *maxHeld)
+#else
 PROJ4SRSCacheStats(MemoryContext context, int level)
+#endif
 {
-	/*
-	 * Simple stats display function - we must supply a function since this call is mandatory according to tgl
-	 * (see postgis-devel archives July 2007)
-	 */
+        /*
+         * Simple stats display function - we must supply a function since this call is mandatory according to tgl
+         * (see postgis-devel archives July 2007)
+         */
 
-	fprintf(stderr, "%s: PROJ4 context\n", context->name);
+        fprintf(stderr, "%s: PROJ4 context\n", context->name);
+
+#ifdef GP_VERSION
+        *nBlocks = 0;
+        *nChunks = 0;
+        *currentAvailable = 0;
+        *allAllocated = 0;
+        *allFreed = 0;
+        *maxHeld = 0;
+#endif
+}
+
+static void
+PROJ4SRSCacheReleaseAccounting(MemoryContext context)
+{
+        /*
+         * This is currently just an skeleton method. The MemoryContextMethods
+         * need a method that can release accounting of all the chunks in this
+         * context. As this context has no allocator method, we never accounted
+         * for any of the allocations. Therefore, releasing accounting does not
+         * make any sense.
+         */
+}
+
+static void
+PROJ4SRSCacheUpdateGeneration(MemoryContext context)
+{
+        /*
+         * This is currently just an skeleton method. The MemoryContextMethods
+         * need a method that can update generations of all the chunks. However,
+         * this context never had any allocation with a chunk header and so we
+         * don't need a method to update the generation.
+         */
 }
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -332,6 +389,16 @@ char* GetProj4StringSPI(int srid)
 	char *proj_str = palloc(maxproj4len);
 	char proj4_spi_buffer[256];
 
+    /* In GPDB, we don't support the SRID retrieving from spatial_ref_sys,
+     *  otherwise we will meet the known issue: cannot access relation from segments.
+     *  so we search static hash table firstly to by-pass this issue issue.
+     */
+	char *proj4_string = getProj4StringStatic(srid);
+	if (proj4_string != NULL) {
+		strncpy(proj_str, proj4_string, maxproj4len - 1);
+		return proj_str;
+	}
+	
 	/* Connect */
 	spi_result = SPI_connect();
 	if (spi_result != SPI_OK_CONNECT)

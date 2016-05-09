@@ -121,7 +121,7 @@ while( my $line = <INPUT>)
 		}
 		push (@ops, $defn)
 	}
-	elsif ($line =~ /^create aggregate/i) {
+    elsif ($line =~ /^create (ordered )?aggregate/i) {
 		my $defn = $line;
 		while( not $defn =~ /;\s*$/ ) {
 			$defn .= <INPUT>;
@@ -168,11 +168,11 @@ foreach my $table (@tables)
 print "-- Drop all aggregates.\n";
 foreach my $agg (@aggs)
 {
-	if ( $agg =~ /create aggregate\s*([\w\.]+)\s*\(\s*.*basetype = ([\w\.]+)/ism )
+	if ( $agg =~ /.* aggregate\s*([\w\.]+)\s*\(\s*.*basetype = ([\w\.]+)/ism )
 	{
 		print "DROP AGGREGATE IF EXISTS $1 ($2);\n";
 	}
-	elsif ( $agg =~ /create aggregate\s*([\w\.]+)\s*\(\s*([\w,\.\s\[\]]+)\s*\)/ism )
+	elsif ( $agg =~ /.* aggregate\s*([\w\.]+)\s*\(\s*([\w,\.\s\[\]]+)\s*\)/ism )
 	{
 		print "DROP AGGREGATE IF EXISTS $1 ($2);\n";
 	}
@@ -186,7 +186,6 @@ print "-- Drop all operators classes and families.\n";
 foreach my $opc (@opcs)
 {
 	print "DROP OPERATOR CLASS $opc;\n";
-	print "DROP OPERATOR FAMILY $opc;\n";
 }
 
 print "-- Drop all operators.\n";

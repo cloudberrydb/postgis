@@ -4,7 +4,7 @@ CREATE TABLE raster_value_arrays (
 	val double precision[][]
 );
 CREATE OR REPLACE FUNCTION make_value_array(
-	rows integer DEFAULT 3,
+	nrows integer DEFAULT 3,
 	columns integer DEFAULT 3,
 	start_val double precision DEFAULT 1,
 	step double precision DEFAULT 1,
@@ -22,10 +22,10 @@ CREATE OR REPLACE FUNCTION make_value_array(
 	BEGIN
 		value := start_val;
 
-		values := array_fill(NULL::double precision, ARRAY[1, columns, rows]);
+		values := array_fill(NULL::double precision, ARRAY[1, columns, nrows]);
 
 		FOR y IN 1..columns LOOP
-			FOR x IN 1..rows LOOP
+			FOR x IN 1..nrows LOOP
 				IF skip_expr IS NULL OR length(skip_expr) < 1 THEN
 					result := TRUE;
 				ELSE

@@ -2899,7 +2899,7 @@ Datum relate_pattern(PG_FUNCTION_ARGS)
 	}
 
 	patt =  DatumGetCString(DirectFunctionCall1(textout,
-	                        PointerGetDatum(PG_GETARG_DATUM(2))));
+	                        PG_GETARG_DATUM(2)));
 
 	/*
 	** Need to make sure 't' and 'f' are upper-case before handing to GEOS
@@ -3218,10 +3218,6 @@ Datum GEOSnoop(PG_FUNCTION_ARGS)
 	GSERIALIZED *geom;
 	GEOSGeometry *geosgeom;
 	GSERIALIZED *lwgeom_result;
-#if POSTGIS_DEBUG_LEVEL > 0
-	int result;
-	LWGEOM_UNPARSER_RESULT lwg_unparser_result;
-#endif
 
 	initGEOS(lwnotice, lwgeom_geos_error);
 

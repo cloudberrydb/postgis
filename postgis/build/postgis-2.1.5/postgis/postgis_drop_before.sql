@@ -32,7 +32,7 @@ DROP FUNCTION IF EXISTS UpdateGeometrySRID(varchar,varchar,varchar,varchar,integ
 -- We can't just drop it since its bound to opclass
 -- See ticket 2279 for why we need to do this
 -- We can get rid of this DO code when 3.0 comes along
-DO  language 'plpgsql' $$ 
+CREATE OR REPLACE FUNCTION _anonymous_function() RETURNS VOID AS $$
 BEGIN
 	-- fix geometry ops --
 	IF EXISTS(SELECT oprname from pg_operator where oprname = '&&' AND oprrest::text = 'geometry_gist_sel_2d') THEN
@@ -58,4 +58,6 @@ BEGIN
 		ALTER FUNCTION geography_gist_join_selectivity(internal, oid, internal, smallint) RENAME TO gserialized_gist_joinsel_nd;
 	END IF;
 END;
-$$ ;
+$$ LANGUAGE 'plpgsql';
+SELECT _anonymous_function();
+DROP FUNCTION IF EXISTS _anonymous_function();

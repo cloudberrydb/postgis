@@ -262,7 +262,7 @@ BEGIN
     RETURN zone+pref;
 END;
 $BODY$ LANGUAGE 'plpgsql' IMMUTABLE
-  COST 100;
+  ;
 
 CREATE TABLE utm_dots ( the_geog geography, utm_srid integer);
 INSERT INTO utm_dots SELECT geography(ST_SetSRID(ST_Point(i*10,j*10),4326)) As the_geog, utmzone(ST_SetSRID(ST_Point(i*10,j*10),4326)) As utm_srid FROM generate_series(-17,17) As i CROSS JOIN generate_series(-8,8) As j;
@@ -409,7 +409,7 @@ INSERT INTO foo VALUES (2, st_geomfromtext('MULTIPOLYGON(((-113.7 35.3,-113.7 35
 
 select '#884', id, ST_Within(
 ST_GeomFromText('POINT (-113.4 35.6)'), the_geom
-) from foo;
+) from foo order by id;
 
 select '#938', 'POLYGON EMPTY'::geometry::box2d;
 
@@ -453,15 +453,19 @@ create table t(g geometry);
 select '#877.1', ST_EstimatedExtent('t','g');
 analyze t;
 select '#877.2', ST_EstimatedExtent('public', 't','g');
-SET client_min_messages TO DEBUG;
+-- SET client_min_messages TO DEBUG;
 select '#877.2.deprecated', ST_Estimated_Extent('public', 't','g');
-SET client_min_messages TO NOTICE;
+--SET client_min_messages TO NOTICE;
 insert into t(g) values ('LINESTRING(-10 -50, 20 30)');
 
 -- #877.3
 with e as ( select ST_EstimatedExtent('t','g') as e )
 select '#877.3', round(st_xmin(e.e)::numeric, 5), round(st_xmax(e.e)::numeric, 5),
 round(st_ymin(e.e)::numeric, 5), round(st_ymax(e.e)::numeric, 5) from e;
+
+-- TODO: Said Greenplum doesn't support Analyze, so I comment out the expected result for below two queries.
+-- 	#877.4|-10.15000|20.15000|-50.40000|30.40000
+-- 	#877.5|-10.15000|20.15000|-50.40000|30.40000
 
 -- #877.4
 analyze t;
@@ -488,7 +492,7 @@ SELECT '#1292.1', ST_AsText(ST_GeomFromText('POINT(180.00000000001 95)')::geogra
 -- #1320
 SELECT '<#1320>';
 CREATE TABLE A ( geom geometry(MultiPolygon, 4326),
-                 geog geography(MultiPolygon, 4326) );
+                 geog geography(MultiPolygon, 4326) ) with oids;
 -- Valid inserts
 INSERT INTO a(geog) VALUES('SRID=4326;MULTIPOLYGON (((0 0, 10 0, 10 10, 0 0)))'::geography);
 INSERT INTO a(geom) VALUES('SRID=4326;MULTIPOLYGON (((0 0, 10 0, 10 10, 0 0)))'::geometry);
@@ -511,6 +515,10 @@ CREATE TRIGGER triga_before
   EXECUTE PROCEDURE triga();
 INSERT INTO a(geog) VALUES('SRID=4326;MULTIPOLYGON (((0 0, 10 0, 10 10, 0 0)))'::geography);
 INSERT INTO a(geom) VALUES('SRID=4326;MULTIPOLYGON (((0 0, 10 0, 10 10, 0 0)))'::geometry);
+
+--TODO: We comment below two rows because Greenplum will return results in different order defaultly.
+--	#1320.geog.3|MULTIPOLYGON|4326$
+--	#1320.geom.3|MULTIPOLYGON|4326$
 SELECT '#1320.geog.3', geometrytype(geog::geometry), st_srid(geog::geometry) FROM a where geog is not null;
 SELECT '#1320.geom.3', geometrytype(geom), st_srid(geom) FROM a where geom is not null;
 DROP TABLE A;
@@ -578,12 +586,12 @@ COPY cacheable FROM STDIN;
 \.
 select '#852.1', id, -- first run is not cached, consequent are cached
   st_intersects(g, 'POLYGON((0 0, 10 10, 1 0, 0 0))'::geometry),
-  st_intersects(g, 'POLYGON((0 0, 1 1, 1 0, 0 0))'::geometry) from cacheable;
+  st_intersects(g, 'POLYGON((0 0, 1 1, 1 0, 0 0))'::geometry) from cacheable order by id;
 UPDATE cacheable SET g = 'POINT(0.5 0.5)';
 -- New select, new cache
 select '#852.2', id, -- first run is not cached, consequent are cached
   st_intersects(g, 'POLYGON((0 0, 10 10, 1 0, 0 0))'::geometry),
-  st_intersects(g, 'POLYGON((0 0, 1 1, 1 0, 0 0))'::geometry) from cacheable;
+  st_intersects(g, 'POLYGON((0 0, 1 1, 1 0, 0 0))'::geometry) from cacheable order by id;
 DROP TABLE cacheable;
 
 -- #1489
@@ -855,7 +863,7 @@ SELECT '#2168',  ST_Distance(g1,g2)::numeric(16,8)  As dist_g1_g2, ST_Distance(g
 CREATE TABLE images (id integer, name varchar, extent geography(POLYGON,4326));
 INSERT INTO images VALUES (47409, 'TDX-1_2010-10-06T19_44_2375085', 'SRID=4326;POLYGON((-59.4139571913088 82.9486103943668,-57.3528882462655 83.1123152898828,-50.2302874208478 81.3740574826097,-51.977353304689 81.2431047148532,-59.4139571913088 82.9486103943668))'::geography);
 INSERT INTO images VALUES (1, 'first_image', 'SRID=4326;POLYGON((-162.211667 88.046667,-151.190278 87.248889,-44.266389 74.887778,-40.793889 75.043333,-162.211667 88.046667))'::geography);
-SELECT '#2556' AS ticket, id, round(ST_Distance(extent, 'SRID=4326;POLYGON((-46.625977 81.634149,-46.625977 81.348076,-48.999023 81.348076,-48.999023 81.634149,-46.625977 81.634149))'::geography)) from images;
+SELECT '#2556' AS ticket, id, round(ST_Distance(extent, 'SRID=4326;POLYGON((-46.625977 81.634149,-46.625977 81.348076,-48.999023 81.348076,-48.999023 81.634149,-46.625977 81.634149))'::geography)) from images order by id;
 DROP TABLE images;
 
 SELECT '#2704', ST_AsText(ST_GeomFromGML('<?xml version="1.0"?>

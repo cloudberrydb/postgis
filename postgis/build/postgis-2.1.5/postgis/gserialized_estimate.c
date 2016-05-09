@@ -826,7 +826,7 @@ pg_get_nd_stats(const Oid table_oid, AttrNumber att_num, int mode)
 		stats_kind = STATISTIC_KIND_2D;
 			
 	/* Then read the geom status histogram from that */
-	rv = get_attstatsslot(stats_tuple, 0, 0, stats_kind, InvalidOid, NULL, NULL, NULL, &floatptr, &nvalues);
+	rv = get_attstatsslot(stats_tuple, 0, 0, stats_kind, InvalidOid, /* NULL,*/ NULL, NULL, &floatptr, &nvalues);
 	if ( ! rv )
 	{
 		ReleaseSysCache(stats_tuple);

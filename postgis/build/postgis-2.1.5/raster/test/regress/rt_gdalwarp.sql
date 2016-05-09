@@ -762,7 +762,7 @@ FROM (
 		(ST_SummaryStats(rast)).*
 	FROM raster_gdalwarp_dst
 	ORDER BY rid
-) foo;
+) foo ORDER BY rid;
 
 DROP TABLE raster_gdalwarp_src;
 DROP TABLE raster_gdalwarp_dst;

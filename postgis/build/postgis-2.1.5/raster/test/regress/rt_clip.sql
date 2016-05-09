@@ -119,7 +119,8 @@ FROM (
 		(ST_Metadata(rast)).*,
 		(ST_BandMetadata(rast, 1)).*
 	FROM raster_clip_out
-) AS r;
+) AS r
+ORDER BY 1, 2, 3;
 
 -- Display the pixels and the values of the resulting rasters (raster 1)
 SELECT
@@ -134,7 +135,7 @@ FROM (SELECT tid, rid, gid, ST_PixelAsPolygons(rast) gvxy
       FROM raster_clip_out
       WHERE rid = 1
 ) foo
-ORDER BY 1, 2, 3, 4, 5, 7;
+ORDER BY 1, 2, 3, 4, 5, 6;
 
 -- Display the pixels and the values of the resulting rasters (raster 2, 3 bands)
 SELECT

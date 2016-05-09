@@ -47,6 +47,8 @@
 #include "liblwgeom.h"
 #include "lwgeom_transform.h"
 
+#include "libsrid.h"
+
 
 Datum geom_from_gml(PG_FUNCTION_ARGS);
 static LWGEOM* lwgeom_from_gml(const char *wkt);
@@ -322,6 +324,12 @@ static int gml_is_srid_planar(int srid)
 	char *result;
 	char query[256];
 	int is_planar, err;
+
+        // Use in-memory lookup to by SQL if possible.
+        is_planar = is_srid_planar(srid);
+        if (is_planar != -1) {
+            return is_planar;
+        }
 
 	if (SPI_OK_CONNECT != SPI_connect ())
 		lwerror("gml_is_srid_planar: could not connect to SPI manager");

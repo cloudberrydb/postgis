@@ -660,7 +660,7 @@ VALUES ( 9, '1x1 single band (32BUI) no transform',
 
 -- 1x1, single band of type 32BF, no transform, scale 1:1
 INSERT INTO rt_io_test (id, name, hexwkb_ndr, hexwkb_xdr)
-VALUES ( 11, '1x1 single band (32BF) no transform',
+VALUES ( 10, '1x1 single band (32BF) no transform',
 (
 '01' -- little endian (uint8 ndr)
 || 
@@ -865,7 +865,7 @@ VALUES ( 12, '1x1 single band (64BF external) no transform',
 SELECT name,
     hexwkb_ndr::raster::text = hexwkb_ndr or hexwkb_ndr::raster::text = hexwkb_xdr as ndr_io,
     hexwkb_xdr::raster::text = hexwkb_ndr or hexwkb_xdr::raster::text = hexwkb_xdr as xdr_io
-FROM rt_io_test;
+FROM rt_io_test order by id;
 
 -- Out of range value for 1BB pixeltype
 SELECT (

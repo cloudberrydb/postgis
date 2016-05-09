@@ -50,11 +50,12 @@ FROM raster_setvalues_rast t1
 CROSS JOIN raster_setvalues_geom t2
 CROSS JOIN raster_setvalues_geom t3
 WHERE t2.gid = 1
-	AND t3.gid = 4;
+	AND t3.gid = 4
+ORDER BY 1, 2, 3;
 
 WITH foo AS (
 	SELECT
-		array_agg(gid) AS gid,
+		array_agg(gid order by gid) AS gid,
 		ST_Union(geom) AS geom
 	FROM raster_setvalues_geom
 	WHERE gid IN (1,4)
@@ -62,11 +63,12 @@ WITH foo AS (
 SELECT
 	t1.rid, t2.gid, ST_DumpValues(ST_SetValues(rast, 1, ARRAY[ROW(t2.geom, 99)]::geomval[]))
 FROM raster_setvalues_rast t1
-CROSS JOIN foo t2;
+CROSS JOIN foo t2
+ORDER BY 1, 2;
 
 WITH foo AS (
 	SELECT
-		array_agg(gid) AS gid,
+		array_agg(gid order by gid) AS gid,
 		ST_Union(geom) AS geom
 	FROM raster_setvalues_geom
 	WHERE gid IN (2,3)
@@ -74,7 +76,8 @@ WITH foo AS (
 SELECT
 	t1.rid, t2.gid, ST_DumpValues(ST_SetValues(rast, 1, ARRAY[ROW(t2.geom, 99)]::geomval[]))
 FROM raster_setvalues_rast t1
-CROSS JOIN foo t2;
+CROSS JOIN foo t2
+ORDER BY 1, 2;
 
 DROP TABLE IF EXISTS raster_setvalues_rast;
 DROP TABLE IF EXISTS raster_setvalues_geom;

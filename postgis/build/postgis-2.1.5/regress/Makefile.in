@@ -72,7 +72,6 @@ TESTS = \
 	regress \
 	regress_index \
 	regress_index_nulls \
-	regress_selectivity \
 	lwgeom_regress \
 	regress_lrs \
 	removepoint \
@@ -84,7 +83,6 @@ TESTS = \
 	empty \
 	measures \
 	legacy \
-	long_xact \
 	ctors \
 	sql-mm-serialize \
 	sql-mm-circularstring \
@@ -116,12 +114,23 @@ TESTS = \
 	wkt \
 	wkb \
 	tickets \
-	typmod \
 	remove_repeated_points \
 	split \
 	relate \
 	bestsrid \
 	concave_hull
+
+
+# tests can't pass
+# ---------------------------------
+    #regress_selectivity \
+        #Greenplum does not support ANALYZE functions for user-defined data types.
+    #long_xact \
+        #Greenplum does not support long transcation for user-defined data types with triggerns
+    #typmod \
+        #Greenplum doesnot support BINARY, so test cannot continues...
+    #regress_index \
+        #BUG to fix, JIRA: MPP-24904
 
 ifeq ($(shell expr $(POSTGIS_GEOS_VERSION) ">=" 32),1)
 	# GEOS-3.3 adds:
@@ -187,19 +196,19 @@ distclean: clean
 
 staged-install-topology:
 	@if test x"@TOPOLOGY@" != "x"; then \
-		$(MAKE) -C ../topology REGRESS=1 DESTDIR=$(REGRESS_INSTALLDIR) install; \
+		$(MAKE) -C ../topology REGRESS=1 USE_PGXS=1 DESTDIR=$(REGRESS_INSTALLDIR) install; \
 	fi
 
 staged-install-raster:
 	@if test x"@RASTER@" != "x"; then \
-		$(MAKE) -C ../raster/rt_pg REGRESS=1 DESTDIR=$(REGRESS_INSTALLDIR) install; \
+		$(MAKE) -C ../raster/rt_pg REGRESS=1 USE_PGXS=1 DESTDIR=$(REGRESS_INSTALLDIR) install; \
 	fi
 
 staged-install: staged-install-raster staged-install-topology
-	$(MAKE) -C ../postgis REGRESS=1 DESTDIR=$(REGRESS_INSTALLDIR) install
-	$(MAKE) -C ../ REGRESS=1 DESTDIR=$(REGRESS_INSTALLDIR) comments-install
+	$(MAKE) -C ../postgis REGRESS=1 USE_PGXS=1 DESTDIR=$(REGRESS_INSTALLDIR) install
+	$(MAKE) -C ../ REGRESS=1 USE_PGXS=1 DESTDIR=$(REGRESS_INSTALLDIR) comments-install
 	$(PERL) -pi.bak -e 's,\$$libdir,$(REGRESS_INSTALLDIR)/lib,g' $(REGRESS_INSTALLDIR)/share/contrib/postgis/*.sql
-	#$(MAKE) -C ../loader REGRESS=1 DESTDIR=$(REGRESS_INSTALLDIR) install
+	#$(MAKE) -C ../loader REGRESS=1 USE_PGXS=1 DESTDIR=$(REGRESS_INSTALLDIR) install
 
 test check: staged-install
 	$(PERL) run_test.pl $(RUNTESTFLAGS) $(TESTS) && \

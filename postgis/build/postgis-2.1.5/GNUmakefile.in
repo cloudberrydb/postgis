@@ -33,6 +33,9 @@ clean-local:
 # TODO: drop 'test' target..
 test: check
 
+# regression test on PULSE
+installcheck: check
+
 check: all docs-check
 
 distclean: clean distclean-local

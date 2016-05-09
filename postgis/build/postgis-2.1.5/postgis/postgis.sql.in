@@ -28,7 +28,7 @@ SET client_min_messages TO warning;
 BEGIN;
 
 -- Check that no other postgis is installed
-DO $$
+CREATE OR REPLACE FUNCTION _anonymous_function() RETURNS VOID AS $$
 DECLARE
   rec RECORD;
 BEGIN
@@ -41,6 +41,8 @@ BEGIN
   END LOOP;
 END
 $$ LANGUAGE 'plpgsql';
+SELECT _anonymous_function();
+DROP FUNCTION IF EXISTS _anonymous_function();
 
 
 -- Let the user know about a deprecated signature and its new name, if any
@@ -2908,7 +2910,7 @@ CREATE OR REPLACE FUNCTION _ST_Buffer(geometry,float8,cstring)
 CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,integer)
 	RETURNS geometry
 	AS $$ SELECT _ST_Buffer($1, $2,
-		CAST('quad_segs='||CAST($3 AS text) as cstring))
+		textout('quad_segs='||CAST($3 AS text)))
 	   $$
 	LANGUAGE 'sql' IMMUTABLE STRICT;
 
@@ -2916,8 +2918,8 @@ CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,integer)
 CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,text)
 	RETURNS geometry
 	AS $$ SELECT _ST_Buffer($1, $2,
-		CAST( regexp_replace($3, '^[0123456789]+$',
-			'quad_segs='||$3) AS cstring)
+		textout( regexp_replace($3, '^[0123456789]+$',
+			'quad_segs='||$3))
 		)
 	   $$
 	LANGUAGE 'sql' IMMUTABLE STRICT;
@@ -3270,7 +3272,7 @@ CREATE OR REPLACE FUNCTION ST_Collect(geom1 geometry, geom2 geometry)
 	LANGUAGE 'c' IMMUTABLE;
 
 -- Availability: 1.2.2
-CREATE AGGREGATE ST_MemCollect(
+CREATE ORDERED AGGREGATE ST_MemCollect(
 	sfunc = ST_collect,
 	basetype = geometry,
 	stype = geometry
@@ -3283,7 +3285,7 @@ CREATE OR REPLACE FUNCTION ST_Collect(geometry[])
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
 -- Availability: 1.2.2
-CREATE AGGREGATE ST_MemUnion (
+CREATE ORDERED AGGREGATE ST_MemUnion (
 	basetype = geometry,
 	sfunc = ST_Union,
 	stype = geometry
@@ -3348,7 +3350,7 @@ CREATE OR REPLACE FUNCTION pgis_geometry_makeline_finalfn(pgis_abs)
 	LANGUAGE 'c';
 
 -- Availability: 1.2.2
-CREATE AGGREGATE ST_Accum (
+CREATE ORDERED AGGREGATE ST_Accum (
 	sfunc = pgis_geometry_accum_transfn,
 	basetype = geometry,
 	stype = pgis_abs,
@@ -3362,7 +3364,7 @@ CREATE OR REPLACE FUNCTION ST_Union (geometry[])
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
 -- Availability: 1.2.2
-CREATE AGGREGATE ST_Union (
+CREATE ORDERED AGGREGATE ST_Union (
 	basetype = geometry,
 	sfunc = pgis_geometry_accum_transfn,
 	stype = pgis_abs,
@@ -3370,7 +3372,7 @@ CREATE AGGREGATE ST_Union (
 	);
 
 -- Availability: 1.2.2
-CREATE AGGREGATE ST_Collect (
+CREATE ORDERED AGGREGATE ST_Collect (
 	BASETYPE = geometry,
 	SFUNC = pgis_geometry_accum_transfn,
 	STYPE = pgis_abs,
@@ -3378,7 +3380,7 @@ CREATE AGGREGATE ST_Collect (
 	);
 
 -- Availability: 1.2.2
-CREATE AGGREGATE ST_Polygonize (
+CREATE ORDERED AGGREGATE ST_Polygonize (
 	BASETYPE = geometry,
 	SFUNC = pgis_geometry_accum_transfn,
 	STYPE = pgis_abs,
@@ -3386,7 +3388,7 @@ CREATE AGGREGATE ST_Polygonize (
 	);
 
 -- Availability: 1.2.2
-CREATE AGGREGATE ST_MakeLine (
+CREATE ORDERED AGGREGATE ST_MakeLine (
 	BASETYPE = geometry,
 	SFUNC = pgis_geometry_accum_transfn,
 	STYPE = pgis_abs,

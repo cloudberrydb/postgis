@@ -158,15 +158,15 @@ UPDATE public.circularstring
                 15 0)')
         WHERE id = 2;
 
-SELECT 'astext01', ST_astext(the_geom_2d) FROM public.circularstring;        
-SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring;        
-SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring;        
-SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring;        
+SELECT 'astext01', ST_astext(the_geom_2d) FROM public.circularstring order by 2;
+SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring order by 2;
+SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring order by 2;
+SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring order by 2;
 
-SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring;        
-SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring;        
-SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring;        
-SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring;        
+SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring order by 2;
+SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring order by 2;
+SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring order by 2;
+SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring order by 2;
 
 -- These tests will fail on different architectures
 -- We need a way to handle multiple byte orderings
@@ -180,20 +180,20 @@ SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring;
 --SELECT 'asewkb03', encode(asewkb(the_geom_3dz), 'hex') FROM public.circularstring;
 --SELECT 'asewkb04', encode(asewkb(the_geom_4d), 'hex') FROM public.circularstring;
 
-SELECT 'ST_CurveToLine-201', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_2d, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine-202', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dm, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine-203', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dz, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine-204', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_4d, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
+SELECT 'ST_CurveToLine-201', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_2d, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine-202', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dm, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine-203', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dz, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine-204', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_4d, 2), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
 
-SELECT 'ST_CurveToLine-401', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_2d, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine-402', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dm, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine-403', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dz, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine-404', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_4d, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
+SELECT 'ST_CurveToLine-401', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_2d, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine-402', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dm, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine-403', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dz, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine-404', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_4d, 4), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
 
-SELECT 'ST_CurveToLine01', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_2d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine02', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dm), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine03', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dz), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'ST_CurveToLine04', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_4d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
+SELECT 'ST_CurveToLine01', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_2d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine02', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dm), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine03', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_3dz), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'ST_CurveToLine04', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_4d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
 
 --Removed due to discrepencies between hardware
 --SELECT 'box2d01', box2d(the_geom_2d) FROM public.circularstring;
@@ -214,15 +214,15 @@ SELECT 'ST_CurveToLine04', ST_asewkt( ST_SnapToGrid(ST_CurveToLine(the_geom_4d),
 --SELECT 'ST_LineToCurve04', ST_asewkt(ST_LineToCurve(ST_CurveToLine(the_geom_4d))) FROM public.circularstring;
 
 -- Repeat tests with new function names.
-SELECT 'astext01', ST_astext(the_geom_2d) FROM public.circularstring;        
-SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring;        
-SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring;        
-SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring;        
+SELECT 'astext01', ST_astext(the_geom_2d) FROM public.circularstring order by 2;
+SELECT 'astext02', ST_astext(the_geom_3dm) FROM public.circularstring order by 2;
+SELECT 'astext03', ST_astext(the_geom_3dz) FROM public.circularstring order by 2;
+SELECT 'astext04', ST_astext(the_geom_4d) FROM public.circularstring order by 2;
 
-SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring;        
-SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring;        
-SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring;        
-SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring;        
+SELECT 'asewkt01', ST_asewkt(the_geom_2d) FROM public.circularstring order by 2;
+SELECT 'asewkt02', ST_asewkt(the_geom_3dm) FROM public.circularstring order by 2;
+SELECT 'asewkt03', ST_asewkt(the_geom_3dz) FROM public.circularstring order by 2;
+SELECT 'asewkt04', ST_asewkt(the_geom_4d) FROM public.circularstring order by 2;
 
 -- These tests will fail on different architectures
 -- We need a way to handle multiple byte orderings
@@ -262,15 +262,15 @@ SELECT 'SRID02', ST_SRID(the_geom_3dm) FROM public.circularstring;
 SELECT 'SRID03', ST_SRID(the_geom_3dz) FROM public.circularstring;
 SELECT 'SRID04', ST_SRID(the_geom_4d) FROM public.circularstring;
 
-SELECT 'accessors01', ST_IsEmpty(the_geom_2d), ST_isSimple(the_geom_2d), ST_isClosed(the_geom_2d), ST_isRing(the_geom_2d) FROM public.circularstring;
-SELECT 'accessors02', ST_IsEmpty(the_geom_3dm), ST_isSimple(the_geom_3dm), ST_isClosed(the_geom_3dm), ST_isRing(the_geom_3dm) FROM public.circularstring;
-SELECT 'accessors03', ST_IsEmpty(the_geom_3dz), ST_isSimple(the_geom_3dz), ST_isClosed(the_geom_3dz), ST_isRing(the_geom_3dz) FROM public.circularstring;
-SELECT 'accessors04', ST_IsEmpty(the_geom_4d), ST_isSimple(the_geom_4d), ST_isClosed(the_geom_4d), ST_isRing(the_geom_4d) FROM public.circularstring;
+SELECT 'accessors01', ST_IsEmpty(the_geom_2d), ST_isSimple(the_geom_2d), ST_isClosed(the_geom_2d), ST_isRing(the_geom_2d) FROM public.circularstring order by id;
+SELECT 'accessors02', ST_IsEmpty(the_geom_3dm), ST_isSimple(the_geom_3dm), ST_isClosed(the_geom_3dm), ST_isRing(the_geom_3dm) FROM public.circularstring order by id;
+SELECT 'accessors03', ST_IsEmpty(the_geom_3dz), ST_isSimple(the_geom_3dz), ST_isClosed(the_geom_3dz), ST_isRing(the_geom_3dz) FROM public.circularstring order by id;
+SELECT 'accessors04', ST_IsEmpty(the_geom_4d), ST_isSimple(the_geom_4d), ST_isClosed(the_geom_4d), ST_isRing(the_geom_4d) FROM public.circularstring order by id;
 
-SELECT 'envelope01', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_2d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'envelope02', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_3dm), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'envelope03', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_3dz), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
-SELECT 'envelope04', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_4d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring;
+SELECT 'envelope01', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_2d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'envelope02', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_3dm), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'envelope03', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_3dz), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
+SELECT 'envelope04', ST_AsText(ST_SnapToGrid(ST_Envelope(the_geom_4d), 'POINT(0 0 0 0)'::geometry, 1e-8, 1e-8, 1e-8, 1e-8)) FROM public.circularstring order by id;
 
 SELECT DropGeometryColumn('public', 'circularstring', 'the_geom_4d');
 SELECT DropGeometryColumn('public', 'circularstring', 'the_geom_3dz');

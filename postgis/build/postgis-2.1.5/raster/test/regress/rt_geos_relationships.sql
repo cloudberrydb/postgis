@@ -183,7 +183,8 @@ SELECT
 	ST_DFullyWithin(r1.rast, 1, r2.rast, 1, 7)
 FROM raster_geos_rast r1
 CROSS JOIN raster_geos_rast r2
-WHERE r1.rid = 0;
+WHERE r1.rid = 0
+ORDER BY 2, 3;
 
 SELECT
 	'1.2',
@@ -200,7 +201,8 @@ SELECT
 FROM raster_geos_rast r1
 JOIN raster_geos_rast r2
 	ON r1.rid != r2.rid
-WHERE r1.rid = 0;
+WHERE r1.rid = 0
+ORDER BY 2, 3;
 
 SELECT
 	'1.3',
@@ -214,7 +216,8 @@ SELECT
 FROM raster_geos_rast r1
 JOIN raster_geos_rast r2
 	ON r1.rid != r2.rid
-WHERE r2.rid = 0;
+WHERE r2.rid = 0
+ORDER BY 2, 3;
 
 SELECT
 	'1.4',
@@ -228,7 +231,8 @@ SELECT
 FROM raster_geos_rast r1
 JOIN raster_geos_rast r2
 	ON r1.rid != r2.rid
-WHERE r2.rid = 0;
+WHERE r2.rid = 0
+ORDER BY 2, 3;
 
 
 SELECT
@@ -239,7 +243,8 @@ SELECT
 	ST_DWithin(r1.rast, NULL, r2.rast, NULL, NULL)
 FROM raster_geos_rast r1
 CROSS JOIN raster_geos_rast r2
-WHERE r1.rid = 0;
+WHERE r1.rid = 0
+ORDER BY 2, 3;
 
 SELECT
 	'2.2',
@@ -249,7 +254,8 @@ SELECT
 	ST_DWithin(r1.rast, NULL, r2.rast, NULL, -1)
 FROM raster_geos_rast r1
 CROSS JOIN raster_geos_rast r2
-WHERE r1.rid = 0;
+WHERE r1.rid = 0
+ORDER BY 2, 3;
 
 SELECT
 	'2.3',
@@ -259,7 +265,8 @@ SELECT
 	ST_DFullyWithin(r1.rast, NULL, r2.rast, NULL, NULL)
 FROM raster_geos_rast r1
 CROSS JOIN raster_geos_rast r2
-WHERE r1.rid = 0;
+WHERE r1.rid = 0
+ORDER BY 2, 3;
 
 SELECT
 	'2.4',
@@ -269,6 +276,7 @@ SELECT
 	ST_DFullyWithin(r1.rast, NULL, r2.rast, NULL, -1)
 FROM raster_geos_rast r1
 CROSS JOIN raster_geos_rast r2
-WHERE r1.rid = 0;
+WHERE r1.rid = 0
+ORDER BY 2, 3;
 
 DROP TABLE IF EXISTS raster_geos_rast;

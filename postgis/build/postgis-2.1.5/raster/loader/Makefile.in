@@ -21,6 +21,16 @@
 #
 #############################################################################
 
+# PGXS information
+#
+# Note that PGXS currently doesn't handle building FE executables, but we need
+# the DESTDIR variable so we can get the correct install paths.
+# Hence we include the PGXS Makefile here, but ensure that we override the
+# 'all' and 'install' targets with the ones we really want to use below.
+PG_CONFIG = @PG_CONFIG@
+PGXS := @PGXS@
+include $(PGXS)
+
 # Set CFLAGS after PGXS, otherwise it will get overwritten with the PGXS
 # version which is not what we want. 
 CC=@CC@
@@ -31,9 +41,6 @@ LIBTOOL = @LIBTOOL@
 
 # Filenames with extension as determined by the OS
 RASTER2PGSQL=raster2pgsql@EXESUFFIX@
-
-# PostgreSQL executable directory
-PGSQL_BINDIR=@PGSQL_BINDIR@
 
 RT_CORE=../rt_core
 
@@ -57,7 +64,7 @@ GETTEXT_LDFLAGS = @GETTEXT_LDFLAGS@ @LIBINTL@
 ICONV_LDFLAGS=@ICONV_LDFLAGS@
 ICONV_CFLAGS=@ICONV_CFLAGS@
 
-CFLAGS = \
+override CFLAGS = \
 	@CFLAGS@ @PICFLAGS@ @WARNFLAGS@ \
 	$(RTCORE_CFLAGS) \
 	$(LIBLWGEOM_CFLAGS) \
@@ -67,7 +74,7 @@ CFLAGS = \
 	$(GETTEXT_CFLAGS) \
 	$(ICONV_CFLAGS)
 
-LDFLAGS = \
+override LDFLAGS = \
 	@LDFLAGS@ \
 	$(LIBLWGEOM_LDFLAGS) \
 	$(LIBGDAL_LDFLAGS) \
@@ -86,13 +93,13 @@ $(RASTER2PGSQL): $(RT_CORE)/librtcore.a raster2pgsql.o
 	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
 
 installdir:
-	@mkdir -p $(DESTDIR)$(PGSQL_BINDIR)
+	@mkdir -p $(DESTDIR)$(bindir)
 
 install: installdir
-	$(LIBTOOL) --mode=install $(INSTALL) $(RASTER2PGSQL) "$(DESTDIR)$(PGSQL_BINDIR)/$(RASTER2PGSQL)"
+	$(LIBTOOL) --mode=install $(INSTALL) $(RASTER2PGSQL) "$(DESTDIR)$(bindir)/$(RASTER2PGSQL)"
 
 uninstall:
-	$(LIBTOOL) --mode=uninstall $(RM) "$(DESTDIR)$(PGSQL_BINDIR)/$(RASTER2PGSQL)"
+	$(LIBTOOL) --mode=uninstall $(RM) "$(DESTDIR)$(bindir)/$(RASTER2PGSQL)"
 
 $(RT_CORE)/librtcore.a:
 	$(MAKE) -C ../rt_core

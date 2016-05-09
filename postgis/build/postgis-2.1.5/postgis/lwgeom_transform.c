@@ -60,7 +60,7 @@ Datum transform(PG_FUNCTION_ARGS)
 	 * without transform it
 	 */
 	if ( input_srid == output_srid )
-		PG_RETURN_POINTER(PG_GETARG_DATUM(0));
+		PG_RETURN_DATUM(PG_GETARG_DATUM(0));
 
 	if ( GetProjectionsUsingFCInfo(fcinfo, input_srid, output_srid, &input_pj, &output_pj) == LW_FAILURE )
 	{

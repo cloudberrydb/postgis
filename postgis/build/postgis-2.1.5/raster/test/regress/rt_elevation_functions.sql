@@ -164,128 +164,76 @@ WHERE rid = 0
 /* with coverage */
 DO $$
 BEGIN
--- this ONLY works for PostgreSQL version 9.1 or higher
-IF array_to_string(regexp_matches(split_part(version(), ' ', 2), E'([0-9]+)\.([0-9]+)'), '')::int > 90 THEN
-
-	INSERT INTO raster_elevation_out (
-		SELECT
-			t1.rid,
-			'slope',
-			ST_Slope(ST_Union(t2.rast), 1, t1.rast) AS rast
-		FROM raster_elevation t1
-		CROSS JOIN raster_elevation t2
-		WHERE t1.rid != 0
-			AND t2.rid != 0
-			AND ST_Intersects(t1.rast, t2.rast)
-		GROUP BY t1.rid, t1.rast
-		ORDER BY t1.rid
-	) UNION ALL (
-		SELECT
-			t1.rid,
-			'aspect',
-			ST_Aspect(ST_Union(t2.rast), 1, t1.rast) AS rast
-		FROM raster_elevation t1
-		CROSS JOIN raster_elevation t2
-		WHERE t1.rid != 0
-			AND t2.rid != 0
-			AND ST_Intersects(t1.rast, t2.rast)
-		GROUP BY t1.rid, t1.rast
-		ORDER BY t1.rid
-	) UNION ALL (
-		SELECT
-			t1.rid,
-			'hillshade',
-			ST_Hillshade(ST_Union(t2.rast), 1, t1.rast) AS rast
-		FROM raster_elevation t1
-		CROSS JOIN raster_elevation t2
-		WHERE t1.rid != 0
-			AND t2.rid != 0
-			AND ST_Intersects(t1.rast, t2.rast)
-		GROUP BY t1.rid, t1.rast
-		ORDER BY t1.rid
-	);
-
-ELSE
-
-	INSERT INTO raster_elevation_out (
-		WITH foo AS (
-			SELECT
-				t1.rid,
-				ST_Union(t2.rast) AS rast
-			FROM raster_elevation t1
-			JOIN raster_elevation t2
-				ON ST_Intersects(t1.rast, t2.rast)
-					AND t1.rid != 0
-					AND t2.rid != 0
-			GROUP BY t1.rid
-		)
+	INSERT INTO raster_elevation_out
 		SELECT
 			t1.rid,
 			'slope',
 			ST_Slope(t2.rast, 1, t1.rast) AS rast
 		FROM raster_elevation t1
-		JOIN foo t2
+		JOIN (
+            SELECT
+                t1.rid,
+                ST_Union(t2.rast) AS rast
+            FROM raster_elevation t1
+            JOIN raster_elevation t2
+                ON ST_Intersects(t1.rast, t2.rast)
+                    AND t1.rid != 0
+                    AND t2.rid != 0
+            GROUP BY t1.rid
+        	) t2
 			ON t1.rid = t2.rid
-		ORDER BY t1.rid
-	) UNION ALL (
-		WITH foo AS (
-			SELECT
-				t1.rid,
-				ST_Union(t2.rast) AS rast
-			FROM raster_elevation t1
-			JOIN raster_elevation t2
-				ON ST_Intersects(t1.rast, t2.rast)
-					AND t1.rid != 0
-					AND t2.rid != 0
-			GROUP BY t1.rid
-		)
+	UNION ALL 
 		SELECT
 			t1.rid,
 			'aspect',
 			ST_Aspect(t2.rast, 1, t1.rast) AS rast
 		FROM raster_elevation t1
-		JOIN foo t2
+		JOIN (
+            SELECT
+                t1.rid,
+                ST_Union(t2.rast) AS rast
+            FROM raster_elevation t1
+            JOIN raster_elevation t2
+                ON ST_Intersects(t1.rast, t2.rast)
+                    AND t1.rid != 0
+                    AND t2.rid != 0
+            GROUP BY t1.rid
+        	) t2
 			ON t1.rid = t2.rid
-		ORDER BY t1.rid
-	) UNION ALL (
-		WITH foo AS (
-			SELECT
-				t1.rid,
-				ST_Union(t2.rast) AS rast
-			FROM raster_elevation t1
-			JOIN raster_elevation t2
-				ON ST_Intersects(t1.rast, t2.rast)
-					AND t1.rid != 0
-					AND t2.rid != 0
-				GROUP BY t1.rid
-		)
+	UNION ALL
 		SELECT
 			t1.rid,
 			'hillshade',
 			ST_Hillshade(t2.rast, 1, t1.rast) AS rast
 		FROM raster_elevation t1
-		JOIN foo t2
+		JOIN (
+            SELECT
+                t1.rid,
+                ST_Union(t2.rast) AS rast
+            FROM raster_elevation t1
+            JOIN raster_elevation t2
+                ON ST_Intersects(t1.rast, t2.rast)
+                    AND t1.rid != 0
+                    AND t2.rid != 0
+                GROUP BY t1.rid
+        	) t2
 			ON t1.rid = t2.rid
-		ORDER BY t1.rid
-	);
-
-END IF;
+	;
 END $$;
 
-WITH foo AS (
-	SELECT
-		rid,
-		functype,
-		ST_PixelAsPoints(rast) AS papt
-	FROM raster_elevation_out
-)
 SELECT
 	rid,
 	functype,
 	(papt).x,
 	(papt).y,
 	round((papt).val::numeric, 6) AS val
-FROM foo
+FROM (
+    SELECT
+        rid,
+        functype,
+        ST_PixelAsPoints(rast) AS papt
+    FROM raster_elevation_out
+) foo
 ORDER BY 2, 1, 4, 3;
 
 DROP TABLE IF EXISTS raster_elevation_out;
@@ -299,8 +247,8 @@ CREATE TABLE raster_value_arrays (
 	val double precision[][]
 );
 CREATE OR REPLACE FUNCTION make_value_array(
-	rows integer DEFAULT 3,
-	columns integer DEFAULT 3,
+	nrows integer DEFAULT 3,
+	ncolumns integer DEFAULT 3,
 	start_val double precision DEFAULT 1,
 	step double precision DEFAULT 1,
 	skip_expr text DEFAULT NULL
@@ -317,10 +265,10 @@ CREATE OR REPLACE FUNCTION make_value_array(
 	BEGIN
 		value := start_val;
 
-		values := array_fill(NULL::double precision, ARRAY[1, columns, rows]);
+		values := array_fill(NULL::double precision, ARRAY[1, ncolumns, nrows]);
 
-		FOR y IN 1..columns LOOP
-			FOR x IN 1..rows LOOP
+		FOR y IN 1..ncolumns LOOP
+			FOR x IN 1..nrows LOOP
 				IF skip_expr IS NULL OR length(skip_expr) < 1 THEN
 					result := TRUE;
 				ELSE

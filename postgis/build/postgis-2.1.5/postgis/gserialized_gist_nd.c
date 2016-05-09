@@ -34,15 +34,6 @@
 #include "gserialized_gist.h"	     /* For utility functions. */
 #include "geography.h"
 
-/* Fall back to older finite() if necessary */ 
-#ifndef HAVE_ISFINITE 
-# ifdef HAVE_GNU_ISFINITE 
-#  define _GNU_SOURCE 
-# else 
-#  define isfinite finite 
-# endif 
-#endif 
-
 /*
 ** When is a node split not so good? If more than 90% of the entries
 ** end up in one of the children.
@@ -707,6 +698,7 @@ Datum gserialized_gist_consistent(PG_FUNCTION_ARGS)
 	char gidxmem[GIDX_MAX_SIZE];
 	GIDX *query_gbox_index = (GIDX*)gidxmem;
 
+#if POSTGIS_PGSQL_VERSION >= 84
 	/* PostgreSQL 8.4 and later require the RECHECK flag to be set here,
 	   rather than being supplied as part of the operator class definition */
 	bool *recheck = (bool *) PG_GETARG_POINTER(4);
@@ -715,6 +707,7 @@ Datum gserialized_gist_consistent(PG_FUNCTION_ARGS)
 	   out during index scans. For cases when the geometries are large, rechecking
 	   can make things twice as slow. */
 	*recheck = false;
+#endif
 
 	POSTGIS_DEBUG(4, "[GIST] 'consistent' function called");
 

@@ -1,3 +1,5 @@
+set client_min_messages = warning;
+
 DROP TABLE IF EXISTS raster_mapalgebra;
 CREATE TABLE raster_mapalgebra (
 	rid integer,
@@ -266,7 +268,8 @@ FROM (
 		ST_Value(rast, 1, 1, 1) AS firstvalue,
 		ST_Value(rast, 1, ST_Width(rast), ST_Height(rast)) AS lastvalue
 	FROM raster_mapalgebra_out
-) AS r;
+) AS r 
+ORDER BY rid1, rid2, extent, firstvalue, lastvalue;  
 
 DROP TABLE IF EXISTS raster_mapalgebra;
 DROP TABLE IF EXISTS raster_mapalgebra_out;

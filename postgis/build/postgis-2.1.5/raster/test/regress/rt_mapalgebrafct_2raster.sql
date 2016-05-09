@@ -1,3 +1,5 @@
+set client_min_messages = warning;
+
 DROP TABLE IF EXISTS raster_mapalgebra;
 CREATE TABLE raster_mapalgebra (
 	rid integer,
@@ -81,16 +83,16 @@ CREATE OR REPLACE FUNCTION raster_mapalgebra_union(
 	AS $$
 	DECLARE
 	BEGIN
-		CASE
-			WHEN rast1 IS NOT NULL AND rast2 IS NOT NULL THEN
+		IF	
+			rast1 IS NOT NULL AND rast2 IS NOT NULL THEN
 				RETURN ((rast1 + rast2)/2.);
-			WHEN rast1 IS NULL AND rast2 IS NULL THEN
+			ELSIF rast1 IS NULL AND rast2 IS NULL THEN
 				RETURN NULL;
-			WHEN rast1 IS NULL THEN
+			ELSIF rast1 IS NULL THEN
 				RETURN rast2;
 			ELSE
 				RETURN rast1;
-		END CASE;
+		END IF;
 
 		RETURN NULL;
 	END;
@@ -105,14 +107,13 @@ CREATE OR REPLACE FUNCTION raster_mapalgebra_first(
 	AS $$
 	DECLARE
 	BEGIN
-		CASE
-			WHEN rast1 IS NOT NULL AND rast2 IS NOT NULL THEN
-				RETURN NULL;
-			WHEN rast1 IS NOT NULL THEN
-				RETURN rast1;
-			ELSE
-				RETURN NULL;
-		END CASE;
+		IF rast1 IS NOT NULL AND rast2 IS NOT NULL THEN
+			RETURN NULL;
+		ELSIF rast1 IS NOT NULL THEN
+			RETURN rast1;
+		ELSE
+			RETURN NULL;
+		END IF;
 
 		RETURN NULL;
 	END;
@@ -127,14 +128,13 @@ CREATE OR REPLACE FUNCTION raster_mapalgebra_second(
 	AS $$
 	DECLARE
 	BEGIN
-		CASE
-			WHEN rast1 IS NOT NULL AND rast2 IS NOT NULL THEN
-				RETURN NULL;
-			WHEN rast2 IS NOT NULL THEN
-				RETURN rast2;
-			ELSE
-				RETURN NULL;
-		END CASE;
+		IF rast1 IS NOT NULL AND rast2 IS NOT NULL THEN
+			RETURN NULL;
+		ELSIF rast2 IS NOT NULL THEN
+			RETURN rast2;
+		ELSE
+			RETURN NULL;
+		END IF;
 
 		RETURN NULL;
 	END;
@@ -333,7 +333,8 @@ FROM (
 		ST_Value(rast, 1, 1, 1) AS firstvalue,
 		ST_Value(rast, 1, ST_Width(rast), ST_Height(rast)) AS lastvalue
 	FROM raster_mapalgebra_out
-) AS r;
+	order by 1, 2, 3
+) AS r order by 1, 2, 3;
 
 DROP FUNCTION IF EXISTS raster_mapalgebra_intersection(double precision, double precision, int[], VARIADIC text[]);
 DROP FUNCTION IF EXISTS raster_mapalgebra_union(double precision, double precision, VARIADIC text[]);

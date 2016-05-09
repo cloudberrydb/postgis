@@ -248,7 +248,7 @@ CREATE OR REPLACE FUNCTION st_summary(rast raster)
 		ELSE
 			msg := msg || 'bands ';
 		END IF;
-		msg := msg || 'and extent of ' || extent;
+		msg := msg || 'and extent of ' || text(box2d_out(extent));
 
 		IF
 			metadata.skewx::numeric(16, 10) <> 0::numeric(16, 10) OR 
@@ -1623,8 +1623,11 @@ CREATE OR REPLACE FUNCTION st_colormap(
 		_ismap boolean;
 		_colormap text;
 		_element text[];
+		_method text;
+		_keyword text;
 	BEGIN
 		_ismap := TRUE;
+		_method := method; -- DEFAULT must be CONSTANT in plpgsql (not in plr/pljava) in GPDB
 
 		-- clean colormap to see what it is
 		_colormap := split_part(colormap, E'\n', 1);
@@ -1639,22 +1642,22 @@ CREATE OR REPLACE FUNCTION st_colormap(
 			_colormap := colormap;
 		-- treat as keyword
 		ELSE
-			method := 'INTERPOLATE';
-			CASE lower(trim(both from _colormap))
-				WHEN 'grayscale', 'greyscale' THEN
+			_method := 'INTERPOLATE';
+			_keyword := lower(trim(both from _colormap));
+			IF (_keyword = 'grayscale' OR _keyword = 'greyscale') THEN
 					_colormap := '
 100%   0
   0% 254
   nv 255 
 					';
-				WHEN 'pseudocolor' THEN
+				ELSIF _keyword = 'pseudocolor' THEN
 					_colormap := '
 100% 255   0   0 255
  50%   0 255   0 255
   0%   0   0 255 255
   nv   0   0   0   0
 					';
-				WHEN 'fire' THEN
+				ELSIF _keyword = 'fire' THEN
 					_colormap := '
   100% 243 255 221 255
 93.75% 242 255 178 255
@@ -1675,7 +1678,7 @@ CREATE OR REPLACE FUNCTION st_colormap(
     0%   0   0   0 255
     nv   0   0   0   0
 					';
-				WHEN 'bluered' THEN
+				ELSIF _keyword = 'bluered' THEN
 					_colormap := '
 100.00% 165   0  33 255
  94.12% 216  21  47 255
@@ -1699,10 +1702,10 @@ CREATE OR REPLACE FUNCTION st_colormap(
 					';
 				ELSE
 					RAISE EXCEPTION 'Unknown colormap keyword: %', colormap;
-			END CASE;
+			END IF;
 		END IF;
 
-		RETURN _st_colormap($1, $2, _colormap, $4);
+		RETURN _st_colormap($1, $2, _colormap, _method);
 	END;
 	$$ LANGUAGE 'plpgsql' IMMUTABLE STRICT;
 
@@ -2434,7 +2437,7 @@ CREATE OR REPLACE FUNCTION st_resize(
 				BEGIN
 					wh[i] := (regexp_matches(wh[i], E'^(\\d*.?\\d*)%{1}$'))[1];
 					IF length(wh[i]) < 1 THEN
-						RAISE invalid_parameter_value;
+						RAISE EXCEPTION 'Invalid percentage value provided for width/height';
 					END IF;
 
 					whd[i] := wh[i]::double precision * 0.01;
@@ -3581,13 +3584,15 @@ CREATE OR REPLACE FUNCTION _st_slope4ma(value double precision[][][], pos intege
 
 		_value double precision[][][];
 		ndims int;
-	BEGIN
 
+		_user_prefer text;
+	BEGIN
 		ndims := array_ndims(value);
+
 		-- add a third dimension if 2-dimension
 		IF ndims = 2 THEN
 			_value := _st_convertarray4ma(value);
-		ELSEIF ndims != 3 THEN
+		ELSIF ndims != 3 THEN
 			RAISE EXCEPTION 'First parameter of function must be a 3-dimension array';
 		ELSE
 			_value := value;
@@ -3645,17 +3650,17 @@ CREATE OR REPLACE FUNCTION _st_slope4ma(value double precision[][][], pos intege
 		slope := sqrt(dz_dx * dz_dx + dz_dy * dz_dy) / (8 * _scale);
 
 		-- output depends on user preference
-		CASE substring(upper(trim(leading from _units)) for 3)
-			-- percentages
-			WHEN 'PER' THEN
-				slope := 100.0 * slope;
-			-- radians
-			WHEN 'rad' THEN
-				slope := atan(slope);
-			-- degrees (default)
-			ELSE
-				slope := degrees(atan(slope));
-		END CASE;
+		_user_prefer := substring(upper(trim(leading from _units)) for 3);
+		-- percentages
+		IF _user_prefer = 'PER' THEN
+			slope := 100.0 * slope;
+		-- radians
+		ELSIF _user_prefer =  'rad' THEN
+			slope := atan(slope);
+		-- degrees (default)
+		ELSE
+			slope := degrees(atan(slope));
+		END IF;
 
 		RETURN slope;
 	END;
@@ -3754,12 +3759,14 @@ CREATE OR REPLACE FUNCTION _st_aspect4ma(value double precision[][][], pos integ
 
 		_value double precision[][][];
 		ndims int;
+
+		_user_prefer text;
 	BEGIN
 		ndims := array_ndims(value);
 		-- add a third dimension if 2-dimension
 		IF ndims = 2 THEN
 			_value := _st_convertarray4ma(value);
-		ELSEIF ndims != 3 THEN
+		ELSIF ndims != 3 THEN
 			RAISE EXCEPTION 'First parameter of function must be a 3-dimension array';
 		ELSE
 			_value := value;
@@ -3832,14 +3839,14 @@ CREATE OR REPLACE FUNCTION _st_aspect4ma(value double precision[][][], pos integ
 		END IF;
 
 		-- output depends on user preference
-		CASE substring(upper(trim(leading from _units)) for 3)
-			-- radians
-			WHEN 'rad' THEN
-				RETURN aspect;
-			-- degrees (default)
-			ELSE
-				RETURN degrees(aspect);
-		END CASE;
+		_user_prefer := substring(upper(trim(leading from _units)) for 3);
+		-- radians
+		IF _user_prefer = 'rad' THEN
+			RETURN aspect;
+		-- degrees (default)
+		ELSE
+			RETURN degrees(aspect);
+		END IF;
 
 	END;
 	$$ LANGUAGE 'plpgsql' IMMUTABLE;
@@ -4153,7 +4160,7 @@ CREATE OR REPLACE FUNCTION _st_tpi4ma(value double precision[][][], pos integer[
 		-- add a third dimension if 2-dimension
 		IF ndims = 2 THEN
 			_value := _st_convertarray4ma(value);
-		ELSEIF ndims != 3 THEN
+		ELSIF ndims != 3 THEN
 			RAISE EXCEPTION 'First parameter of function must be a 3-dimension array';
 		ELSE
 			_value := value;
@@ -5764,7 +5771,7 @@ CREATE OR REPLACE FUNCTION _st_samealignment_finalfn(agg agg_samealignment)
 	LANGUAGE 'sql' IMMUTABLE STRICT;
 
 -- Availability: 2.1.0
-CREATE AGGREGATE st_samealignment(raster) (
+CREATE ORDERED AGGREGATE st_samealignment(raster) (
 	SFUNC = _st_samealignment_transfn,
 	STYPE = agg_samealignment,
 	FINALFUNC = _st_samealignment_finalfn
@@ -6294,32 +6301,34 @@ CREATE OR REPLACE FUNCTION st_intersection(geomin geometry, rast raster, band in
 	RETURNS SETOF geomval AS $$
 	DECLARE
 		intersects boolean := FALSE;
+		gv_r geomval;
 	BEGIN
 		intersects := ST_Intersects(geomin, rast, band);
 		IF intersects THEN
 			-- Return the intersections of the geometry with the vectorized parts of
 			-- the raster and the values associated with those parts, if really their
 			-- intersection is not empty.
-			RETURN QUERY
-				SELECT
-					intgeom,
-					val
+			FOR gv_r IN
+				SELECT intgeom, val
 				FROM (
-					SELECT
-						ST_Intersection((gv).geom, geomin) AS intgeom,
-						(gv).val
-					FROM ST_DumpAsPolygons(rast, band) gv
-					WHERE ST_Intersects((gv).geom, geomin)
+					SELECT ST_Intersection((gv).geom, geomin) AS intgeom, (gv).val
+						FROM ST_DumpAsPolygons(rast, band) gv
+						WHERE ST_Intersects((gv).geom, geomin)
 				) foo
-				WHERE NOT ST_IsEmpty(intgeom);
+				WHERE NOT ST_IsEmpty(intgeom)
+			LOOP
+				RETURN NEXT gv_r;
+			END LOOP;
+
 		ELSE
 			-- If the geometry does not intersect with the raster, return an empty
 			-- geometry and a null value
-			RETURN QUERY
-				SELECT
-					emptygeom,
-					NULL::float8
-				FROM ST_GeomCollFromText('GEOMETRYCOLLECTION EMPTY', ST_SRID($1)) emptygeom;
+			FOR gv_r IN
+				SELECT emptygeom, NULL::float8 from 
+					ST_GeomCollFromText('GEOMETRYCOLLECTION EMPTY', ST_SRID($1))
+			LOOP
+				RETURN NEXT gv_r;
+			END LOOP;
 		END IF;
 	END;
 	$$
@@ -6362,22 +6371,21 @@ CREATE OR REPLACE FUNCTION st_intersection(
 		_returnband := upper(returnband);
 
 		rtn := NULL;
-		CASE
-			WHEN _returnband = 'BAND1' THEN
-				rtn := ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast1.val]', ST_BandPixelType(rast1, band1), 'INTERSECTION', newnodata1::text, newnodata1::text, newnodata1);
-				rtn := ST_SetBandNodataValue(rtn, 1, newnodata1);
-			WHEN _returnband = 'BAND2' THEN
-				rtn := ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast2.val]', ST_BandPixelType(rast2, band2), 'INTERSECTION', newnodata2::text, newnodata2::text, newnodata2);
-				rtn := ST_SetBandNodataValue(rtn, 1, newnodata2);
-			WHEN _returnband = 'BOTH' THEN
-				rtn := ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast1.val]', ST_BandPixelType(rast1, band1), 'INTERSECTION', newnodata1::text, newnodata1::text, newnodata1);
-				rtn := ST_SetBandNodataValue(rtn, 1, newnodata1);
-				rtn := ST_AddBand(rtn, ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast2.val]', ST_BandPixelType(rast2, band2), 'INTERSECTION', newnodata2::text, newnodata2::text, newnodata2));
-				rtn := ST_SetBandNodataValue(rtn, 2, newnodata2);
-			ELSE
-				RAISE EXCEPTION 'Unknown value provided for returnband: %', returnband;
-				RETURN NULL;
-		END CASE;
+		IF _returnband = 'BAND1' THEN
+			rtn := ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast1.val]', ST_BandPixelType(rast1, band1), 'INTERSECTION', newnodata1::text, newnodata1::text, newnodata1);
+			rtn := ST_SetBandNodataValue(rtn, 1, newnodata1);
+		ELSIF _returnband = 'BAND2' THEN
+			rtn := ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast2.val]', ST_BandPixelType(rast2, band2), 'INTERSECTION', newnodata2::text, newnodata2::text, newnodata2);
+			rtn := ST_SetBandNodataValue(rtn, 1, newnodata2);
+		ELSIF _returnband = 'BOTH' THEN
+			rtn := ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast1.val]', ST_BandPixelType(rast1, band1), 'INTERSECTION', newnodata1::text, newnodata1::text, newnodata1);
+			rtn := ST_SetBandNodataValue(rtn, 1, newnodata1);
+			rtn := ST_AddBand(rtn, ST_MapAlgebraExpr(rast1, band1, rast2, band2, '[rast2.val]', ST_BandPixelType(rast2, band2), 'INTERSECTION', newnodata2::text, newnodata2::text, newnodata2));
+			rtn := ST_SetBandNodataValue(rtn, 2, newnodata2);
+		ELSE
+			RAISE EXCEPTION 'Unknown value provided for returnband: %', returnband;
+			RETURN NULL;
+		END IF;
 
 		RETURN rtn;
 	END;
@@ -6470,7 +6478,7 @@ CREATE OR REPLACE FUNCTION _st_union_transfn(internal, raster, unionarg[])
 	LANGUAGE 'c' IMMUTABLE;
 
 -- Availability: 2.1.0
-CREATE AGGREGATE st_union(raster, unionarg[]) (
+CREATE ORDERED AGGREGATE st_union(raster, unionarg[]) (
 	SFUNC = _st_union_transfn,
 	STYPE = internal,
 	FINALFUNC = _st_union_finalfn
@@ -6483,7 +6491,7 @@ CREATE OR REPLACE FUNCTION _st_union_transfn(internal, raster, integer, text)
 
 -- Availability: 2.0.0
 -- Changed: 2.1.0 changed definition
-CREATE AGGREGATE st_union(raster, integer, text) (
+CREATE ORDERED AGGREGATE st_union(raster, integer, text) (
 	SFUNC = _st_union_transfn,
 	STYPE = internal,
 	FINALFUNC = _st_union_finalfn
@@ -6496,7 +6504,7 @@ CREATE OR REPLACE FUNCTION _st_union_transfn(internal, raster, integer)
 
 -- Availability: 2.0.0
 -- Changed: 2.1.0 changed definition
-CREATE AGGREGATE st_union(raster, integer) (
+CREATE ORDERED AGGREGATE st_union(raster, integer) (
 	SFUNC = _st_union_transfn,
 	STYPE = internal,
 	FINALFUNC = _st_union_finalfn
@@ -6509,7 +6517,7 @@ CREATE OR REPLACE FUNCTION _st_union_transfn(internal, raster)
 
 -- Availability: 2.0.0
 -- Changed: 2.1.0 changed definition
-CREATE AGGREGATE st_union(raster) (
+CREATE ORDERED AGGREGATE st_union(raster) (
 	SFUNC = _st_union_transfn,
 	STYPE = internal,
 	FINALFUNC = _st_union_finalfn
@@ -6522,7 +6530,7 @@ CREATE OR REPLACE FUNCTION _st_union_transfn(internal, raster, text)
 
 -- Availability: 2.0.0
 -- Changed: 2.1.0 changed definition
-CREATE AGGREGATE st_union(raster, text) (
+CREATE ORDERED AGGREGATE st_union(raster, text) (
 	SFUNC = _st_union_transfn,
 	STYPE = internal,
 	FINALFUNC = _st_union_finalfn
@@ -7126,9 +7134,13 @@ CREATE OR REPLACE FUNCTION _raster_constraint_info_spatially_unique(rastschema n
 		AND s.conrelid = c.oid
 		AND s.contype = 'x'
 		AND 0::smallint = ANY (s.conkey)
-		AND idx.indexrelid = s.conindid
+--XXX I have little confidence on this, :(
+--		AND idx.indexrelid = s.conindid
+		AND idx.indrelid = s.conrelid
 		AND pg_get_indexdef(idx.indexrelid, 1, true) LIKE '(' || quote_ident($3) || '::geometry)'
-		AND s.conexclop[1] = op.oid
+--XXX I have little confidence on this, :(
+--		AND s.conexclop[1] = op.oid
+		AND s.connamespace = op.oprnamespace
 		AND op.oprname = '=';
 	$$ LANGUAGE sql STABLE STRICT
   COST 100;
@@ -7174,9 +7186,13 @@ CREATE OR REPLACE FUNCTION _drop_raster_constraint_spatially_unique(rastschema n
 			AND s.conrelid = c.oid
 			AND s.contype = 'x'
 			AND 0::smallint = ANY (s.conkey)
-			AND idx.indexrelid = s.conindid
+--XXX I have little confidence on this, :(
+--			AND idx.indexrelid = s.conindid
+			AND idx.indrelid = s.conrelid
 			AND pg_get_indexdef(idx.indexrelid, 1, true) LIKE '(' || quote_ident($3) || '::geometry)'
-			AND s.conexclop[1] = op.oid
+--XXX I have little confidence on this, :(
+--			AND s.conexclop[1] = op.oid
+			AND s.connamespace = op.oprnamespace
 			AND op.oprname = '=';
 
 		RETURN _drop_raster_constraint($1, $2, cn); 
@@ -7347,8 +7363,13 @@ CREATE OR REPLACE FUNCTION _drop_raster_constraint_num_bands(rastschema name, ra
 
 CREATE OR REPLACE FUNCTION _raster_constraint_info_pixel_types(rastschema name, rasttable name, rastcolumn name)
 	RETURNS text[] AS $$
+--
+-- Greenplum will replace operator '=' as 'OPERATOR(pg_catalog.=)', hence original method will fail.
+-- An example of s.consrc may be below:
+--		 (_raster_constraint_pixel_types(rast) OPERATOR(pg_catalog.=) '{8BUI}'::anyarray)
+--
 	SELECT
-		trim(both '''' from split_part(replace(replace(split_part(s.consrc, ' = ', 2), ')', ''), '(', ''), '::', 1))::text[]
+		trim(both ' ''' from split_part(replace(replace(split_part(s.consrc, '=', 2), ')', ''), '(', ''), '::', 1))::text[]
 	FROM pg_class c, pg_namespace n, pg_attribute a, pg_constraint s
 	WHERE n.nspname = $1
 		AND c.relname = $2
@@ -7423,8 +7444,11 @@ CREATE OR REPLACE FUNCTION _drop_raster_constraint_pixel_types(rastschema name, 
 
 CREATE OR REPLACE FUNCTION _raster_constraint_info_nodata_values(rastschema name, rasttable name, rastcolumn name)
 	RETURNS double precision[] AS $$
+--
+-- Greenplum will replace operator '=' as 'OPERATOR(pg_catalog.=)', hence original method will fail.
+--
 	SELECT
-		trim(both '''' from split_part(replace(replace(split_part(s.consrc, ' = ', 2), ')', ''), '(', ''), '::', 1))::double precision[]
+		trim(both ' ''' from split_part(replace(replace(split_part(s.consrc, '=', 2), ')', ''), '(', ''), '::', 1))::text[]::double precision[]
 	FROM pg_class c, pg_namespace n, pg_attribute a, pg_constraint s
 	WHERE n.nspname = $1
 		AND c.relname = $2
@@ -7503,8 +7527,11 @@ CREATE OR REPLACE FUNCTION _drop_raster_constraint_nodata_values(rastschema name
 
 CREATE OR REPLACE FUNCTION _raster_constraint_info_out_db(rastschema name, rasttable name, rastcolumn name)
 	RETURNS boolean[] AS $$
+--
+-- Greenplum will replace operator '=' as 'OPERATOR(pg_catalog.=)', hence original method will fail.
+--
 	SELECT
-		trim(both '''' from split_part(replace(replace(split_part(s.consrc, ' = ', 2), ')', ''), '(', ''), '::', 1))::boolean[]
+		trim(both ' ''' from split_part(replace(replace(split_part(s.consrc, '=', 2), ')', ''), '(', ''), '::', 1))::text[]::boolean[]
 	FROM pg_class c, pg_namespace n, pg_attribute a, pg_constraint s
 	WHERE n.nspname = $1
 		AND c.relname = $2
@@ -7645,61 +7672,61 @@ CREATE OR REPLACE FUNCTION AddRasterConstraints (
 			kw := trim(both from lower(constraints[x]));
 
 			BEGIN
-				CASE
-					WHEN kw = 'srid' THEN
+				IF
+					kw = 'srid' THEN
 						RAISE NOTICE 'Adding SRID constraint';
 						rtn := _add_raster_constraint_srid(schema, $2, $3);
-					WHEN kw IN ('scale_x', 'scalex') THEN
+					ELSIF kw IN ('scale_x', 'scalex') THEN
 						RAISE NOTICE 'Adding scale-X constraint';
 						rtn := _add_raster_constraint_scale(schema, $2, $3, 'x');
-					WHEN kw IN ('scale_y', 'scaley') THEN
+					ELSIF kw IN ('scale_y', 'scaley') THEN
 						RAISE NOTICE 'Adding scale-Y constraint';
 						rtn := _add_raster_constraint_scale(schema, $2, $3, 'y');
-					WHEN kw = 'scale' THEN
+					ELSIF kw = 'scale' THEN
 						RAISE NOTICE 'Adding scale-X constraint';
 						rtn := _add_raster_constraint_scale(schema, $2, $3, 'x');
 						RAISE NOTICE 'Adding scale-Y constraint';
 						rtn := _add_raster_constraint_scale(schema, $2, $3, 'y');
-					WHEN kw IN ('blocksize_x', 'blocksizex', 'width') THEN
+					ELSIF kw IN ('blocksize_x', 'blocksizex', 'width') THEN
 						RAISE NOTICE 'Adding blocksize-X constraint';
 						rtn := _add_raster_constraint_blocksize(schema, $2, $3, 'width');
-					WHEN kw IN ('blocksize_y', 'blocksizey', 'height') THEN
+					ELSIF kw IN ('blocksize_y', 'blocksizey', 'height') THEN
 						RAISE NOTICE 'Adding blocksize-Y constraint';
 						rtn := _add_raster_constraint_blocksize(schema, $2, $3, 'height');
-					WHEN kw = 'blocksize' THEN
+					ELSIF kw = 'blocksize' THEN
 						RAISE NOTICE 'Adding blocksize-X constraint';
 						rtn := _add_raster_constraint_blocksize(schema, $2, $3, 'width');
 						RAISE NOTICE 'Adding blocksize-Y constraint';
 						rtn := _add_raster_constraint_blocksize(schema, $2, $3, 'height');
-					WHEN kw IN ('same_alignment', 'samealignment', 'alignment') THEN
+					ELSIF kw IN ('same_alignment', 'samealignment', 'alignment') THEN
 						RAISE NOTICE 'Adding alignment constraint';
 						rtn := _add_raster_constraint_alignment(schema, $2, $3);
-					WHEN kw IN ('regular_blocking', 'regularblocking') THEN
-						RAISE NOTICE 'Adding coverage tile constraint required for regular blocking';
-						rtn := _add_raster_constraint_coverage_tile(schema, $2, $3);
-						IF rtn IS NOT FALSE THEN
-							RAISE NOTICE 'Adding spatially unique constraint required for regular blocking';
-							rtn := _add_raster_constraint_spatially_unique(schema, $2, $3);
-						END IF;
-					WHEN kw IN ('num_bands', 'numbands') THEN
+					ELSIF kw IN ('regular_blocking', 'regularblocking') THEN
+
+						-- Greenplum doesn't support EXCLUSION CONSTRAINT (exclude)
+						--	so spatially unique is not supportted up to now, 28 Jan 2015
+						RAISE EXCEPTION 'Unable to add constraint: %, because Greenplum doesn\'t support exclusion constraint (EXCLUDE), so spatially unique constraints will be ignored. Skipping', quote_literal(constraints[x]);
+						rtn := FLASE;
+						CONTINUE kwloop;
+					ELSIF kw IN ('num_bands', 'numbands') THEN
 						RAISE NOTICE 'Adding number of bands constraint';
 						rtn := _add_raster_constraint_num_bands(schema, $2, $3);
-					WHEN kw IN ('pixel_types', 'pixeltypes') THEN
+					ELSIF kw IN ('pixel_types', 'pixeltypes') THEN
 						RAISE NOTICE 'Adding pixel type constraint';
 						rtn := _add_raster_constraint_pixel_types(schema, $2, $3);
-					WHEN kw IN ('nodata_values', 'nodatavalues', 'nodata') THEN
+					ELSIF kw IN ('nodata_values', 'nodatavalues', 'nodata') THEN
 						RAISE NOTICE 'Adding nodata value constraint';
 						rtn := _add_raster_constraint_nodata_values(schema, $2, $3);
-					WHEN kw IN ('out_db', 'outdb') THEN
+					ELSIF kw IN ('out_db', 'outdb') THEN
 						RAISE NOTICE 'Adding out-of-database constraint';
 						rtn := _add_raster_constraint_out_db(schema, $2, $3);
-					WHEN kw = 'extent' THEN
+					ELSIF kw = 'extent' THEN
 						RAISE NOTICE 'Adding maximum extent constraint';
 						rtn := _add_raster_constraint_extent(schema, $2, $3);
 					ELSE
 						RAISE NOTICE 'Unknown constraint: %.  Skipping', quote_literal(constraints[x]);
 						CONTINUE kwloop;
-				END CASE;
+				END IF;
 			END;
 
 			IF rtn IS FALSE THEN
@@ -7889,36 +7916,36 @@ CREATE OR REPLACE FUNCTION DropRasterConstraints (
 			kw := trim(both from lower(constraints[x]));
 
 			BEGIN
-				CASE
-					WHEN kw = 'srid' THEN
+				IF
+					kw = 'srid' THEN
 						RAISE NOTICE 'Dropping SRID constraint';
 						rtn := _drop_raster_constraint_srid(schema, $2, $3);
-					WHEN kw IN ('scale_x', 'scalex') THEN
+					ELSIF kw IN ('scale_x', 'scalex') THEN
 						RAISE NOTICE 'Dropping scale-X constraint';
 						rtn := _drop_raster_constraint_scale(schema, $2, $3, 'x');
-					WHEN kw IN ('scale_y', 'scaley') THEN
+					ELSIF kw IN ('scale_y', 'scaley') THEN
 						RAISE NOTICE 'Dropping scale-Y constraint';
 						rtn := _drop_raster_constraint_scale(schema, $2, $3, 'y');
-					WHEN kw = 'scale' THEN
+					ELSIF kw = 'scale' THEN
 						RAISE NOTICE 'Dropping scale-X constraint';
 						rtn := _drop_raster_constraint_scale(schema, $2, $3, 'x');
 						RAISE NOTICE 'Dropping scale-Y constraint';
 						rtn := _drop_raster_constraint_scale(schema, $2, $3, 'y');
-					WHEN kw IN ('blocksize_x', 'blocksizex', 'width') THEN
+					ELSIF kw IN ('blocksize_x', 'blocksizex', 'width') THEN
 						RAISE NOTICE 'Dropping blocksize-X constraint';
 						rtn := _drop_raster_constraint_blocksize(schema, $2, $3, 'width');
-					WHEN kw IN ('blocksize_y', 'blocksizey', 'height') THEN
+					ELSIF kw IN ('blocksize_y', 'blocksizey', 'height') THEN
 						RAISE NOTICE 'Dropping blocksize-Y constraint';
 						rtn := _drop_raster_constraint_blocksize(schema, $2, $3, 'height');
-					WHEN kw = 'blocksize' THEN
+					ELSIF kw = 'blocksize' THEN
 						RAISE NOTICE 'Dropping blocksize-X constraint';
 						rtn := _drop_raster_constraint_blocksize(schema, $2, $3, 'width');
 						RAISE NOTICE 'Dropping blocksize-Y constraint';
 						rtn := _drop_raster_constraint_blocksize(schema, $2, $3, 'height');
-					WHEN kw IN ('same_alignment', 'samealignment', 'alignment') THEN
+					ELSIF kw IN ('same_alignment', 'samealignment', 'alignment') THEN
 						RAISE NOTICE 'Dropping alignment constraint';
 						rtn := _drop_raster_constraint_alignment(schema, $2, $3);
-					WHEN kw IN ('regular_blocking', 'regularblocking') THEN
+					ELSIF kw IN ('regular_blocking', 'regularblocking') THEN
 						rtn := _drop_raster_constraint_regular_blocking(schema, $2, $3);
 
 						RAISE NOTICE 'Dropping coverage tile constraint required for regular blocking';
@@ -7928,25 +7955,25 @@ CREATE OR REPLACE FUNCTION DropRasterConstraints (
 							RAISE NOTICE 'Dropping spatially unique constraint required for regular blocking';
 							rtn := _drop_raster_constraint_spatially_unique(schema, $2, $3);
 						END IF;
-					WHEN kw IN ('num_bands', 'numbands') THEN
+					ELSIF kw IN ('num_bands', 'numbands') THEN
 						RAISE NOTICE 'Dropping number of bands constraint';
 						rtn := _drop_raster_constraint_num_bands(schema, $2, $3);
-					WHEN kw IN ('pixel_types', 'pixeltypes') THEN
+					ELSIF kw IN ('pixel_types', 'pixeltypes') THEN
 						RAISE NOTICE 'Dropping pixel type constraint';
 						rtn := _drop_raster_constraint_pixel_types(schema, $2, $3);
-					WHEN kw IN ('nodata_values', 'nodatavalues', 'nodata') THEN
+					ELSIF kw IN ('nodata_values', 'nodatavalues', 'nodata') THEN
 						RAISE NOTICE 'Dropping nodata value constraint';
 						rtn := _drop_raster_constraint_nodata_values(schema, $2, $3);
-					WHEN kw IN ('out_db', 'outdb') THEN
+					ELSIF kw IN ('out_db', 'outdb') THEN
 						RAISE NOTICE 'Dropping out-of-database constraint';
 						rtn := _drop_raster_constraint_out_db(schema, $2, $3);
-					WHEN kw = 'extent' THEN
+					ELSIF kw = 'extent' THEN
 						RAISE NOTICE 'Dropping maximum extent constraint';
 						rtn := _drop_raster_constraint_extent(schema, $2, $3);
 					ELSE
 						RAISE NOTICE 'Unknown constraint: %.  Skipping', quote_literal(constraints[x]);
 						CONTINUE kwloop;
-				END CASE;
+				END IF;
 			END;
 
 			IF rtn IS FALSE THEN
@@ -8118,6 +8145,32 @@ CREATE OR REPLACE FUNCTION _overview_constraint(ov raster, factor integer, refsc
 	RETURNS boolean AS
 	$$ SELECT COALESCE((SELECT TRUE FROM raster_columns WHERE r_table_catalog = current_database() AND r_table_schema = $3 AND r_table_name = $4 AND r_raster_column = $5), FALSE) $$
 	LANGUAGE 'sql' STABLE
+	COST 100;
+
+-- We re-write this function, otherwise Greenplum will complain: 
+--		function cannot execute on segment because it accesses relation "public.raster_columns"
+CREATE OR REPLACE FUNCTION _overview_constraint(ov raster, factor integer, refschema name, reftable name, refcolumn name)
+	RETURNS boolean AS
+	$$ 
+	SELECT COALESCE((
+	SELECT TRUE 
+    FROM
+        pg_class c,
+        pg_attribute a,
+        pg_type t,
+        pg_namespace n
+    WHERE t.typname = 'raster'::name
+		AND n.nspname = $3
+		AND c.relname = $4
+		AND a.attname = $5
+        AND a.attisdropped = false
+        AND a.atttypid = t.oid
+        AND a.attrelid = c.oid
+        AND c.relnamespace = n.oid
+        AND c.relkind = ANY(ARRAY['r'::char, 'v'::char, 'm'::char, 'f'::char])
+        AND NOT pg_is_other_temp_schema(c.relnamespace)
+	), FALSE)
+	$$ LANGUAGE 'sql' STABLE
 	COST 100;
 
 CREATE OR REPLACE FUNCTION _overview_constraint_info(
