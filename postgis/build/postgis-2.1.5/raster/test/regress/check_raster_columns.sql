@@ -101,7 +101,7 @@ DELETE FROM test_raster_columns;
 
 --	NOTICE:
 --		Greenplum doesn't support EXCLUDE (exclusion constraint) now,
---		so we can't claim EXLUCDE(UNIQUE) on UDTs, which is invoked in 
+--		so we can't claim EXLUCDE(UNIQUE) on UDTs, which is invoked in
 --		the constraint of 'regular_blocking'.
 
 
@@ -115,7 +115,7 @@ SELECT AddRasterConstraints(current_schema(), 'test_raster_columns', 'rast'::nam
 
 --The textual result of ST_Union() relys on the sort of inputs, so we try to verifty it in semantic domain
 SELECT r_table_name, r_raster_column, srid, scale_x, scale_y, blocksize_x, blocksize_y, same_alignment, regular_blocking, num_bands, pixel_types, nodata_values, 
-	CASE WHEN ST_Equals(extent,'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'::geometry) 
+	CASE WHEN ST_Equals(extent,'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'::geometry)
 		THEN 'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'
 		ELSE ST_AsEWKT(extent)
 	END
@@ -131,7 +131,7 @@ SELECT DropRasterConstraints(current_schema(), 'test_raster_columns', 'rast'::na
 
 --The textual result of ST_Union() relays on the sort of inputs, so we try to verify it in semantic domain
 SELECT r_table_name, r_raster_column, srid, scale_x, scale_y, blocksize_x, blocksize_y, same_alignment, regular_blocking, num_bands, pixel_types, nodata_values, 
-	CASE WHEN ST_Equals(extent,'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'::geometry) 
+	CASE WHEN ST_Equals(extent,'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'::geometry)
 		THEN 'POLYGON((3 0,0 0,0 3,0 6,3 6,6 6,6 3,6 0,3 0))'
 		ELSE ST_AsEWKT(extent)
 	END

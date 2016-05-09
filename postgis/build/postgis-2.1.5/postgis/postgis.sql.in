@@ -28,7 +28,7 @@ SET client_min_messages TO warning;
 BEGIN;
 
 -- Check that no other postgis is installed
-CREATE OR REPLACE FUNCTION _anonymous_function() RETURNS VOID AS $$
+DO $$
 DECLARE
   rec RECORD;
 BEGIN
@@ -41,8 +41,6 @@ BEGIN
   END LOOP;
 END
 $$ LANGUAGE 'plpgsql';
-SELECT _anonymous_function();
-DROP FUNCTION IF EXISTS _anonymous_function();
 
 
 -- Let the user know about a deprecated signature and its new name, if any
@@ -2910,7 +2908,7 @@ CREATE OR REPLACE FUNCTION _ST_Buffer(geometry,float8,cstring)
 CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,integer)
 	RETURNS geometry
 	AS $$ SELECT _ST_Buffer($1, $2,
-		textout('quad_segs='||CAST($3 AS text)))
+		CAST('quad_segs='||CAST($3 AS text) as cstring))
 	   $$
 	LANGUAGE 'sql' IMMUTABLE STRICT;
 
@@ -2918,8 +2916,8 @@ CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,integer)
 CREATE OR REPLACE FUNCTION ST_Buffer(geometry,float8,text)
 	RETURNS geometry
 	AS $$ SELECT _ST_Buffer($1, $2,
-		textout( regexp_replace($3, '^[0123456789]+$',
-			'quad_segs='||$3))
+		CAST( regexp_replace($3, '^[0123456789]+$',
+			'quad_segs='||$3) AS cstring)
 		)
 	   $$
 	LANGUAGE 'sql' IMMUTABLE STRICT;

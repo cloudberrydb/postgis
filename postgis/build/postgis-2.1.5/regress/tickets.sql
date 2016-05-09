@@ -262,7 +262,7 @@ BEGIN
     RETURN zone+pref;
 END;
 $BODY$ LANGUAGE 'plpgsql' IMMUTABLE
-  ;
+  COST 100;
 
 CREATE TABLE utm_dots ( the_geog geography, utm_srid integer);
 INSERT INTO utm_dots SELECT geography(ST_SetSRID(ST_Point(i*10,j*10),4326)) As the_geog, utmzone(ST_SetSRID(ST_Point(i*10,j*10),4326)) As utm_srid FROM generate_series(-17,17) As i CROSS JOIN generate_series(-8,8) As j;

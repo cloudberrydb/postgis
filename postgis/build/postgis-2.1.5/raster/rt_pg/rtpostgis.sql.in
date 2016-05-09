@@ -54,11 +54,23 @@ CREATE OR REPLACE FUNCTION raster_out(raster)
     AS 'MODULE_PATHNAME','RASTER_out'
     LANGUAGE 'c' IMMUTABLE STRICT;
 
+CREATE OR REPLACE FUNCTION raster_recv(internal)
+    RETURNS raster
+    AS 'MODULE_PATHNAME','RASTER_recv'
+    LANGUAGE 'c' IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION raster_send(raster)
+    RETURNS bytea
+    AS 'MODULE_PATHNAME','RASTER_send'
+    LANGUAGE 'c' IMMUTABLE STRICT;
+
 CREATE TYPE raster (
     alignment = double,
     internallength = variable,
     input = raster_in,
     output = raster_out,
+    send = raster_send,
+    receive = raster_recv,
     storage = extended
 );
 
@@ -248,7 +260,7 @@ CREATE OR REPLACE FUNCTION st_summary(rast raster)
 		ELSE
 			msg := msg || 'bands ';
 		END IF;
-		msg := msg || 'and extent of ' || text(box2d_out(extent));
+		msg := msg || 'and extent of ' || extent::text;
 
 		IF
 			metadata.skewx::numeric(16, 10) <> 0::numeric(16, 10) OR 
@@ -6301,34 +6313,32 @@ CREATE OR REPLACE FUNCTION st_intersection(geomin geometry, rast raster, band in
 	RETURNS SETOF geomval AS $$
 	DECLARE
 		intersects boolean := FALSE;
-		gv_r geomval;
 	BEGIN
 		intersects := ST_Intersects(geomin, rast, band);
 		IF intersects THEN
 			-- Return the intersections of the geometry with the vectorized parts of
 			-- the raster and the values associated with those parts, if really their
 			-- intersection is not empty.
-			FOR gv_r IN
-				SELECT intgeom, val
+			RETURN QUERY
+				SELECT
+					intgeom,
+					val
 				FROM (
-					SELECT ST_Intersection((gv).geom, geomin) AS intgeom, (gv).val
-						FROM ST_DumpAsPolygons(rast, band) gv
-						WHERE ST_Intersects((gv).geom, geomin)
+					SELECT
+						ST_Intersection((gv).geom, geomin) AS intgeom,
+						(gv).val
+					FROM ST_DumpAsPolygons(rast, band) gv
+					WHERE ST_Intersects((gv).geom, geomin)
 				) foo
-				WHERE NOT ST_IsEmpty(intgeom)
-			LOOP
-				RETURN NEXT gv_r;
-			END LOOP;
-
+				WHERE NOT ST_IsEmpty(intgeom);
 		ELSE
 			-- If the geometry does not intersect with the raster, return an empty
 			-- geometry and a null value
-			FOR gv_r IN
-				SELECT emptygeom, NULL::float8 from 
-					ST_GeomCollFromText('GEOMETRYCOLLECTION EMPTY', ST_SRID($1))
-			LOOP
-				RETURN NEXT gv_r;
-			END LOOP;
+			RETURN QUERY
+				SELECT
+					emptygeom,
+					NULL::float8
+				FROM ST_GeomCollFromText('GEOMETRYCOLLECTION EMPTY', ST_SRID($1)) emptygeom;
 		END IF;
 	END;
 	$$
@@ -7448,7 +7458,7 @@ CREATE OR REPLACE FUNCTION _raster_constraint_info_nodata_values(rastschema name
 -- Greenplum will replace operator '=' as 'OPERATOR(pg_catalog.=)', hence original method will fail.
 --
 	SELECT
-		trim(both ' ''' from split_part(replace(replace(split_part(s.consrc, '=', 2), ')', ''), '(', ''), '::', 1))::text[]::double precision[]
+		trim(both ' ''' from split_part(replace(replace(split_part(s.consrc, '=', 2), ')', ''), '(', ''), '::', 1))::double precision[]
 	FROM pg_class c, pg_namespace n, pg_attribute a, pg_constraint s
 	WHERE n.nspname = $1
 		AND c.relname = $2
@@ -7531,7 +7541,7 @@ CREATE OR REPLACE FUNCTION _raster_constraint_info_out_db(rastschema name, rastt
 -- Greenplum will replace operator '=' as 'OPERATOR(pg_catalog.=)', hence original method will fail.
 --
 	SELECT
-		trim(both ' ''' from split_part(replace(replace(split_part(s.consrc, '=', 2), ')', ''), '(', ''), '::', 1))::text[]::boolean[]
+		trim(both ' ''' from split_part(replace(replace(split_part(s.consrc, '=', 2), ')', ''), '(', ''), '::', 1))::boolean[]
 	FROM pg_class c, pg_namespace n, pg_attribute a, pg_constraint s
 	WHERE n.nspname = $1
 		AND c.relname = $2
@@ -8147,13 +8157,13 @@ CREATE OR REPLACE FUNCTION _overview_constraint(ov raster, factor integer, refsc
 	LANGUAGE 'sql' STABLE
 	COST 100;
 
--- We re-write this function, otherwise Greenplum will complain: 
+-- We re-write this function, otherwise Greenplum will complain:
 --		function cannot execute on segment because it accesses relation "public.raster_columns"
 CREATE OR REPLACE FUNCTION _overview_constraint(ov raster, factor integer, refschema name, reftable name, refcolumn name)
 	RETURNS boolean AS
-	$$ 
+	$$
 	SELECT COALESCE((
-	SELECT TRUE 
+	SELECT TRUE
     FROM
         pg_class c,
         pg_attribute a,
