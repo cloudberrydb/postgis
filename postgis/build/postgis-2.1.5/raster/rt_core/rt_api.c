@@ -37,6 +37,12 @@
 #include "rt_api.h"
 #include "gdal_vrt.h"
 
+/*
+#define M_PI	3.14159265358979323846
+#define M_PI_2	1.57079632679489661923
+#define M_PI_4	0.785398163397448309616
+*/
+
 /******************************************************************************
 * Some rules for *.(c|h) files in rt_core
 *
@@ -87,7 +93,7 @@ flip_endian_64(uint8_t *d) {
 
 uint8_t
 rt_util_clamp_to_1BB(double value) {
-    return (uint8_t)fmin(fmax((value), 0), POSTGIS_RT_1BBMAX);
+    return (uint8_t)fmin(fmax((value), 0), (double)POSTGIS_RT_1BBMAX);
 }
 
 uint8_t
@@ -102,7 +108,7 @@ rt_util_clamp_to_4BUI(double value) {
 
 int8_t
 rt_util_clamp_to_8BSI(double value) {
-    return (int8_t)fmin(fmax((value), SCHAR_MIN), SCHAR_MAX);
+    return (int8_t)fmin(fmax((value), SCHAR_MIN), (double)SCHAR_MAX);
 }
 
 uint8_t
