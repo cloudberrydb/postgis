@@ -1,5 +1,7 @@
 --- regression test for postGIS
 
+SET client_min_messages TO WARNING;
+
 
 
 --- assume datatypes already defined
@@ -283,3 +285,6 @@ select '181', ST_AsText('GEOMETRYCOLLECTION(TRIANGLE EMPTY,TIN EMPTY)');
 
 -- Drop test table
 DROP table test;
+
+SET client_min_messages TO NOTICE;
+

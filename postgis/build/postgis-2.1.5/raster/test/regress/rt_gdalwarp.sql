@@ -153,7 +153,9 @@ INSERT INTO raster_gdalwarp_dst (rid, rast) VALUES (
 		NULL, NULL,
 		-500100, 599950
 	) FROM raster_gdalwarp_src)
-), (
+);
+
+INSERT INTO raster_gdalwarp_dst (rid, rast) VALUES ( 
 	0.14, (SELECT _st_gdalwarp(
 		rast,
 		'NearestNeighbor', 0.125,
@@ -648,7 +650,8 @@ INSERT INTO raster_gdalwarp_dst (rid, rast) VALUES (
 		-500000, 600000,
 		50, 50
 	) FROM raster_gdalwarp_src)
-), (
+);
+INSERT INTO raster_gdalwarp_dst (rid, rast) VALUES (
 	5.13, (SELECT ST_SnapToGrid(
 		rast,
 		0, 0,

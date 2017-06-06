@@ -1,3 +1,5 @@
+DEPRECATED - Patch is outdated and will fail several cunit tests.
+
 Usage:
 --------
 0. Download the source code of PostGIS 2.1.5

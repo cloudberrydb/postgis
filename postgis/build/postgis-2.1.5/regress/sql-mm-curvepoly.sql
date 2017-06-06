@@ -1,3 +1,4 @@
+SET client_min_messages TO WARNING;
 -- Repeat tests with new function names.
 SELECT 'ndims01', ST_ndims(ST_geomfromewkt('CURVEPOLYGON(CIRCULARSTRING(
                 -2 0 0 0,
@@ -340,3 +341,6 @@ SELECT 'valid curve 6', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUN
 SELECT 'valid curve 7', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 4 5, 1 4, 0 0)), (1.7 1, 1.4 0.4, 1.7 1) )'),'ndr'),'hex');
 SELECT 'valid curve 8', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 0 0)), CIRCULARSTRING(1.7 1, 1.4 0.4, 1.7 1) )'),'ndr'),'hex');
 SELECT 'null response', ST_NumPoints(ST_GeomFromEWKT('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 4 5, 1 4, 0 0)), CIRCULARSTRING(1.7 1, 1.4 0.4, 1.7 1) )'));
+
+SET client_min_messages TO NOTICE;
+

@@ -1,0 +1,140 @@
+diff --git a/postgis/build/postgis-2.1.5/regress/regress.sql b/postgis/build/postgis-2.1.5/regress/regress.sql
+index fbefa13..95770f6 100644
+--- a/postgis/build/postgis-2.1.5/regress/regress.sql
++++ b/postgis/build/postgis-2.1.5/regress/regress.sql
+@@ -1,5 +1,7 @@
+ --- regression test for postGIS
+
++SET client_min_messages TO WARNING;
++
+
+
+ --- assume datatypes already defined
+@@ -283,3 +285,6 @@ select '181', ST_AsText('GEOMETRYCOLLECTION(TRIANGLE EMPTY,TIN EMPTY)');
+
+ -- Drop test table
+ DROP table test;
++
++SET client_min_messages TO NOTICE;
++
+diff --git a/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql b/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
+index d5cd6b1..8e57913 100644
+--- a/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
++++ b/postgis/build/postgis-2.1.5/regress/sql-mm-compoundcurve.sql
+@@ -1,3 +1,4 @@
++SET client_min_messages TO WARNING;
+ SELECT 'ndims01', ST_NDims(ST_Geomfromewkt('COMPOUNDCURVE(CIRCULARSTRING(
+                 0 0 0 0, 
+                 0.26794919243112270647255365849413 1 3 -2, 
+@@ -322,3 +324,6 @@ SELECT 'minpoints issues - pass', encode(ST_AsBinary(ST_GeomFromText('COMPOUNDCU
+ SELECT 'minpoints issues - fail', ST_GeomFromText('COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1))');
+ SELECT 'minpoints issues - fail', ST_GeomFromText('COMPOUNDCURVE(CIRCULARSTRING(0 0))');
+ SELECT 'minpoints issues - fail', ST_GeomFromText('COMPOUNDCURVE((0 0),(0 0,1 1))');
++
++SET client_min_messages TO NOTICE;
++
+diff --git a/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql b/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql
+index 794580a..f321126 100644
+--- a/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql
++++ b/postgis/build/postgis-2.1.5/regress/sql-mm-curvepoly.sql
+@@ -1,3 +1,4 @@
++SET client_min_messages TO WARNING;
+ -- Repeat tests with new function names.
+ SELECT 'ndims01', ST_ndims(ST_geomfromewkt('CURVEPOLYGON(CIRCULARSTRING(
+                 -2 0 0 0,
+@@ -340,3 +341,6 @@ SELECT 'valid curve 6', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUN
+ SELECT 'valid curve 7', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 4 5, 1 4, 0 0)), (1.7 1, 1.4 0.4, 1.7 1) )'),'ndr'),'hex');
+ SELECT 'valid curve 8', encode(ST_AsBinary(ST_GeomFromText('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 0 0)), CIRCULARSTRING(1.7 1, 1.4 0.4, 1.7 1) )'),'ndr'),'hex');
+ SELECT 'null response', ST_NumPoints(ST_GeomFromEWKT('CURVEPOLYGON(COMPOUNDCURVE(CIRCULARSTRING(0 0,2 0, 2 1, 2 3, 4 3),(4 3, 4 5, 1 4, 0 0)), CIRCULARSTRING(1.7 1, 1.4 0.4, 1.7 1) )'));
++
++SET client_min_messages TO NOTICE;
++
+diff --git a/postgis/build/postgis-2.1.5/regress/sql-mm-multicurve.sql b/postgis/build/postgis-2.1.5/regress/sql-mm-multicurve.sql
+index 044631c..7acae00 100644
+--- a/postgis/build/postgis-2.1.5/regress/sql-mm-multicurve.sql
++++ b/postgis/build/postgis-2.1.5/regress/sql-mm-multicurve.sql
+@@ -1,3 +1,6 @@
++
++SET client_min_messages TO WARNING;
++
+ -- Repeat the tests with the new function names.
+ SELECT 'ndims01', ST_ndims(ST_geomfromewkt('MULTICURVE((
+                 5 5 1 3,
+@@ -234,3 +237,5 @@ SELECT DropGeometryColumn('public', 'multicurve', 'the_geom_3dz');
+ SELECT DropGeometryColumn('public', 'multicurve', 'the_geom_4d');
+ DROP TABLE public.multicurve;
+
++SET client_min_messages TO NOTICE;
++
+diff --git a/postgis/build/postgis-2.1.5/regress/sql-mm-multisurface.sql b/postgis/build/postgis-2.1.5/regress/sql-mm-multisurface.sql
+index 3e8ac29..7f6989d 100644
+--- a/postgis/build/postgis-2.1.5/regress/sql-mm-multisurface.sql
++++ b/postgis/build/postgis-2.1.5/regress/sql-mm-multisurface.sql
+@@ -1,3 +1,6 @@
++
++SET client_min_messages TO WARNING;
++
+ -- Repeat these tests with the new function names.
+ SELECT 'ndims01', ST_ndims(ST_geomfromewkt('MULTISURFACE(CURVEPOLYGON(CIRCULARSTRING(
+                 -2 0 0 0,
+@@ -349,3 +352,5 @@ SELECT DropGeometryColumn('public', 'multisurface', 'the_geom_3dz');
+ SELECT DropGeometryColumn('public', 'multisurface', 'the_geom_4d');
+ DROP TABLE public.multisurface;
+
++SET client_min_messages TO NOTICE;
++
+diff --git a/postgis/build/postgis-2.1.5/regress/tickets.sql b/postgis/build/postgis-2.1.5/regress/tickets.sql
+index 04ccb8d..03583ad 100644
+--- a/postgis/build/postgis-2.1.5/regress/tickets.sql
++++ b/postgis/build/postgis-2.1.5/regress/tickets.sql
+@@ -328,7 +328,7 @@ SELECT '#667', ST_AsEWKT(ST_LineToCurve(ST_Buffer(ST_SetSRID(ST_Point(i,j),4326)
+ SELECT '#677',round(ST_Distance_Spheroid(ST_GeomFromEWKT('MULTIPOLYGON(((-10 40,-10 55,-10 70,5 40,-10 40)))'), ST_GeomFromEWKT('MULTIPOINT(20 40,20 55,20 70,35 40,35 55,35 70,50 40,50 55,50 70)'), 'SPHEROID["GRS_1980",6378137,298.257222101]')) As result;
+
+ -- #680 --
+-SELECT '#680', encode(ST_AsBinary(geography(foo1.the_geom),'ndr'),'hex') As result FROM ((SELECT ST_SetSRID(ST_MakePointM(i,j,m),4326) As the_geom FROM generate_series(-10,50,10) As i CROSS JOIN generate_series(50,70, 20) AS j CROSS JOIN generate_series(1,2) As m ORDER BY i, j, i*j*m)) As foo1 LIMIT 1;
++--SELECT '#680', encode(ST_AsBinary(geography(foo1.the_geom),'ndr'),'hex') As result FROM ((SELECT ST_SetSRID(ST_MakePointM(i,j,m),4326) As the_geom FROM generate_series(-10,50,10) As i CROSS JOIN generate_series(50,70, 20) AS j CROSS JOIN generate_series(1,2) As m ORDER BY i, j, i*j*m)) As foo1 LIMIT 1;
+
+ -- #681 --
+ SELECT '#681a', ST_AsGML(ST_GeomFromText('POINT EMPTY', 4326));
+diff --git a/postgis/build/postgis-2.1.5/regress/tickets_expected b/postgis/build/postgis-2.1.5/regress/tickets_expected
+index 85afb10..035408e 100644
+--- a/postgis/build/postgis-2.1.5/regress/tickets_expected
++++ b/postgis/build/postgis-2.1.5/regress/tickets_expected
+@@ -97,7 +97,6 @@ NOTICE:  IllegalArgumentException: Invalid number of points in LinearRing found
+ #650|MULTIPOINT(0 0,1 1,2 2)
+ #667|SRID=4326;CURVEPOLYGON(CIRCULARSTRING(30 40,-50 39.9999999999999,30 40))
+ #677|1121395
+-#680|01d107000000000000000024c000000000000049400000000000000040
+ #681a|
+ #681b|
+ #681c|
+@@ -155,14 +154,17 @@ NOTICE:  Coordinate values were coerced into range [-180 -90, 180 90] for GEOGRA
+ #1292.1|POINT(180 85)|POINT(-175 90)
+ <#1320>
+ #1320.geog.1|MULTIPOLYGON|4326
++NOTICE:  One or more columns in the following table(s) do not have statistics: a
+ #1320.geom.1|MULTIPOLYGON|4326
+ ERROR:  Geometry type (Polygon) does not match column type (MultiPolygon)
+ ERROR:  Geometry type (Polygon) does not match column type (MultiPolygon)
+ #1320.geog.2|MULTIPOLYGON|4326
++NOTICE:  One or more columns in the following table(s) do not have statistics: a
+ #1320.geom.2|MULTIPOLYGON|4326
+ ERROR:  Geometry type (Polygon) does not match column type (MultiPolygon)
+ ERROR:  Geometry type (Polygon) does not match column type (MultiPolygon)
+ #1320.geog.3|MULTIPOLYGON|4326
++NOTICE:  One or more columns in the following table(s) do not have statistics: a
+ #1320.geom.3|MULTIPOLYGON|4326
+ </#1320>
+ #1344|25
+@@ -214,8 +216,11 @@ NOTICE:  SRID value -1 converted to the officially unknown SRID value 0
+ #1596.7|0
+ #1596|Point[BGS]
+ #1695|MULTIPOLYGON EMPTY
++NOTICE:  One or more columns in the following table(s) do not have statistics: eg
+ #1697.1|0
++NOTICE:  One or more columns in the following table(s) do not have statistics: eg
+ #1697.2|0
++NOTICE:  One or more columns in the following table(s) do not have statistics: eg
+ #1697.3|1024
+ #1734.1|1026
+ #1755|01e9030000000000000040554000000000008041400000000000000000

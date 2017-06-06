@@ -8,6 +8,7 @@ POSTGIS_BLD_DIR     = $(POSTGIS_BLD_TOP)/postgis-$(POSTGIS_VER)
 # tar ball and patch file
 POSTGIS_TAR_BALL    = source/postgis-$(POSTGIS_VER).tar.gz
 POSTGIS_PATCH_FILE  = patch/postgis-$(POSTGIS_VER)-GPDB.patch
+POSTGIS_PATCH_FILE2  = patch/patch2.patch
 
 # entry
 all install uninstall clean distclean maintainer-clean test check installcheck docs docs-install docs-uninstall utils:
@@ -47,6 +48,8 @@ prepare:
 		tar -zxf $(POSTGIS_TAR_BALL) -C $(POSTGIS_BLD_TOP); \
 		echo "    2. patch it with $(POSTGIS_PATCH_FILE) ..."; \
 		patch -d $(POSTGIS_BLD_DIR) -p 4 --silent < $(POSTGIS_PATCH_FILE); \
+		echo "    2. patch it with $(POSTGIS_PATCH_FILE2) ..."; \
+		patch -d $(POSTGIS_BLD_DIR) -p 4 --silent < $(POSTGIS_PATCH_FILE2); \
 		echo "-----------------------------------------------------------------------"; \
 		echo "Done"; \
 		echo "-----------------------------------------------------------------------"; \

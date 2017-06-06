@@ -1,3 +1,6 @@
+
+SET client_min_messages TO WARNING;
+
 -- Repeat these tests with the new function names.
 SELECT 'ndims01', ST_ndims(ST_geomfromewkt('MULTISURFACE(CURVEPOLYGON(CIRCULARSTRING(
                 -2 0 0 0,
@@ -348,4 +351,6 @@ SELECT DropGeometryColumn('public', 'multisurface', 'the_geom_3dm');
 SELECT DropGeometryColumn('public', 'multisurface', 'the_geom_3dz');
 SELECT DropGeometryColumn('public', 'multisurface', 'the_geom_4d');
 DROP TABLE public.multisurface;
+
+SET client_min_messages TO NOTICE;
 
