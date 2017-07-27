@@ -26,7 +26,48 @@ cp $GPHOME/lib/postgresql/postgis-2.1.so %{buildroot}/temp/lib/postgresql/postgi
 cp $GPHOME/lib/postgresql/rtpostgis-2.1.so %{buildroot}/temp/lib/postgresql/rtpostgis-2.1.so
 
 mkdir -p %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/
+mkdir -p %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/{install,upgrade,uninstall}/
+
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/postgis.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/rtpostgis.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/*comments.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/spatial_ref_sys.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
+
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/*upgrade*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/upgrade/
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/legacy*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/upgrade/
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/rtpostgis_legacy.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/upgrade/
+
+cp $GPHOME/share/postgresql/contrib/postgis-2.1/uninstall*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/uninstall/
+
+cp %{postgis_dir}/../../package/postgis_manager.sh %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/postgis_manager.sh
 
 %files
-/temp
+/temp/bin/pgsql2shp
+/temp/bin/raster2pgsql
+/temp/bin/shp2pgsql
+/temp/include/liblwgeom.h
+/temp/lib/liblwgeom-2.1.5.so
+/temp/lib/liblwgeom.a
+/temp/lib/liblwgeom.la
+/temp/lib/liblwgeom.so
+/temp/lib/postgresql/postgis-2.1.so
+/temp/lib/postgresql/rtpostgis-2.1.so
+/temp/share/postgresql/contrib/postgis-2.1/postgis_manager.sh
+/temp/share/postgresql/contrib/postgis-2.1/install/postgis.sql
+/temp/share/postgresql/contrib/postgis-2.1/install/postgis_comments.sql
+/temp/share/postgresql/contrib/postgis-2.1/install/raster_comments.sql
+/temp/share/postgresql/contrib/postgis-2.1/install/rtpostgis.sql
+/temp/share/postgresql/contrib/postgis-2.1/install/spatial_ref_sys.sql
+/temp/share/postgresql/contrib/postgis-2.1/install/topology_comments.sql
+/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_legacy.sql
+/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_postgis.sql
+/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_rtpostgis.sql
+/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_sfcgal.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/legacy.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/legacy_gist.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/legacy_minimal.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/postgis_upgrade_20_21.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/postgis_upgrade_21_minor.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/rtpostgis_legacy.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/rtpostgis_upgrade_20_21.sql
+/temp/share/postgresql/contrib/postgis-2.1/upgrade/rtpostgis_upgrade_21_minor.sql
