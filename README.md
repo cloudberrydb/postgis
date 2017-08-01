@@ -18,7 +18,7 @@ For normal use without raster, please install json-c, geos and proj.4
 To enbale raster function, plese install gdal and expat. The minimum version
 requirments are listed in Makefile.version.
 
-Before setup the geospatial, please make sure the GPDB is installed correctly. 
+Before setup the geospatial, please make sure the GPDB is installed correctly.
 To configure the geospatial, please use following command:
 ```
 ./configure --with-pgconfig="Your gpdb location"/bin/pg_config --with-raster
@@ -29,20 +29,20 @@ If configuration is successfully, then please run _make_ to compile the geospati
 and run make install to install the geospatial to the GPDB. If you build from
 the extended PostGIS-2.x directory, you may compile with following command:
 ```
-make USE_PGXS=1 clean all install 
+make USE_PGXS=1 clean all install
 ```
 Here USE_PGXS will specify the correct install path to gpdb.
 
 
 ## how to distribute it
 The geospatial has bulit-in function to build the geospatial as a gppkg to allow
-user to install the geospatial directly into GPDB without compiling. 
+user to install the geospatial directly into GPDB without compiling.
 
-To build the gppkg, please make sure the source code of GPDB is downloaded and 
-```make sync_tools``` is run correctly. 
+To build the gppkg, please make sure the source code of GPDB is downloaded and
+```make sync_tools``` is run correctly.
 
 After this, go to _package_ folder and run ./build.sh or following command to build the gppkg
-automaticly. 
+automaticly.
 ```
 make BLD_TARGETS="gppkg" \
 	BLD_ARCH="rhel5_x86_64" \
@@ -54,16 +54,12 @@ make BLD_TARGETS="gppkg" \
 ## how to use it
 After you installed geospatial extention, run following commands to enable it:
 ```
-psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.1/*.sql
+psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.1/postgis.sql
+psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.1/postgis_comments.sql
+psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.1/spatial_ref_sys.sql
+psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.1/rtpostgis.sql
+psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.1/raster_comments.sql
 ```
-
-The most commonly used files include:
-1. postgis.sql
-2. postgis_comments.sql
-3. spatial_ref_sys.sql
-4. rtpostgis.sql
-5. raster_comments.sql
-
 Besides, to configure raster utilities, please set following variables into env of both
 master and segments, and restart the databases.
 ```
