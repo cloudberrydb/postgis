@@ -1,4 +1,5 @@
 -- Repeat the tests with the new function names.
+SET client_min_messages='WARNING';
 SELECT 'ndims01', ST_ndims(ST_geomfromewkt('MULTICURVE((
                 5 5 1 3,
                 3 5 2 2,
@@ -199,4 +200,4 @@ SELECT DropGeometryColumn('public', 'multicurve', 'the_geom_3dz');
 SELECT DropGeometryColumn('public', 'multicurve', 'the_geom_4d');
 
 DROP TABLE public.multicurve;
-
+RESET client_min_messages;

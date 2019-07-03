@@ -44,10 +44,11 @@ from (
 
 \i regress_big_polygon.sql
 
+set client_min_messages = 'warning';
 create table big_polygon_sliced as (
 	select ST_Subdivide(geom) As geom FROM big_polygon
 );
-
+reset client_min_messages;
 -- regression big polygon
 SELECT '4' As rn,
 	(select ST_Area(geom)::numeric(12,1) from big_polygon) as orig_area,

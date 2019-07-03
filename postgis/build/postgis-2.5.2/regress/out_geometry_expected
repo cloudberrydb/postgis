@@ -3,8 +3,8 @@ gml_precision_01|<gml:Point srsName="EPSG:4326"><gml:coordinates>1,1</gml:coordi
 gml_precision_02|<gml:Point srsName="EPSG:4326"><gml:coordinates>1.1111111,1.1111111</gml:coordinates></gml:Point>
 gml_version_01|<gml:Point srsName="EPSG:4326"><gml:coordinates>1,1</gml:coordinates></gml:Point>
 gml_version_02|<gml:Point srsName="EPSG:4326"><gml:pos srsDimension="2">1 1</gml:pos></gml:Point>
-ERROR:  Only GML 2 and GML 3 are supported
-ERROR:  Only GML 2 and GML 3 are supported
+ERROR:  Only GML 2 and GML 3 are supported (lwgeom_export.c:204)
+ERROR:  Only GML 2 and GML 3 are supported (lwgeom_export.c:204)
 gml_option_01|<gml:Point srsName="EPSG:4326"><gml:coordinates>1,2</gml:coordinates></gml:Point>
 gml_option_02|<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos srsDimension="2">1 2</gml:pos></gml:Point>
 gml_option_03|<gml:Point srsName="EPSG:4326"><gml:pos>1 2</gml:pos></gml:Point>
@@ -31,20 +31,20 @@ gml_out_curve_02|<gml:Curve><gml:segments><gml:ArcString><gml:posList srsDimensi
 gml_out_curve_03|<gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:LinearRing><gml:posList srsDimension="2">-1 0 0 0.5 1 0 0 1 -1 0</gml:posList></gml:LinearRing></gml:interior></gml:Polygon>
 gml_out_curve_04|<gml:MultiCurve><gml:curveMember><gml:Curve><gml:segments><gml:LineStringSegment><gml:posList srsDimension="2">5 5 3 5 3 3 0 3</gml:posList></gml:LineStringSegment></gml:segments></gml:Curve></gml:curveMember><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList srsDimension="2">0 0 2 1 2 2</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:MultiCurve>
 gml_out_curve_05|<gml:MultiSurface><gml:Polygon><gml:exterior><gml:Ring><gml:curveMember><gml:Curve><gml:segments><gml:ArcString><gml:posList srsDimension="2">-2 0 -1 -1 0 0 1 -1 2 0 0 2 -2 0</gml:posList></gml:ArcString></gml:segments></gml:Curve></gml:curveMember></gml:Ring></gml:exterior><gml:interior><gml:LinearRing><gml:posList srsDimension="2">-1 0 0 0.5 1 0 0 1 -1 0</gml:posList></gml:LinearRing></gml:interior></gml:Polygon><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="2">7 8 10 10 6 14 4 11 7 8</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:MultiSurface>
-ERROR:  GetProj4StringSPI: Cannot find SRID (10) in spatial_ref_sys
-ERROR:  Input geometry has unknown (0) SRID
+ERROR:  GetProj4StringSPI: Cannot find SRID (10) in spatial_ref_sys (lwgeom_transform.c:389)
+ERROR:  Input geometry has unknown (0) SRID (lwgeom_transform.c:69)
 kml_empty_geom|
 kml_precision_01|<Point><coordinates>1,1</coordinates></Point>
 kml_precision_02|<Point><coordinates>1.1111111,1.1111111</coordinates></Point>
 kml_version_01|<Point><coordinates>1,1</coordinates></Point>
-ERROR:  Only KML 2 is supported
-ERROR:  Only KML 2 is supported
+ERROR:  Only KML 2 is supported (lwgeom_export.c:336)
+ERROR:  Only KML 2 is supported (lwgeom_export.c:336)
 kml_prefix_01|<Point><coordinates>1,2</coordinates></Point>
 kml_prefix_02|<kml:Point><kml:coordinates>1,2</kml:coordinates></kml:Point>
 kml_projection_01|<Point><coordinates>-74.078,4.596</coordinates></Point>
 encoded_polyline_01|_p~iF~ps|U_ulLnnqC_mqNvxq`@
 encoded_polyline_02|_p~iF~ps|U_ulLnnqC_mqNvxq`@
-ERROR:  Only SRID 4326 is supported.
+ERROR:  Only SRID 4326 is supported. (lwgeom_export.c:646)
 encoded_polyline_04|_izlhAd}oidF{}jgCxotj@chtxCn`{nI
 svg_empty_geom|
 svg_option_01|M 1 -1 L 4 -4 5 -7
@@ -63,8 +63,8 @@ geojson_crs_01|{"type":"Point","crs":{"type":"name","properties":{"name":"EPSG:4
 geojson_crs_02|{"type":"Point","coordinates":[1,1]}
 geojson_crs_03|{"type":"Point","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:EPSG::4326"}},"coordinates":[1,1]}
 geojson_crs_04|{"type":"Point","coordinates":[1,1]}
-ERROR:  SRID 1 unknown in spatial_ref_sys table
-ERROR:  SRID 1 unknown in spatial_ref_sys table
+ERROR:  SRID 1 unknown in spatial_ref_sys table (lwgeom_export.c:468)
+ERROR:  SRID 1 unknown in spatial_ref_sys table (lwgeom_export.c:468)
 geojson_bbox_01|{"type":"LineString","coordinates":[[1,1],[2,2],[3,3],[4,4]]}
 geojson_bbox_02|{"type":"LineString","bbox":[1,1,4,4],"coordinates":[[1,1],[2,2],[3,3],[4,4]]}
 geojson_bbox_03|{"type":"LineString","bbox":[1,1,4,4],"coordinates":[[1,1],[2,2],[3,3],[4,4]]}

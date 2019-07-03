@@ -1,4 +1,5 @@
 -- Repeat these tests with the new function names.
+SET client_min_messages='WARNING';
 SELECT 'ndims01', ST_ndims(ST_geomfromewkt('MULTISURFACE(CURVEPOLYGON(CIRCULARSTRING(
                 -2 0 0 0,
                 -1 -1 1 2,
@@ -331,4 +332,5 @@ SELECT 'geometryN-303', (ST_GeometryN(the_geom_3dz, 3) is null) FROM public.mult
 SELECT 'geometryN-304', (ST_GeometryN(the_geom_4d, 3) is null) FROM public.multisurface;
 
 DROP TABLE public.multisurface;
+RESET client_min_messages;
 

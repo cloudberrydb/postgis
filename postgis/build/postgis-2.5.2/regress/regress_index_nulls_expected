@@ -1,4 +1,8 @@
 NOTICE:  table "indexnulls" does not exist, skipping
 NOTICE:  table "indexnulls" does not exist, skipping
 NOTICE:  table "indexempty" does not exist, skipping
+NOTICE:  no non-null/empty features, unable to compute statistics
+NOTICE:  no non-null/empty features, unable to compute statistics
 NOTICE:  table "indexempty" does not exist, skipping
+NOTICE:  no non-null/empty features, unable to compute statistics
+NOTICE:  no non-null/empty features, unable to compute statistics

@@ -1,3 +1,4 @@
+SET client_min_messages TO ERROR;
 -- #877, #818
 create table t(g geometry);
 select '#877.1', ST_EstimatedExtent('t','g');
@@ -205,4 +206,5 @@ select '4.b box',_postgis_index_extent('test', 'geom2');
 -- select '6.a null', _postgis_index_extent('test', 'geom1');
 -- select '6.b null', _postgis_index_extent('test', 'geom2');
 drop table test cascade;
+SET client_min_messages TO NOTICE;
 

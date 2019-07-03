@@ -1,7 +1,7 @@
-ERROR:  stats for "no_stats.g" do not exist
-ERROR:  stats for "no_stats.g" do not exist
-ERROR:  stats for "no_stats.g" do not exist
-ERROR:  stats for "no_stats_join.g" do not exist
+ERROR:  stats for "no_stats.g" do not exist (gserialized_estimate.c:2099)
+ERROR:  stats for "no_stats.g" do not exist (gserialized_estimate.c:2065)
+ERROR:  stats for "no_stats.g" do not exist (gserialized_estimate.c:2136)
+ERROR:  stats for "no_stats_join.g" do not exist (gserialized_estimate.c:2139)
 selectivity_00|2127
 selectivity_01|1068
 selectivity_02|actual|0.502

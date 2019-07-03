@@ -1,5 +1,5 @@
-ERROR:  Input geometry does not have a measure dimension
-ERROR:  Input geometry does not have a measure dimension
+ERROR:  Input geometry does not have a measure dimension (lwgeom_pg.c:128)
+ERROR:  Input geometry does not have a measure dimension (lwgeom_pg.c:128)
 PNTM_1|MULTIPOINT M EMPTY
 PNTM_2|MULTIPOINT M (1 2 3)
 PNTM_3|MULTIPOINT M (1 2 3)

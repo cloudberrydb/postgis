@@ -3,15 +3,15 @@ gml_precision_01|<gml:Point srsName="EPSG:4326"><gml:coordinates>1,1</gml:coordi
 gml_precision_02|<gml:Point srsName="EPSG:4326"><gml:coordinates>1.1111111,1.1111111</gml:coordinates></gml:Point>
 gml_version_01|<gml:Point srsName="EPSG:4326"><gml:coordinates>1,1</gml:coordinates></gml:Point>
 gml_version_02|<gml:Point srsName="EPSG:4326"><gml:pos srsDimension="2">1 1</gml:pos></gml:Point>
-ERROR:  Only GML 2 and GML 3 are supported
-ERROR:  Only GML 2 and GML 3 are supported
+ERROR:  Only GML 2 and GML 3 are supported (geography_inout.c:234)
+ERROR:  Only GML 2 and GML 3 are supported (geography_inout.c:234)
 gml_option_01|<gml:Point srsName="EPSG:4326"><gml:coordinates>1,2</gml:coordinates></gml:Point>
 gml_option_02|<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:pos srsDimension="2">2 1</gml:pos></gml:Point>
 gml_option_03|<gml:Point srsName="EPSG:4326"><gml:pos>1 2</gml:pos></gml:Point>
-ERROR:  Options 4 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry)
-ERROR:  Options 16 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry)
-ERROR:  Options 32 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry)
-ERROR:  Options 32 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry)
+ERROR:  Options 4 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry) (geography_inout.c:322)
+ERROR:  Options 16 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry) (geography_inout.c:322)
+ERROR:  Options 32 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry) (geography_inout.c:322)
+ERROR:  Options 32 passed to ST_AsGML(geography) but are only applicable to ST_AsGML(geometry) (geography_inout.c:322)
 gml_deegree_01|<gml:Point srsName="EPSG:4326"><gml:coordinates>1,2</gml:coordinates></gml:Point>
 gml_deegree_02|<gml:Point srsName="urn:ogc:def:crs:EPSG::4326"><gml:coordinates>1,2</gml:coordinates></gml:Point>
 gml_deegree_03|<gml:Point srsName="EPSG:4326"><gml:pos srsDimension="2">1 2</gml:pos></gml:Point>
@@ -20,14 +20,14 @@ gml_prefix_01|<Point srsName="EPSG:4326"><coordinates>1,2</coordinates></Point>
 gml_prefix_02|<Point srsName="EPSG:4326"><pos srsDimension="2">1 2</pos></Point>
 gml_prefix_03|<foo:Point srsName="EPSG:4326"><foo:coordinates>1,2</foo:coordinates></foo:Point>
 gml_prefix_04|<foo:Point srsName="EPSG:4326"><foo:pos srsDimension="2">1 2</foo:pos></foo:Point>
-ERROR:  GetProj4StringSPI: Cannot find SRID (10) in spatial_ref_sys
+ERROR:  GetProj4StringSPI: Cannot find SRID (10) in spatial_ref_sys (lwgeom_transform.c:389)
 kml_srid_02|<Point><coordinates>0,1</coordinates></Point>
 kml_empty_geom|
 kml_precision_01|<Point><coordinates>1,1</coordinates></Point>
 kml_precision_02|<Point><coordinates>1.1111111,1.1111111</coordinates></Point>
 kml_version_01|<Point><coordinates>1,1</coordinates></Point>
-ERROR:  Only KML 2 is supported
-ERROR:  Only KML 2 is supported
+ERROR:  Only KML 2 is supported (geography_inout.c:368)
+ERROR:  Only KML 2 is supported (geography_inout.c:368)
 kml_prefix_01|<Point><coordinates>1,2</coordinates></Point>
 kml_prefix_02|<kml:Point><kml:coordinates>1,2</kml:coordinates></kml:Point>
 ERROR:  Only lon/lat coordinate systems are supported in geography.
@@ -42,14 +42,14 @@ geojson_empty_geom|
 geojson_precision_01|{"type":"Point","coordinates":[1,1]}
 geojson_precision_02|{"type":"Point","coordinates":[1.1111111,1.1111111]}
 geojson_version_01|{"type":"Point","coordinates":[1,1]}
-ERROR:  Only GeoJSON 1 is supported
-ERROR:  Only GeoJSON 1 is supported
+ERROR:  Only GeoJSON 1 is supported (geography_inout.c:490)
+ERROR:  Only GeoJSON 1 is supported (geography_inout.c:490)
 geojson_crs_01|{"type":"Point","crs":{"type":"name","properties":{"name":"EPSG:4326"}},"coordinates":[1,1]}
 geojson_crs_02|{"type":"Point","crs":{"type":"name","properties":{"name":"EPSG:4326"}},"coordinates":[1,1]}
 geojson_crs_03|{"type":"Point","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:EPSG::4326"}},"coordinates":[1,1]}
 geojson_crs_04|{"type":"Point","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:EPSG::4326"}},"coordinates":[1,1]}
-ERROR:  GetProj4StringSPI: Cannot find SRID (1) in spatial_ref_sys
-ERROR:  GetProj4StringSPI: Cannot find SRID (1) in spatial_ref_sys
+ERROR:  GetProj4StringSPI: Cannot find SRID (1) in spatial_ref_sys (lwgeom_transform.c:389)
+ERROR:  GetProj4StringSPI: Cannot find SRID (1) in spatial_ref_sys (lwgeom_transform.c:389)
 geojson_bbox_01|{"type":"LineString","coordinates":[[1,1],[2,2],[3,3],[4,4]]}
 geojson_bbox_02|{"type":"LineString","bbox":[1,1,4,4],"coordinates":[[1,1],[2,2],[3,3],[4,4]]}
 geojson_bbox_03|{"type":"LineString","crs":{"type":"name","properties":{"name":"EPSG:4326"}},"bbox":[1,1,4,4],"coordinates":[[1,1],[2,2],[3,3],[4,4]]}

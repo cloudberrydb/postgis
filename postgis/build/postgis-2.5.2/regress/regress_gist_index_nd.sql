@@ -1,4 +1,5 @@
-﻿create table tbl_geomcollection_nd (
+﻿set client_min_messages = warning;
+create table tbl_geomcollection_nd (
 	k serial,
 	g geometry
 );
@@ -34,3 +35,4 @@ create index tbl_geomcollection_nd_gist_nd_idx on tbl_geomcollection_nd using gi
 select count(*) from tbl_geomcollection_nd t1, tbl_geomcollection_nd t2 where t1.g &&& t2.g;
 
 DROP TABLE tbl_geomcollection_nd CASCADE;
+set client_min_messages = notice;

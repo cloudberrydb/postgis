@@ -1,3 +1,4 @@
+set client_min_messages = warning;
 -- postgres
 --- regression test for postGIS
 
@@ -282,3 +283,4 @@ SELECT regexp_replace(probin, '(rt)?postgis(_[^-]*)?', '')
 	FROM pg_proc WHERE proname = 'postgis_lib_version'
 )
 ORDER BY 2;
+set client_min_messages = notice;

@@ -1,6 +1,6 @@
-ERROR:  Can't remove points from a single segment line
-ERROR:  Point index out of range (0..2)
-ERROR:  Point index out of range (0..2)
+ERROR:  Can't remove points from a single segment line (lwgeom_functions_basic.c:2255)
+ERROR:  Point index out of range (0..2) (lwgeom_functions_basic.c:2249)
+ERROR:  Point index out of range (0..2) (lwgeom_functions_basic.c:2249)
 LINESTRING(1 1,2 2)
 LINESTRING(0 0,1 1)
 LINESTRING(1 1 1,2 2 2)

@@ -1,3 +1,4 @@
+set client_min_messages = warning;
 CREATE TABLE test_data (
     id integer,
     wkt text,
@@ -217,3 +218,4 @@ select 'typmod_pointzm_0', geometry_typmod_out(geometry_typmod_in('{PointZM,0}')
 select 'typmod_geometry_0', geometry_typmod_out(geometry_typmod_in('{Geometry,0}'));
 select 'typmod_geometry_4326', geometry_typmod_out(geometry_typmod_in('{Geometry,4326}'));
 select 'typmod_geography_0', geometry_typmod_out(geometry_typmod_in('{Geogrpahy,0}'));
+set client_min_messages = notice;

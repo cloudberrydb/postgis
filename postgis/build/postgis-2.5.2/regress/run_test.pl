@@ -49,7 +49,7 @@ our $REGDIR = abs_path(dirname($0));
 our $SHP2PGSQL = $REGDIR . "/../loader/shp2pgsql";
 our $PGSQL2SHP = $REGDIR . "/../loader/pgsql2shp";
 our $RASTER2PGSQL = $REGDIR . "/../raster/loader/raster2pgsql";
-our $sysdiff = !system("diff --strip-trailing-cr $0 $0 2> /dev/null");
+our $sysdiff = !system("/usr/local/greenplum-db/lib/postgresql/pgxs/src/test/regress/gpdiff.pl -gpd_init " . $REGDIR . "/global_init_file --strip-trailing-cr $0 $0 2> /dev/null");
 
 ##################################################################
 # Parse command line opts
@@ -1665,7 +1665,10 @@ sub diff
 	my $diffstr = '';
 
 	if ( $sysdiff ) {
-		$diffstr = `diff --strip-trailing-cr -u $expected_file $obtained_file 2>&1`;
+		
+		#$diffstr = `diff --strip-trailing-cr -u $expected_file $obtained_file 2>&1`;
+		$diffstr = `/usr/local/greenplum-db/lib/postgresql/pgxs/src/test/regress/gpdiff.pl -gpd_init $REGDIR/global_init_file --strip-trailing-cr $expected_file $obtained_file 2>&1`;
+
 		return $diffstr;
 	}
 

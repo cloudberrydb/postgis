@@ -1,5 +1,6 @@
 -- Make example data
 
+SET client_min_messages TO warning;
 CREATE TABLE regular_overdots_ab (
     a integer,
     b integer
@@ -2184,3 +2185,4 @@ select 'selectivity_09', 'estimated', _postgis_selectivity('regular_overdots','g
 drop table if exists regular_overdots;
 drop table if exists regular_overdots_ab;
 
+SET client_min_messages TO NOTICE;

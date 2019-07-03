@@ -404,7 +404,7 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
-SELECT * FROM tm.insert_all(:tmpfile);
+SELECT * FROM tm.insert_all(:tmpfile) order by 1,2,3,4,5;
 
 DROP SCHEMA tm CASCADE;
 

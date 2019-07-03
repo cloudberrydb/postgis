@@ -1,3 +1,4 @@
+SET client_min_messages='WARNING';
 SELECT 'ndims01', ST_NDims(ST_Geomfromewkt('COMPOUNDCURVE(CIRCULARSTRING(
                 0 0 0 0,
                 0.26794919243112270647255365849413 1 3 -2,
@@ -240,3 +241,4 @@ SELECT 'minpoints issues - pass', encode(ST_AsBinary(ST_GeomFromText('COMPOUNDCU
 SELECT 'minpoints issues - fail', ST_GeomFromText('COMPOUNDCURVE(CIRCULARSTRING(0 0,1 1))');
 SELECT 'minpoints issues - fail', ST_GeomFromText('COMPOUNDCURVE(CIRCULARSTRING(0 0))');
 SELECT 'minpoints issues - fail', ST_GeomFromText('COMPOUNDCURVE((0 0),(0 0,1 1))');
+RESET client_min_messages;
