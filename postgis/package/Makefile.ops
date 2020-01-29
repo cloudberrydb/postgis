@@ -3,7 +3,7 @@ GPDB_LIB_RELENG_PREFIX=/opt/tools_build/tools/greenplum-db
 POSTGIS_TAR_BALL=/../source/postgis-$(POSTGIS_VER).tar.gz
 POSTGIS_PATCH_FILE=/../patch/postgis-$(POSTGIS_VER)-GPDB.patch
 
-prepare: check_path check_postgis_path remove_la replace_prefix 
+prepare: check_path check_postgis_path remove_la replace_prefix
 
 #check all of paths
 check_path:
@@ -14,26 +14,6 @@ check_path:
 		@if [ x"$(POSTGIS_DIR)" = x ]; then \
 			echo "ERROR:  the directory of postgis source does not set."; \
 			exit 1 ; \
-		fi
-		@if [ x"$(GEOS_DIR)" = x ]; then \
-			echo "ERROR:  the directory of GEOS does not set."; \
-			exit 1 ; \
-		fi
-		@if [ x"$(PROJ_DIR)" = x ]; then \
-			echo "ERROR:  the directory of PROJ does not set."; \
-			exit 1 ; \
-		fi
-		@if [ x"$(JSON_DIR)" = x ]; then \
-			echo "ERROR:  the directory of json_c does not set."; \
-			exit 1 ; \
-		fi
-		@if [ x"$(GDAL_DIR)" = x ]; then \
-			echo "ERROR:  the directory of GDAL does not set."; \
-			exit 1 ; \
-		fi
-		@if [ x"$(LIBEXPAT_DIR)" = x ]; then \
-			echo "ERROR:  the directory of LIBEXPAT does not set."; \
-			exit 1; \
 		fi
 		@for lib in  $(DEP_LIBS_PATH); do \
 			if [ ! -d $$lib ]; then \
@@ -69,4 +49,4 @@ remove_la:
 
 replace_prefix:
 		perl -i.bak -p -e "s|$(GPDB_LIB_RELENG_PREFIX)|${GPHOME}|g" $(GDAL_CONFIG) 2>/dev/null
-	
+

@@ -2,7 +2,7 @@
 # current version of postgis to compile
 # -----------------------------------------
 
-POSTGIS_VER	= 2.1.5
+POSTGIS_VER	= 2.5.4
 
 # -----------------------------------------
 # remaining are used for enterprise build
@@ -29,6 +29,6 @@ LIBEXPAT_VER = 2.1.0
 LIBEXPAT_REL = 1
 
 # GPDB gppkg
-PIVOTAL_VER	= 2.1
-GPDB_VER	= 5.0
+PIVOTAL_VER	= 2.5
+GPDB_VER	= 6.0
 POSTGIS_REL	= 1

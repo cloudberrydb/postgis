@@ -8,7 +8,6 @@ Prefix:         /temp
 AutoReq:        no
 AutoProv:       no
 Provides:       postgis = %{postgis_ver}
-Requires:       geos = %{geos_ver}, proj = %{proj_ver}, json-c = %{json_ver}, gdal = %{gdal_ver}
 
 %description
 The PostGIS module provides geospatial extensions for Greenplum Database.
@@ -22,52 +21,54 @@ cp $GPHOME/bin/shp2pgsql %{buildroot}/temp/bin
 cp $GPHOME/bin/raster2pgsql %{buildroot}/temp/bin
 
 mkdir -p %{buildroot}/temp/lib/postgresql
-cp $GPHOME/lib/postgresql/postgis-2.1.so %{buildroot}/temp/lib/postgresql/postgis-2.1.so
-cp $GPHOME/lib/postgresql/rtpostgis-2.1.so %{buildroot}/temp/lib/postgresql/rtpostgis-2.1.so
+cp $GPHOME/lib/postgresql/postgis-2.5.so %{buildroot}/temp/lib/postgresql/postgis-2.5.so
+cp $GPHOME/lib/postgresql/rtpostgis-2.5.so %{buildroot}/temp/lib/postgresql/rtpostgis-2.5.so
 
-mkdir -p %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/
-mkdir -p %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/{install,upgrade,uninstall}/
+mkdir -p %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/
+mkdir -p %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/{install,upgrade,uninstall}/
 
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/postgis.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/rtpostgis.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/*comments.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/spatial_ref_sys.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/install/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/postgis.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/install/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/rtpostgis.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/install/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/*comments.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/install/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/spatial_ref_sys.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/install/
 
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/*upgrade*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/upgrade/
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/legacy*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/upgrade/
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/rtpostgis_legacy.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/upgrade/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/*upgrade*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/upgrade/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/legacy*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/upgrade/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/rtpostgis_legacy.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/upgrade/
 
-cp $GPHOME/share/postgresql/contrib/postgis-2.1/uninstall*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/uninstall/
+cp $GPHOME/share/postgresql/contrib/postgis-2.5/uninstall*.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/uninstall/
 
-cp %{postgis_dir}/../../package/postgis_manager.sh %{buildroot}/temp/share/postgresql/contrib/postgis-2.1/postgis_manager.sh
+cp %{postgis_dir}/../../package/postgis_manager.sh %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/postgis_manager.sh
 
 %files
 /temp/bin/pgsql2shp
 /temp/bin/raster2pgsql
 /temp/bin/shp2pgsql
 /temp/include/liblwgeom.h
-/temp/lib/liblwgeom-2.1.5.so
+/temp/include/liblwgeom_topo.h
+/temp/lib/liblwgeom-2.5.so.0.0.0
+/temp/lib/liblwgeom-2.5.so.0
 /temp/lib/liblwgeom.a
 /temp/lib/liblwgeom.la
 /temp/lib/liblwgeom.so
-/temp/lib/postgresql/postgis-2.1.so
-/temp/lib/postgresql/rtpostgis-2.1.so
-/temp/share/postgresql/contrib/postgis-2.1/postgis_manager.sh
-/temp/share/postgresql/contrib/postgis-2.1/install/postgis.sql
-/temp/share/postgresql/contrib/postgis-2.1/install/postgis_comments.sql
-/temp/share/postgresql/contrib/postgis-2.1/install/raster_comments.sql
-/temp/share/postgresql/contrib/postgis-2.1/install/rtpostgis.sql
-/temp/share/postgresql/contrib/postgis-2.1/install/spatial_ref_sys.sql
-/temp/share/postgresql/contrib/postgis-2.1/install/topology_comments.sql
-/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_legacy.sql
-/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_postgis.sql
-/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_rtpostgis.sql
-/temp/share/postgresql/contrib/postgis-2.1/uninstall/uninstall_sfcgal.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/legacy.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/legacy_gist.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/legacy_minimal.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/postgis_upgrade_20_21.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/postgis_upgrade_21_minor.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/rtpostgis_legacy.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/rtpostgis_upgrade_20_21.sql
-/temp/share/postgresql/contrib/postgis-2.1/upgrade/rtpostgis_upgrade_21_minor.sql
+/temp/lib/postgresql/postgis-2.5.so
+/temp/lib/postgresql/rtpostgis-2.5.so
+/temp/share/postgresql/contrib/postgis-2.5/postgis_manager.sh
+/temp/share/postgresql/contrib/postgis-2.5/install/postgis.sql
+/temp/share/postgresql/contrib/postgis-2.5/install/postgis_comments.sql
+/temp/share/postgresql/contrib/postgis-2.5/install/raster_comments.sql
+/temp/share/postgresql/contrib/postgis-2.5/install/rtpostgis.sql
+/temp/share/postgresql/contrib/postgis-2.5/install/spatial_ref_sys.sql
+/temp/share/postgresql/contrib/postgis-2.5/install/topology_comments.sql
+/temp/share/postgresql/contrib/postgis-2.5/install/sfcgal_comments.sql
+/temp/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_legacy.sql
+/temp/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_postgis.sql
+/temp/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_rtpostgis.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/legacy.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/legacy_gist.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/legacy_minimal.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/rtpostgis_legacy.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/postgis_upgrade.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/postgis_upgrade_for_extension.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/rtpostgis_upgrade.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/rtpostgis_upgrade_for_extension.sql
