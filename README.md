@@ -1,5 +1,5 @@
 # geospatial repo
-PostGIS 2.1.5 for GreenPlum 5.x+
+PostGIS 2.1.5 for Greenplum 5.x and 6.x
 
 ## License
 This project is developed under GPL v2, because PostGIS is GPL v2.
