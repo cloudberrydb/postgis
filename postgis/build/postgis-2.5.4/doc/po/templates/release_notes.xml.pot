@@ -1943,15 +1943,6 @@ msgid "Interruptibility API for liblwgeom (Sandro Santilli / CartoDB)"
 msgstr ""
 
 #. Tag: para
-#: release_notes.xml:476
-#, no-c-format
-msgid ""
-"<ulink url=\"http://trac.osgeo.org/postgis/ticket/2939\"><ulink url=\"http://"
-"trac.osgeo.org/postgis/ticket/2939\">#2939</ulink></ulink>, ST_ClipByBox2D "
-"(Sandro Santilli / CartoDB)"
-msgstr ""
-
-#. Tag: para
 #: release_notes.xml:477
 #, no-c-format
 msgid ""

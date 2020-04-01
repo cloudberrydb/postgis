@@ -1289,61 +1289,62 @@ Datum centroid(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-Datum ST_ClipByBox2d(PG_FUNCTION_ARGS);
-PG_FUNCTION_INFO_V1(ST_ClipByBox2d);
-Datum ST_ClipByBox2d(PG_FUNCTION_ARGS)
-{
-	GSERIALIZED *geom1;
-	GSERIALIZED *result;
-	LWGEOM *lwgeom1, *lwresult ;
-	const GBOX *bbox1;
-	GBOX *bbox2;
+/* FIX_ME_POSTGIS_254: Re-enable, when adding support for GEOS 3.5 */
+// Datum ST_ClipByBox2d(PG_FUNCTION_ARGS);
+// PG_FUNCTION_INFO_V1(ST_ClipByBox2d);
+// Datum ST_ClipByBox2d(PG_FUNCTION_ARGS)
+// {
+// 	GSERIALIZED *geom1;
+// 	GSERIALIZED *result;
+// 	LWGEOM *lwgeom1, *lwresult ;
+// 	const GBOX *bbox1;
+// 	GBOX *bbox2;
 
-	geom1 = PG_GETARG_GSERIALIZED_P(0);
-	lwgeom1 = lwgeom_from_gserialized(geom1) ;
+// 	geom1 = PG_GETARG_GSERIALIZED_P(0);
+// 	lwgeom1 = lwgeom_from_gserialized(geom1) ;
 
-	bbox1 = lwgeom_get_bbox(lwgeom1);
-	if ( ! bbox1 )
-	{
-		/* empty clips to empty, no matter rect */
-		lwgeom_free(lwgeom1);
-		PG_RETURN_POINTER(geom1);
-	}
+// 	bbox1 = lwgeom_get_bbox(lwgeom1);
+// 	if ( ! bbox1 )
+// 	{
+// 		/* empty clips to empty, no matter rect */
+// 		lwgeom_free(lwgeom1);
+// 		PG_RETURN_POINTER(geom1);
+// 	}
 
-	/* WARNING: this is really a BOX2DF, use only xmin and ymin fields */
-	bbox2 = (GBOX *)PG_GETARG_POINTER(1);
-	bbox2->flags = 0;
+// 	/* WARNING: this is really a BOX2DF, use only xmin and ymin fields */
+// 	bbox2 = (GBOX *)PG_GETARG_POINTER(1);
+// 	bbox2->flags = 0;
 
-	/* If bbox1 outside of bbox2, return empty */
-	if ( ! gbox_overlaps_2d(bbox1, bbox2) )
-	{
-		lwresult = lwgeom_construct_empty(lwgeom1->type, lwgeom1->srid, 0, 0);
-		lwgeom_free(lwgeom1);
-		PG_FREE_IF_COPY(geom1, 0);
-		result = geometry_serialize(lwresult) ;
-		lwgeom_free(lwresult) ;
-		PG_RETURN_POINTER(result);
-	}
+// 	/* If bbox1 outside of bbox2, return empty */
+// 	if ( ! gbox_overlaps_2d(bbox1, bbox2) )
+// 	{
+// 		lwresult = lwgeom_construct_empty(lwgeom1->type, lwgeom1->srid, 0, 0);
+// 		lwgeom_free(lwgeom1);
+// 		PG_FREE_IF_COPY(geom1, 0);
+// 		result = geometry_serialize(lwresult) ;
+// 		lwgeom_free(lwresult) ;
+// 		PG_RETURN_POINTER(result);
+// 	}
 
-	/* if bbox1 is covered by bbox2, return lwgeom1 */
-	if ( gbox_contains_2d(bbox2, bbox1) )
-	{
-		lwgeom_free(lwgeom1);
-		PG_RETURN_POINTER(geom1);
-	}
+// 	/* if bbox1 is covered by bbox2, return lwgeom1 */
+// 	if ( gbox_contains_2d(bbox2, bbox1) )
+// 	{
+// 		lwgeom_free(lwgeom1);
+// 		PG_RETURN_POINTER(geom1);
+// 	}
 
-	lwresult = lwgeom_clip_by_rect(lwgeom1, bbox2->xmin, bbox2->ymin,
-	                               bbox2->xmax, bbox2->ymax);
+// 	lwresult = lwgeom_clip_by_rect(lwgeom1, bbox2->xmin, bbox2->ymin,
+// 	                               bbox2->xmax, bbox2->ymax);
 
-	lwgeom_free(lwgeom1);
-	PG_FREE_IF_COPY(geom1, 0);
+// 	lwgeom_free(lwgeom1);
+// 	PG_FREE_IF_COPY(geom1, 0);
 
-	if (!lwresult) PG_RETURN_NULL();
+// 	if (!lwresult) PG_RETURN_NULL();
 
-	result = geometry_serialize(lwresult) ;
-	lwgeom_free(lwresult) ;
-	PG_RETURN_POINTER(result);
-}
+// 	result = geometry_serialize(lwresult) ;
+// 	lwgeom_free(lwresult) ;
+// 	PG_RETURN_POINTER(result);
+// }
 
 
 /*---------------------------------------------*/
@@ -3298,88 +3299,89 @@ Datum ST_Node(PG_FUNCTION_ARGS)
  * from the points of the input geometry.
  *
  ******************************************/
-Datum ST_Voronoi(PG_FUNCTION_ARGS);
-PG_FUNCTION_INFO_V1(ST_Voronoi);
-Datum ST_Voronoi(PG_FUNCTION_ARGS)
-{
-	GSERIALIZED* input;
-	GSERIALIZED* clip;
-	GSERIALIZED* result;
-	LWGEOM* lwgeom_input;
-	LWGEOM* lwgeom_result;
-	double tolerance;
-	GBOX clip_envelope;
-	int custom_clip_envelope;
-	int return_polygons;
+/* FIX_ME_POSTGIS_254: Re-enable, when adding support for GEOS 3.5 */
+// Datum ST_Voronoi(PG_FUNCTION_ARGS);
+// PG_FUNCTION_INFO_V1(ST_Voronoi);
+// Datum ST_Voronoi(PG_FUNCTION_ARGS)
+// {
+// 	GSERIALIZED* input;
+// 	GSERIALIZED* clip;
+// 	GSERIALIZED* result;
+// 	LWGEOM* lwgeom_input;
+// 	LWGEOM* lwgeom_result;
+// 	double tolerance;
+// 	GBOX clip_envelope;
+// 	int custom_clip_envelope;
+// 	int return_polygons;
 
-	/* Return NULL on NULL geometry */
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
+// 	/* Return NULL on NULL geometry */
+// 	if (PG_ARGISNULL(0))
+// 		PG_RETURN_NULL();
 
-	/* Read our tolerance value */
-	if (PG_ARGISNULL(2))
-	{
-		lwpgerror("Tolerance must be a positive number.");
-		PG_RETURN_NULL();
-	}
+// 	/* Read our tolerance value */
+// 	if (PG_ARGISNULL(2))
+// 	{
+// 		lwpgerror("Tolerance must be a positive number.");
+// 		PG_RETURN_NULL();
+// 	}
 
-	tolerance = PG_GETARG_FLOAT8(2);
+// 	tolerance = PG_GETARG_FLOAT8(2);
 
-	if (tolerance < 0)
-	{
-		lwpgerror("Tolerance must be a positive number.");
-		PG_RETURN_NULL();
-	}
+// 	if (tolerance < 0)
+// 	{
+// 		lwpgerror("Tolerance must be a positive number.");
+// 		PG_RETURN_NULL();
+// 	}
 
-	/* Are we returning lines or polygons? */
-	if (PG_ARGISNULL(3))
-	{
-		lwpgerror("return_polygons must be true or false.");
-		PG_RETURN_NULL();
-	}
-	return_polygons = PG_GETARG_BOOL(3);
+// 	/* Are we returning lines or polygons? */
+// 	if (PG_ARGISNULL(3))
+// 	{
+// 		lwpgerror("return_polygons must be true or false.");
+// 		PG_RETURN_NULL();
+// 	}
+// 	return_polygons = PG_GETARG_BOOL(3);
 
-	/* Read our clipping envelope, if applicable. */
-	custom_clip_envelope = !PG_ARGISNULL(1);
-	if (custom_clip_envelope) {
-		clip = PG_GETARG_GSERIALIZED_P(1);
-		if (!gserialized_get_gbox_p(clip, &clip_envelope))
-		{
-			lwpgerror("Could not determine envelope of clipping geometry.");
-			PG_FREE_IF_COPY(clip, 1);
-			PG_RETURN_NULL();
-		}
-		PG_FREE_IF_COPY(clip, 1);
-	}
+// 	/* Read our clipping envelope, if applicable. */
+// 	custom_clip_envelope = !PG_ARGISNULL(1);
+// 	if (custom_clip_envelope) {
+// 		clip = PG_GETARG_GSERIALIZED_P(1);
+// 		if (!gserialized_get_gbox_p(clip, &clip_envelope))
+// 		{
+// 			lwpgerror("Could not determine envelope of clipping geometry.");
+// 			PG_FREE_IF_COPY(clip, 1);
+// 			PG_RETURN_NULL();
+// 		}
+// 		PG_FREE_IF_COPY(clip, 1);
+// 	}
 
-	/* Read our input geometry */
-	input = PG_GETARG_GSERIALIZED_P(0);
+// 	/* Read our input geometry */
+// 	input = PG_GETARG_GSERIALIZED_P(0);
 
-	lwgeom_input = lwgeom_from_gserialized(input);
+// 	lwgeom_input = lwgeom_from_gserialized(input);
 
-	if(!lwgeom_input)
-	{
-		lwpgerror("Could not read input geometry.");
-		PG_FREE_IF_COPY(input, 0);
-		PG_RETURN_NULL();
-	}
+// 	if(!lwgeom_input)
+// 	{
+// 		lwpgerror("Could not read input geometry.");
+// 		PG_FREE_IF_COPY(input, 0);
+// 		PG_RETURN_NULL();
+// 	}
 
-	lwgeom_result = lwgeom_voronoi_diagram(lwgeom_input, custom_clip_envelope ? &clip_envelope : NULL, tolerance, !return_polygons);
-	lwgeom_free(lwgeom_input);
+// 	lwgeom_result = lwgeom_voronoi_diagram(lwgeom_input, custom_clip_envelope ? &clip_envelope : NULL, tolerance, !return_polygons);
+// 	lwgeom_free(lwgeom_input);
 
-	if (!lwgeom_result)
-	{
-		lwpgerror("Error computing Voronoi diagram.");
-		PG_FREE_IF_COPY(input, 0);
-		PG_RETURN_NULL();
-	}
+// 	if (!lwgeom_result)
+// 	{
+// 		lwpgerror("Error computing Voronoi diagram.");
+// 		PG_FREE_IF_COPY(input, 0);
+// 		PG_RETURN_NULL();
+// 	}
 
-	result = geometry_serialize(lwgeom_result);
-	lwgeom_free(lwgeom_result);
+// 	result = geometry_serialize(lwgeom_result);
+// 	lwgeom_free(lwgeom_result);
 
-	PG_FREE_IF_COPY(input, 0);
-	PG_RETURN_POINTER(result);
-}
+// 	PG_FREE_IF_COPY(input, 0);
+// 	PG_RETURN_POINTER(result);
+// }
 
 /******************************************
  *

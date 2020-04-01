@@ -470,55 +470,6 @@ FROM (SELECT ST_Buffer(
 		  </refsection>
 	</refentry>
 
-	<refentry id="ST_ClipByBox2D">
-	  <refnamediv>
-		<refname>ST_ClipByBox2D</refname>
-		<refpurpose>Returns the portion of a geometry falling within a rectangle.</refpurpose>
-	  </refnamediv>
-
-	  <refsynopsisdiv>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>geometry <function>ST_ClipByBox2D</function></funcdef>
-				<paramdef><type>geometry</type> <parameter>geom</parameter></paramdef>
-				<paramdef><type>box2d</type> <parameter>box</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-	  </refsynopsisdiv>
-
-	  <refsection>
-		<title>Description</title>
-
-		<para>
-			Clips a geometry by a 2D box in a fast but possibly dirty way.
-			The output geometry is not guaranteed to be valid (self-intersections for a polygon may be introduced).
-			Topologically invalid input geometries do not result in exceptions being thrown.
-		</para>
-
-		<para>Performed by the GEOS module.</para>
-		<note><para>Requires GEOS 3.5.0+</para></note>
-
-		<para>Availability: 2.2.0 - requires GEOS &gt;= 3.5.0.</para>
-
-	  </refsection>
-
-	  <refsection>
-		<title>Examples</title>
-			<programlisting>
--- Rely on implicit cast from geometry to box2d for the second parameter
-SELECT ST_ClipByBox2D(the_geom, ST_MakeEnvelope(0,0,10,10)) FROM mytab;
-      </programlisting>
-	  </refsection>
-	  <refsection>
-		<title>See Also</title>
-		<para>
-<xref linkend="ST_Intersection" />,
-<xref linkend="ST_MakeBox2D" />,
-<xref linkend="ST_MakeEnvelope" />
-    </para>
-	  </refsection>
-	</refentry>
-
 	<refentry id="ST_Collect">
 	  <refnamediv>
 		<refname>ST_Collect</refname>
@@ -3480,8 +3431,7 @@ GEOMETRYCOLLECTION(
 <xref linkend="ST_BuildArea" />,
 <xref linkend="ST_Dump" />,
 <xref linkend="ST_GeometryN" />,
-<xref linkend="ST_Union" />,
-<xref linkend="ST_Subdivide" />
+<xref linkend="ST_Union" />
         </para>
         </refsection>
     </refentry>
@@ -3592,158 +3542,42 @@ MULTILINESTRING((1 3 2.75,1 4 2),(1 1 3,1 2 2.25))
 		<para><xref linkend="ST_Difference" />, <xref linkend="ST_Intersection" />, <xref linkend="ST_Union" /></para>
 	  </refsection>
 </refentry>
-
-
-	<refentry id="ST_Subdivide">
-	  <refnamediv>
-		<refname>ST_Subdivide</refname>
-		<refpurpose>Returns a set of geometry where no geometry in the set has more than the specified number of vertices.</refpurpose>
-	  </refnamediv>
-
-	  <refsynopsisdiv>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>setof geometry <function>ST_Subdivide</function></funcdef>
-				<paramdef><type>geometry</type> <parameter>geom</parameter></paramdef>
-				<paramdef><type>integer</type> <parameter>max_vertices=256</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-	</refsynopsisdiv>
-
-	  <refsection>
-		<title>Description</title>
-
-		<para>
-			Divides geometry into parts until a part can be represented using no more than <code>max_vertices</code>.
-			Point-in-polygon and other overlay operations are normally faster for indexed subdivided dataset:
-			"miss" cases are faster to check as boxes for all parts typically cover smaller area than original geometry box,
-			"hit" cases are faster because recheck operates on less points.
-			Uses the same envelope clipping as <code>ST_ClipByBox2D</code>.
-			<code>max_vertices</code> must be 5 or more, as 5 points are needed to represent a closed box.
-		</para>
-
-		<para>Availability: 2.2.0 requires GEOS &gt;= 3.5.0.</para>
-		<para>Enhanced: 2.5.0 reuses existing points on polygon split, vertex count is lowered from 8 to 5.</para>
-	  </refsection>
-
-	  <refsection>
-		<title>Examples</title>
-			<programlisting>-- Subdivide complex geometries in table, in place
-with complex_areas_to_subdivide as (
-    delete from polygons_table
-    where ST_NPoints(geom) > 255
-    returning id, column1, column2, column3, geom
-)
-insert into polygons_table (fid, column1, column2, column3, geom)
-    select
-        fid, column1, column2, column3,
-        ST_Subdivide(geom, 255) as geom
-    from complex_areas_to_subdivide;
- </programlisting>
-
-			<programlisting>-- Create a new subdivided table suitable for joining to the original
-CREATE TABLE subdivided_geoms AS
-SELECT pkey, ST_Subdivide(geom) AS geom
-FROM original_geoms;
- </programlisting>
-
-				<informaltable>
-				  <tgroup cols="1">
-					<tbody>
-					  <row>
-						<entry><para><informalfigure>
-							<mediaobject>
-							  <imageobject>
-								<imagedata fileref="images/st_subdivide01.png" />
-							  </imageobject>
-							  <caption><para>Subdivide max 10 vertices</para></caption>
-							</mediaobject>
-						  </informalfigure>
-				<programlisting>SELECT row_number() OVER() As rn, ST_AsText(geom) As wkt
-FROM ( SELECT ST_SubDivide('POLYGON((132 10,119 23,85 35,68 29,66 28,49 42,32 56,22 64,32 110,40 119,36 150,
-57 158,75 171,92 182,114 184,132 186,146 178,176 184,179 162,184 141,190 122,
-190 100,185 79,186 56,186 52,178 34,168 18,147 13,132 10))'::geometry,10))  As f(geom);</programlisting>
-<screen> rn │                                                      wkt
-────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  1 │ POLYGON((119 23,85 35,68 29,66 28,32 56,22 64,29.8260869565217 100,119 100,119 23))
-  2 │ POLYGON((132 10,119 23,119 56,186 56,186 52,178 34,168 18,147 13,132 10))
-  3 │ POLYGON((119 56,119 100,190 100,185 79,186 56,119 56))
-  4 │ POLYGON((29.8260869565217 100,32 110,40 119,36 150,57 158,75 171,92 182,114 184,114 100,29.8260869565217 100))
-  5 │ POLYGON((114 184,132 186,146 178,176 184,179 162,184 141,190 122,190 100,114 100,114 184))</screen>
-						  </para></entry>
-					  </row>
-					  <row>
-						<entry><para><informalfigure>
-							<mediaobject>
-							  <imageobject>
-								<imagedata fileref="images/st_subdivide02.png" />
-							  </imageobject>
-							  <caption><para>Useful in conjunction with ST_Segmentize(geography) to create additional vertices that can then be used for splitting.</para></caption>
-							</mediaobject>
-						  </informalfigure>
-				<programlisting>SELECT ST_AsText(ST_Subdivide(ST_Segmentize('LINESTRING(0 0, 85 85)'::geography,1200000)::geometry,8));</programlisting>
-				<screen>
-LINESTRING(0 0,0.487578359029357 5.57659056746196,0.984542144675897 11.1527721155093,1.50101059639722 16.7281035483571,1.94532113630331 21.25)
-LINESTRING(1.94532113630331 21.25,2.04869538062779 22.3020741387339,2.64204641967673 27.8740533545155,3.29994062412787 33.443216802941,4.04836719489742 39.0084282520239,4.59890468420694 42.5)
-LINESTRING(4.59890468420694 42.5,4.92498503922732 44.5680389206321,5.98737409390639 50.1195229244701,7.3290919767674 55.6587646879025,8.79638749938413 60.1969505994924)
-LINESTRING(8.79638749938413 60.1969505994924,9.11375579533779 61.1785363177625,11.6558166691368 66.6648504160202,15.642041247655 72.0867690601745,22.8716627200212 77.3609628116894,24.6991785131552 77.8939011989848)
-LINESTRING(24.6991785131552 77.8939011989848,39.4046096622744 82.1822848017636,44.7994523421035 82.5156766227011)
-LINESTRING(44.7994523421035 82.5156766227011,85 85)</screen>
-						  </para></entry>
-					  </row>
-				</tbody></tgroup></informaltable>
-	  </refsection>
-	  <refsection>
-		<title>See Also</title>
-		<para>
-<xref linkend="ST_AsText" />,
-<xref linkend="ST_ClipByBox2D" />,
-<xref linkend="ST_Segmentize" />,
-<xref linkend="ST_Split" />,
-<xref linkend="ST_NPoints" />
-    </para>
-	  </refsection>
-	</refentry>
-
-	<refentry id="ST_SwapOrdinates">
-	  <refnamediv>
-		<refname>ST_SwapOrdinates</refname>
-		<refpurpose>Returns a version of the given geometry with
-				given ordinate values swapped.
+<refentry id="ST_SwapOrdinates">
+         <refnamediv>
+               <refname>ST_SwapOrdinates</refname>
+               <refpurpose>Returns a version of the given geometry with
+                               given ordinate values swapped.
     </refpurpose>
-	  </refnamediv>
-
-	  <refsynopsisdiv>
-		<funcsynopsis>
-		  <funcprototype>
-			<funcdef>geometry <function>ST_SwapOrdinates</function></funcdef>
-			<paramdef><type>geometry</type> <parameter>geom</parameter></paramdef>
-			<paramdef><type>cstring</type> <parameter>ords</parameter></paramdef>
-		  </funcprototype>
-		</funcsynopsis>
-	  </refsynopsisdiv>
-
-	  <refsection>
-		<title>Description</title>
-		<para>
-Returns a version of the given geometry with given ordinates swapped.
+         </refnamediv>
+         <refsynopsisdiv>
+               <funcsynopsis>
+                 <funcprototype>
+                       <funcdef>geometry <function>ST_SwapOrdinates</function></funcdef>
+                       <paramdef><type>geometry</type> <parameter>geom</parameter></paramdef>
+                       <paramdef><type>cstring</type> <parameter>ords</parameter></paramdef>
+                 </funcprototype>
+               </funcsynopsis>
+         </refsynopsisdiv>
+         <refsection>
+               <title>Description</title>
+               <para>
+               	Returns a version of the given geometry with given ordinates swapped.
     </para>
-		<para>
-The <varname>ords</varname> parameter is a 2-characters string naming
+               <para>
+               	The <varname>ords</varname> parameter is a 2-characters string naming
 the ordinates to swap. Valid names are: x,y,z and m.
     </para>
-		<para>Availability: 2.2.0</para>
-		<para>&curve_support;</para>
-		<para>&Z_support;</para>
-		<para>&M_support;</para>
-		<para>&P_support;</para>
-		<para>&T_support;</para>
-	  </refsection>
-
-	  <refsection>
-		<title>Example</title>
-		<programlisting><![CDATA[
--- Scale M value by 2
+               <para>Availability: 2.2.0</para>
+               <para>&curve_support;</para>
+               <para>&Z_support;</para>
+               <para>&M_support;</para>
+               <para>&P_support;</para>
+               <para>&T_support;</para>
+         </refsection>
+         <refsection>
+               <title>Example</title>
+               <programlisting><![CDATA[
+               	-- Scale M value by 2
 SELECT ST_AsText(
   ST_SwapOrdinates(
     ST_Scale(
@@ -3751,20 +3585,19 @@ SELECT ST_AsText(
       2, 1
     ),
   'xm')
-) FROM ( SELECT 'POINT ZM (0 0 0 2)'::geometry g ) foo;
+  ) FROM ( SELECT 'POINT ZM (0 0 0 2)'::geometry g ) foo;
      st_astext
---------------------
+     --------------------
  POINT ZM (0 0 0 4)
-		 ]]></programlisting>
-	  </refsection>
+                ]]></programlisting>
+         </refsection>
+         <!-- Optionally add a "See Also" section -->
+         <refsection>
+               <title>See Also</title>
+               <para> <xref linkend="ST_FlipCoordinates" /> </para>
+         </refsection>
+       </refentry>
 
-	  <!-- Optionally add a "See Also" section -->
-	  <refsection>
-		<title>See Also</title>
-		<para> <xref linkend="ST_FlipCoordinates" /> </para>
-	  </refsection>
-
-	</refentry>
 
 <refentry id="ST_Union">
   <refnamediv>
@@ -3961,228 +3794,4 @@ MULTILINESTRING((3 4,4 5),(1 2,3 4))
 	  </refsection>
 	</refentry>
 
-	<refentry id="ST_VoronoiLines">
-	  <refnamediv>
-		<refname>ST_VoronoiLines</refname>
-
-		<refpurpose>Returns the boundaries between the cells of the Voronoi diagram constructed from the vertices of a geometry.</refpurpose>
-	  </refnamediv>
-
-	  <refsynopsisdiv>
-		<funcsynopsis>
-		  <funcprototype>
-			<funcdef>geometry <function>ST_VoronoiLines</function></funcdef>
-			<paramdef>
-				<parameter>g1</parameter>
-				<type>geometry</type>
-			</paramdef>
-			<paramdef choice="opt">
-				<parameter>tolerance</parameter>
-				<type>float8</type>
-			</paramdef>
-			<paramdef choice="opt">
-				<parameter>extend_to</parameter>
-				<type>geometry</type>
-			</paramdef>
-		  </funcprototype>
-
-		</funcsynopsis>
-	  </refsynopsisdiv>
-
-	  <refsection>
-		<title>Description</title>
-		<para>
-			ST_VoronoiLines computes a two-dimensional <ulink url="https://en.wikipedia.org/wiki/Voronoi_diagram">Voronoi diagram</ulink> from the vertices of
-			the supplied geometry and returns the boundaries between cells in that diagram as a MultiLineString.
-			Returns null if input geometry is null. Returns an empty geometry collection if the input geometry contains only one vertex. Returns an empty geometry collection if the extend_to envelope has zero area.
-		</para>
-		<para>
-			Optional parameters:
-			<itemizedlist>
-				<listitem>
-					<para> 'tolerance' : The distance within which vertices will be considered equivalent.  Robustness of the algorithm can be improved by supplying a nonzero tolerance distance.  (default = 0.0)</para>
-				</listitem>
-				<listitem>
-					<para>'extend_to' : If a geometry is supplied as the "extend_to" parameter, the diagram will be extended to cover the envelope of the "extend_to" geometry, unless
-						that envelope is smaller than the default envelope (default = NULL, default envelope is boundingbox of input geometry extended by about 50% in each direction).</para>
-				</listitem>
-			</itemizedlist>
-		</para>
-
-		<para>Availability: 2.3.0 - requires GEOS &gt;= 3.5.0.</para>
-	  </refsection>
-
-	  <!-- Examples -->
-	  <refsection>
-		<title>Examples</title>
-		<informaltable>
-		  <tgroup cols="1">
-			<tbody>
-			 <row>
-				<entry><para><informalfigure>
-					<mediaobject>
-					  <imageobject>
-						<imagedata fileref="images/st_voronoi03.png" />
-					  </imageobject>
-					  <caption><para>Voronoi lines with tolerance of 30 units</para></caption>
-					</mediaobject>
-				  </informalfigure>
-					<programlisting>SELECT ST_VoronoiLines(geom, 30) As geom
-FROM (SELECT 'MULTIPOINT (50 30, 60 30, 100 100,10 150, 110 120)'::geometry As geom ) As g</programlisting>
-<screen> -- ST_AsText output
-MULTILINESTRING((135.555555555556 270,36.8181818181818 92.2727272727273),(36.8181818181818 92.2727272727273,-110 43.3333333333333),(230 -45.7142857142858,36.8181818181818 92.2727272727273))
-</screen>
-				</para></entry>
-			  </row>
-		</tbody>
-		</tgroup>
-		</informaltable>
-
-	  </refsection>
-
-	  <!-- Optionally add a "See Also" section -->
-	  <refsection>
-		<title>See Also</title>
-
-		<para>
-			<xref linkend="ST_DelaunayTriangles" />,
-			<xref linkend="ST_VoronoiPolygons" />,
-			<xref linkend="ST_Collect" />
-		</para>
-	  </refsection>
-	</refentry>
-
-	<refentry id="ST_VoronoiPolygons">
-	  <refnamediv>
-		<refname>ST_VoronoiPolygons</refname>
-
-		<refpurpose>Returns the cells of the Voronoi diagram constructed from the vertices of a geometry.</refpurpose>
-	  </refnamediv>
-
-	  <refsynopsisdiv>
-		<funcsynopsis>
-		  <funcprototype>
-			<funcdef>geometry <function>ST_VoronoiPolygons</function></funcdef>
-			<paramdef>
-				<parameter>g1</parameter>
-				<type>geometry</type>
-			</paramdef>
-			<paramdef choice="opt">
-				<parameter>tolerance</parameter>
-				<type>float8</type>
-			</paramdef>
-			<paramdef choice="opt">
-				<parameter>extend_to</parameter>
-				<type>geometry</type>
-			</paramdef>
-		  </funcprototype>
-
-		</funcsynopsis>
-	  </refsynopsisdiv>
-
-	  <refsection>
-		<title>Description</title>
-
-		<para>
-			ST_VoronoiPolygons computes a two-dimensional <ulink url="https://en.wikipedia.org/wiki/Voronoi_diagram">Voronoi diagram</ulink> from the vertices of
-			the supplied geometry.  The result is a GeometryCollection of Polygons that covers an envelope larger than the extent of the input vertices.
-			Returns null if input geometry is null. Returns an empty geometry collection if the input geometry contains only one vertex. Returns an empty geometry collection if the extend_to envelope has zero area.
-		</para>
-
-		<para>
-			Optional parameters:
-			<itemizedlist>
-				<listitem>
-					<para> 'tolerance' : The distance within which vertices will be considered equivalent.  Robustness of the algorithm can be improved by supplying a nonzero tolerance distance.  (default = 0.0)</para>
-				</listitem>
-				<listitem>
-					<para>'extend_to' : If a geometry is supplied as the "extend_to" parameter, the diagram will be extended to cover the envelope of the "extend_to" geometry, unless
-						that envelope is smaller than the default envelope (default = NULL, default envelope is boundingbox of input geometry extended by about 50% in each direction).
-					</para>
-				</listitem>
-			</itemizedlist>
-		</para>
-
-		<para>Availability: 2.3.0 - requires GEOS &gt;= 3.5.0.</para>
-	  </refsection>
-
-	  <!-- Examples -->
-	  <refsection>
-		<title>Examples</title>
-		<informaltable>
-		  <tgroup cols="1">
-			<tbody>
-			  <row>
-				<entry>
-					<para><informalfigure>
-					<mediaobject>
-					  <imageobject>
-						<imagedata fileref="images/st_voronoi01.png" />
-					  </imageobject>
-					  <caption><para>Points overlaid on top of Voronoi diagram</para></caption>
-					</mediaobject>
-					</informalfigure>
-					<programlisting>SELECT
-	ST_VoronoiPolygons(geom) As geom
-FROM (SELECT 'MULTIPOINT (50 30, 60 30, 100 100,10 150, 110 120)'::geometry As geom ) As g;</programlisting>
-<screen> -- ST_AsText output
-GEOMETRYCOLLECTION(POLYGON((-110 43.3333333333333,-110 270,100.5 270,59.3478260869565 132.826086956522,36.8181818181818 92.2727272727273,-110 43.3333333333333)),
-POLYGON((55 -90,-110 -90,-110 43.3333333333333,36.8181818181818 92.2727272727273,55 79.2857142857143,55 -90)),
-POLYGON((230 47.5,230 -20.7142857142857,55 79.2857142857143,36.8181818181818 92.2727272727273,59.3478260869565 132.826086956522,230 47.5)),POLYGON((230 -20.7142857142857,230 -90,55 -90,55 79.2857142857143,230 -20.7142857142857)),
-POLYGON((100.5 270,230 270,230 47.5,59.3478260869565 132.826086956522,100.5 270)))
-</screen>
-					</para>
-				</entry>
-			</row>
-			<row>
-				<entry><para><informalfigure>
-					<mediaobject>
-					  <imageobject>
-						<imagedata fileref="images/st_voronoi02.png" />
-					  </imageobject>
-					  <caption><para>Voronoi with tolerance of 30 units</para></caption>
-					</mediaobject>
-				  </informalfigure>
-					<programlisting>SELECT ST_VoronoiPolygons(geom, 30) As geom
-FROM (SELECT 'MULTIPOINT (50 30, 60 30, 100 100,10 150, 110 120)'::geometry As geom ) As g;</programlisting>
-<screen> -- ST_AsText output
-GEOMETRYCOLLECTION(POLYGON((-110 43.3333333333333,-110 270,100.5 270,59.3478260869565 132.826086956522,36.8181818181818 92.2727272727273,-110 43.3333333333333)),
-POLYGON((230 47.5,230 -45.7142857142858,36.8181818181818 92.2727272727273,59.3478260869565 132.826086956522,230 47.5)),POLYGON((230 -45.7142857142858,230 -90,-110 -90,-110 43.3333333333333,36.8181818181818 92.2727272727273,230 -45.7142857142858)),
-POLYGON((100.5 270,230 270,230 47.5,59.3478260869565 132.826086956522,100.5 270)))
-</screen>
-				</para></entry>
-			  </row>
-			 <row>
-				<entry><para><informalfigure>
-					<mediaobject>
-					  <imageobject>
-						<imagedata fileref="images/st_voronoi03.png" />
-					  </imageobject>
-					  <caption><para>Voronoi with tolerance of 30 units as MultiLineString</para></caption>
-					</mediaobject>
-				  </informalfigure>
-					<programlisting>SELECT ST_VoronoiLines(geom, 30) As geom
-FROM (SELECT 'MULTIPOINT (50 30, 60 30, 100 100,10 150, 110 120)'::geometry As geom ) As g</programlisting>
-<screen> -- ST_AsText output
-MULTILINESTRING((135.555555555556 270,36.8181818181818 92.2727272727273),(36.8181818181818 92.2727272727273,-110 43.3333333333333),(230 -45.7142857142858,36.8181818181818 92.2727272727273))
-</screen>
-				</para></entry>
-			  </row>
-		</tbody>
-		</tgroup>
-		</informaltable>
-
-	  </refsection>
-
-	  <!-- Optionally add a "See Also" section -->
-	  <refsection>
-		<title>See Also</title>
-
-		<para>
-			<xref linkend="ST_DelaunayTriangles" />,
-			<xref linkend="ST_VoronoiLines" />,
-			<xref linkend="ST_Collect" />
-		</para>
-	  </refsection>
-	</refentry>
 </sect1>

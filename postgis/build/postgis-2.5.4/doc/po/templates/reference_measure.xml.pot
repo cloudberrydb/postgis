@@ -1880,7 +1880,7 @@ msgstr ""
 #, no-c-format
 msgid ""
 ", <xref linkend=\"ST_ClusterIntersecting\"/>, <xref linkend="
-"\"ST_ClusterWithin\"/>, <xref linkend=\"ST_Subdivide\"/>"
+"\"ST_ClusterWithin\"/>"
 msgstr ""
 
 #. Tag: refname

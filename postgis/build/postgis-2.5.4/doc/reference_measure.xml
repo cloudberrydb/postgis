@@ -1433,7 +1433,7 @@ FROM parcels;
           <para>
               <xref linkend="ST_ClusterDBSCAN"/>,
               <xref linkend="ST_ClusterIntersecting" />,
-              <xref linkend="ST_ClusterWithin" />, <xref linkend="ST_Subdivide" />
+              <xref linkend="ST_ClusterWithin" />
           </para>
 	  </refsection>
 	</refentry>

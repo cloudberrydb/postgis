@@ -40,7 +40,8 @@ extern "C"
 #include "liblwgeom.h"
 
 void GEOSCoordSeq_destroy() { assert(0); }
-void GEOSClipByRect() { assert(0); }
+/* FIX_ME_POSTGIS_254: Re-enable, when adding support for GEOS 3.5 */
+// void GEOSClipByRect() { assert(0); }
 void GEOSUnion() { assert(0); }
 void GEOSCoordSeq_getDimensions() { assert(0); }
 void GEOSPreparedCovers() { assert(0); }
