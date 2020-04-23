@@ -4,21 +4,14 @@ Notes for generating gppkg with pre-compiled libraries
 
 ======================================
 
-To build postgis gppkg, we first need to download the third-party libraries from
-lvy repo by using make sync_tools provided by gpdb.
+To build postgis gppkg, we first need to download the third-party libraries
 
-Usage:
--  located to gpdb/gpAux folder
--  run make sync_tools [BLD_ARCH="rhel5_x86_64"]
-
-Below lines should be contained within file 'gpdb/gpAux/releng/make/dependencies/ivy.xml'.
-```xml
- <!-- dependency for PostGIS -->
-      <dependency org="geos"                  name="geos"      rev="3.4.2"          conf="rhel5_x86_64->rhel5_x86_64;suse10_x86_64->suse10_x86_64" />
-      <dependency org="json-c"                name="json-c"    rev="0.12"           conf="rhel5_x86_64->rhel5_x86_64;suse10_x86_64->suse10_x86_64" />
-      <dependency org="PROJ.4"                name="proj"      rev="4.8.0"          conf="rhel5_x86_64->rhel5_x86_64;suse10_x86_64->suse10_x86_64" />
-      <dependency org="Geospatial-Foundation" name="gdal"      rev="1.11.1"         conf="rhel5_x86_64->rhel5_x86_64;suse10_x86_64->suse10_x86_64" />
-      <dependency org="expat"                 name="libexpat"  rev="2.1.0"          conf="rhel5_x86_64->rhel5_x86_64;suse10_x86_64->suse10_x86_64" />
+```
+GEOS: geos 3.4.2
+json-c: json-c 0.12
+PROJ.4: proj 4.8.0
+Geospatial-Foundation: gdal 1.11.1
+expat: libexpat 2.1.0
 ```
 
 ### 2. Compile postgis gppkg
@@ -27,9 +20,9 @@ Below lines should be contained within file 'gpdb/gpAux/releng/make/dependencies
 
 After downloaded libraries, go to package folder. And run make BLD_TARGETS="gppkg"
 with user-defined parameters, which include BLD_ARCH (the os version), GPROOT (the
-location of gpAux folder), BLD_TOP (the location of libraries, usually same as GPROOT), 
+location of gpAux folder), BLD_TOP (the location of libraries, usually same as GPROOT),
 POSGIS_DIR (the location of postgis source folder), INSTLOC (the location of installed
-gpdb), and use gppkg as build traget. 
+gpdb), and use gppkg as build traget.
 
 An example is to write a shell 'build.sh' with lines:
 ```sh
@@ -37,11 +30,11 @@ source ~/greenplum-db-devel/greenplum_path.sh
 
 make \
 	BLD_TARGETS="gppkg" \
-	BLD_ARCH="rhel5_x86_64" \
+	BLD_ARCH="rhel6_x86_64" \
 	INSTLOC=$GPHOME \
 	BLD_TOP="/home/gpadmin/workspace/gpdb/gpAux" \
-	POSTGIS_DIR="/home/gpadmin/workspace/geospatial/postgis/build/postgis-2.1.5" \
-	gppkg
+	POSTGIS_DIR="/home/gpadmin/workspace/geospatial/postgis/build/postgis-2.5.4" \
+	gppkg_only
 ```
 
 To clean it, run:
@@ -55,10 +48,10 @@ To clean it, run:
 
 run belowing command to verify postgis.gppkg is ready.
 ```sh
-	gppkg --query postgis-ossv2.1.5_pv2.1_gpdb4.4-rhel5-x86_64.gppkg
+	gppkg --query postgis-ossv2.5.4+pivotal.2_pv2.5_gpdb6.0-rhel6-x86_64.gppkg
 ```
 
 run belowing belowing to install postgis.gppkg into gpdb.
 ```sh
-	gppkg -i postgis-ossv2.1.5_pv2.1_gpdb4.4-rhel5-x86_64.gppkg
+	gppkg -i postgis-ossv2.5.4+pivotal.2_pv2.5_gpdb6.0-rhel6-x86_64.gppkg
 ```
