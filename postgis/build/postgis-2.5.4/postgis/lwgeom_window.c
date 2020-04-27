@@ -20,6 +20,7 @@
  *
  * Copyright 2016 Paul Ramsey <pramsey@cleverelephant.ca>
  * Copyright 2016 Daniel Baston <dbaston@gmail.com>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

@@ -20,6 +20,7 @@
  *
  * Copyright 2001-2006 Refractions Research Inc.
  * Copyright 2017 Darafei Praliaskouski <me@komzpa.net>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

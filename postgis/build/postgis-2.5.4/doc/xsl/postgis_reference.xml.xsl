@@ -2,6 +2,7 @@
 <!-- ********************************************************************
 	 ********************************************************************
 	 Copyright 2010, Regina Obe
+	 Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 	 License: BSD
 	 Purpose: This is an xsl transform that concatenates 
 	      all the sections defined in postgis.xml and strips all tags

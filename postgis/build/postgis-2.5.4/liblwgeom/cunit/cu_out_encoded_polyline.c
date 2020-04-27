@@ -5,6 +5,7 @@
  *
  * Copyright 2014 Kashif Rasul <kashif.rasul@gmail.com> and
  *                Shoaib Burq <saburq@gmail.com>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  * This is free software; you can redistribute and/or modify it under
  * the terms of the GNU General Public Licence. See the COPYING file.

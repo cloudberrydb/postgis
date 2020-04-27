@@ -21,6 +21,7 @@
  * Copyright 2009 Mark Cave-Ayland <mark.cave-ayland@siriusit.co.uk>
  * Copyright 2009-2017 Paul Ramsey <pramsey@cleverelephant.ca>
  * Copyright 2018 Darafei Praliaskouski <me@komzpa.net>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

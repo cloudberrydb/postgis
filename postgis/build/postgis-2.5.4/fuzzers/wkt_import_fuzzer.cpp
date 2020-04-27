@@ -6,6 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2017, Even Rouault <even.rouault at spatialys.com>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

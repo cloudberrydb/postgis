@@ -2,6 +2,7 @@
 <!-- ********************************************************************
 	 ********************************************************************
 	 Copyright 2010, Regina Obe
+	 Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 	 License: BSD
 	 Purpose: This is an xsl transform that generates index listing of aggregate functions and mm /sql compliant functions xml section from reference_new.xml to then
 	 be processed by doc book

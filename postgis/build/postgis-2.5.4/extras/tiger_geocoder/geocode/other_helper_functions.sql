@@ -1,6 +1,7 @@
  /***
  *
  * Copyright (C) 2011 Regina Obe and Leo Hsu (Paragon Corporation)
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  **/
 -- Note we are wrapping this in a function so we can make it immutable and thus useable in an index
 -- It also allows us to shorten and possibly better cache the repetitive pattern in the code

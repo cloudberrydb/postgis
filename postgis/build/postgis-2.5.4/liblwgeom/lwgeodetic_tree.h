@@ -19,6 +19,7 @@
  **********************************************************************
  *
  * Copyright (C) 2012-2015 Paul Ramsey <pramsey@cleverelephant.ca>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

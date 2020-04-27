@@ -20,6 +20,7 @@
 -----------------------------------------------------------------------
 --
 -- Copyright (c) 2009 Pierre Racine <pierre.racine@sbf.ulaval.ca>
+-- Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 --
 -- This is free software; you can redistribute and/or modify it under
 -- the terms of the GNU General Public Licence. See the COPYING file.

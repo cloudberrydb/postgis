@@ -1,6 +1,7 @@
  /***
  *
  * Copyright (C) 2011-2016 Regina Obe and Leo Hsu (Paragon Corporation)
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  **/
 -- This function given two roadways, state and optional city, zip
 -- Will return addresses that are at the intersecton of those roadways

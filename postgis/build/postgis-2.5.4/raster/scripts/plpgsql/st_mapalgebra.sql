@@ -1,6 +1,7 @@
 ----------------------------------------------------------------------
 --
 -- Copyright (c) 2009-2010 Pierre Racine <pierre.racine@sbf.ulaval.ca>
+-- Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 --
 ----------------------------------------------------------------------
 -- NOTE: The ST_MapAlgebra() function is already implemented in C. This plpgsql script is provided only as an example.

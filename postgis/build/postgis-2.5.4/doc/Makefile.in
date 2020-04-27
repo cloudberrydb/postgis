@@ -14,6 +14,7 @@
 # Copyright 2008-2010 Kevin Neufeld <kneufeld.ca@gmail.com>
 # Copyright 2009-2010 Olivier Courtin <olivier.courtin@camptocamp.com>
 # Copyright 2005-2006 Markus Schaber <markus@schabi.de>
+# Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 #
 # NOTE: We don't use a standard PGXS Makefile here since the DOCS target
 # only allows files to be stored within contrib/ and we currently

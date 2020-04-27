@@ -1,5 +1,6 @@
 # lib-link.m4 serial 13 (gettext-0.17)
 dnl Copyright (C) 2001-2007 Free Software Foundation, Inc.
+dnl Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.

@@ -20,6 +20,7 @@
  *
  * Copyright 2009 Paul Ramsey <pramsey@cleverelephant.ca>
  * Copyright 2017 Darafei Praliaskouski <me@komzpa.net>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

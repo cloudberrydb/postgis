@@ -6,6 +6,7 @@
 -- Copyright (C) 2008 Stephen Frost (et al)
 -- reintegrated back into PostGIS code base from Steven's git (http://www.snowman.net/git/tiger_geocoder/)
 -- Copyright Refractions Research
+-- Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 --
 -- This is free software; you can redistribute and/or modify it under
 -- the terms of the GNU General Public Licence. See the COPYING file.

@@ -20,6 +20,7 @@
  *
  * Copyright 2011 Sandro Santilli <strk@kbt.io>
  * Copyright 2018 Darafei Praliaskouski <me@komzpa.net>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

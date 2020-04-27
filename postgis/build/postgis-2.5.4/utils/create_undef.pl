@@ -7,6 +7,7 @@
 # Copyright (C) 2011 OpenGeo.org
 # Copyright (C) 2009-2010 Paul Ramsey <pramsey@opengeo.org>
 # Copyright (C) 2001-2005 Refractions Research Inc.
+# Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 #
 # This is free software; you can redistribute and/or modify it under
 # the terms of the GNU General Public Licence. See the COPYING file.

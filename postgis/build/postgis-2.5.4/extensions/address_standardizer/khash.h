@@ -1,6 +1,7 @@
 /* The MIT License
 
    Copyright (c) 2008, by Attractive Chaos <attractivechaos@aol.co.uk>
+   Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 
    Permission is hereby granted, free of charge, to any person obtaining
    a copy of this software and associated documentation files (the

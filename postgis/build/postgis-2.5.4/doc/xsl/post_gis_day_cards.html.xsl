@@ -3,6 +3,7 @@
 <!-- ********************************************************************
      ********************************************************************
 	 Copyright 2011, Regina Obe
+	 Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
      License: BSD
 	 Purpose: This is an xsl transform that generates PostGIS flash cards
      ******************************************************************** -->

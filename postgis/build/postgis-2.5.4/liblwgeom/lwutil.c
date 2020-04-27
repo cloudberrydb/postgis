@@ -23,6 +23,7 @@
  * Copyright (C) 2008-2009 Mark Cave-Ayland <mark.cave-ayland@siriusit.co.uk>
  * Copyright (C) 2009-2015 Paul Ramsey <pramsey@cleverelephant.ca>
  * Copyright (C) 2010 Olivier Courtin <olivier.courtin@camptocamp.com>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

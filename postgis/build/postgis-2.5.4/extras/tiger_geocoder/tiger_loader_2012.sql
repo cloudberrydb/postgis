@@ -3,6 +3,7 @@
 -- http://postgis.net
 --
 -- Copyright (C) 2010, 2011, 2012 Regina Obe and Leo Hsu
+-- Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 -- Paragon Corporation
 --
 -- This is free software; you can redistribute and/or modify it under

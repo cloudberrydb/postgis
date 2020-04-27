@@ -3,6 +3,7 @@ dnl *
 dnl * PostGIS - Spatial Types for PostgreSQL
 dnl * http://postgis.net
 dnl * Copyright 2008 Mark Cave-Ayland
+dnl * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
 dnl *
 dnl * This is free software; you can redistribute and/or modify it under
 dnl * the terms of the GNU General Public Licence. See the COPYING file.

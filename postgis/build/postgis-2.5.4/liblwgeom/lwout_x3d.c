@@ -19,6 +19,7 @@
  **********************************************************************
  *
  * Copyright 2011-2017 Arrival 3D, Regina Obe
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 

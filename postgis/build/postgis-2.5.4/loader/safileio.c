@@ -6,6 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  * This software is available under the following "MIT Style" license,
  * or at the option of the licensee under the LGPL (see LICENSE.LGPL).  This

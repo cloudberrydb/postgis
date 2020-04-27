@@ -2,6 +2,7 @@
  * parseaddres.c - utility to crack a string into address, city st zip
  *
  * Copyright 2006 Stephen Woodbridge
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  * This code is released under and MIT-X style license,
  *

@@ -1,6 +1,7 @@
  /***
  *
  * Copyright (C) 2012 Regina Obe and Leo Hsu (Paragon Corporation)
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  **/
 -- Adds a schema to  the front of search path so that functions, tables etc get installed by default in set schema
 -- but if people have postgis and other things installed in non-public, it will still keep those in path

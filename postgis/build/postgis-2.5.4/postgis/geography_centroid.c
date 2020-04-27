@@ -19,6 +19,7 @@
  **********************************************************************
  *
  * Copyright (C) 2017 Danny Götte <danny.goette@fem.tu-ilmenau.de>
+ * Modifications Copyright (c) 2017 - Present Pivotal Software, Inc. All Rights Reserved.
  *
  **********************************************************************/
 
