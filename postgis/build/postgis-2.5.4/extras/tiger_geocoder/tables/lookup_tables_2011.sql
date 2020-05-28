@@ -79,7 +79,7 @@ CREATE INDEX secondary_unit_lookup_abbrev_idx ON secondary_unit_lookup (abbrev);
 
 -- Create state lookup table
 DROP TABLE IF EXISTS tiger.state_lookup;
-CREATE TABLE state_lookup (st_code INTEGER PRIMARY KEY, name VARCHAR(40) UNIQUE, abbrev VARCHAR(3) UNIQUE, statefp char(2) UNIQUE);
+CREATE TABLE state_lookup (st_code INTEGER PRIMARY KEY, name VARCHAR(40), abbrev VARCHAR(3), statefp char(2), UNIQUE(st_code, name, abbrev, statefp));
 INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('Alabama', 'AL', '01');
 INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('Alaska', 'AK', '02');
 INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('American Samoa', 'AS', '60');
@@ -983,7 +983,7 @@ CREATE TABLE county
   intptlat character varying(11),
   intptlon character varying(12),
   the_geom geometry,
-  CONSTRAINT uidx_county_gid UNIQUE (gid),
+  CONSTRAINT uidx_county_gid UNIQUE (gid,cntyidfp),
   CONSTRAINT pk_tiger_county PRIMARY KEY (cntyidfp),
   CONSTRAINT enforce_dims_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
@@ -1009,8 +1009,8 @@ CREATE TABLE state
   intptlat character varying(11),
   intptlon character varying(12),
   the_geom geometry,
-  CONSTRAINT uidx_tiger_state_stusps UNIQUE (stusps),
-  CONSTRAINT uidx_tiger_state_gid UNIQUE (gid),
+  CONSTRAINT uidx_tiger_state_stusps UNIQUE (stusps, statefp),
+  CONSTRAINT uidx_tiger_state_gid UNIQUE (gid, statefp),
   CONSTRAINT pk_tiger_state PRIMARY KEY (statefp),
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
@@ -1040,7 +1040,7 @@ CREATE TABLE place
   intptlat character varying(11),
   intptlon character varying(12),
   the_geom geometry,
-  CONSTRAINT uidx_tiger_place_gid UNIQUE (gid),
+  CONSTRAINT uidx_tiger_place_gid UNIQUE (gid, plcidfp),
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
@@ -1089,7 +1089,7 @@ CREATE TABLE cousub
   intptlat character varying(11),
   intptlon character varying(12),
   the_geom geometry,
-  CONSTRAINT uidx_cousub_gid UNIQUE (gid),
+  CONSTRAINT uidx_cousub_gid UNIQUE (gid, cosbidfp),
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
@@ -1325,7 +1325,7 @@ CREATE TABLE zcta5
   intptlon character varying(12),
   partflg character varying(1),
   the_geom geometry,
-  CONSTRAINT uidx_tiger_zcta5_gid UNIQUE (gid),
+  CONSTRAINT uidx_tiger_zcta5_gid UNIQUE (gid,zcta5ce,statefp),
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269),
   CONSTRAINT pk_tiger_zcta5_zcta5ce PRIMARY KEY (zcta5ce,statefp)

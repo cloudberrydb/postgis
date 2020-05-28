@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS us_lex (
     word text,
     stdword text,
     token integer, is_custom boolean NOT NULL DEFAULT true, CONSTRAINT pk_us_lex PRIMARY KEY(id)
-);
+)DISTRIBUTED REPLICATED;
 
 -- this will be needed for upgrading to prevent purging of custom entries
 DELETE FROM us_lex WHERE is_custom = false;
