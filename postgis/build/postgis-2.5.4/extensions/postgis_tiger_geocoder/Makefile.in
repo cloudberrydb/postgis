@@ -28,7 +28,7 @@ DATA_built = \
 	sql/$(EXTENSION)--unpackaged--$(EXTVERSION).sql \
 	$(NULL)
 
-REGRESS = test-normalize_address test-upgrade
+REGRESS = test-normalize_address ##test-upgrade
 REGRESS_OPTS = --load-extension=fuzzystrmatch --load-extension=postgis --load-extension=$(EXTENSION)
 
 PG_CONFIG    =  @PG_CONFIG@
