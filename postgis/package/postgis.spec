@@ -43,6 +43,8 @@ cp $GPHOME/share/postgresql/contrib/postgis-2.5/uninstall*.sql %{buildroot}/temp
 cp %{postgis_dir}/../../package/postgis_manager.sh %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/postgis_manager.sh
 
 cp %{postgis_dir}/../../package/postgis_replace_views.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/postgis_replace_views.sql
+cp %{postgis_dir}/../../package/postgis--unpackaged--2.1.5.sql %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/upgrade/
+cp %{postgis_dir}/../../package/postgis.control-2.1.5 %{buildroot}/temp/share/postgresql/contrib/postgis-2.5/upgrade/
 
 cp $GPHOME/share/postgresql/extension/postgis.control %{buildroot}/temp/share/postgresql/extension/
 cp $GPHOME/share/postgresql/extension/postgis_tiger_geocoder.control %{buildroot}/temp/share/postgresql/extension/
@@ -85,6 +87,8 @@ cp $GPHOME/share/postgresql/extension/address_standardizer*.sql %{buildroot}/tem
 /temp/share/postgresql/contrib/postgis-2.5/upgrade/postgis_upgrade_for_extension.sql
 /temp/share/postgresql/contrib/postgis-2.5/upgrade/rtpostgis_upgrade.sql
 /temp/share/postgresql/contrib/postgis-2.5/upgrade/rtpostgis_upgrade_for_extension.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/postgis--unpackaged--2.1.5.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/postgis.control-2.1.5
 /temp/share/postgresql/extension/postgis.control
 /temp/share/postgresql/extension/postgis_tiger_geocoder.control
 /temp/share/postgresql/extension/address_standardizer.control

@@ -1,23 +1,65 @@
 #!/bin/bash -l
 
+function upgrade_postgis() {
+	## Verify which version of PostGIS is installed
+	## and call the corresponding upgrade function.
+	postgis_version=`psql -t -d $1 -c "SELECT postgis_version();" | head -n 1`
+	if [[ $postgis_version == *"2.5"* ]]; then
+		echo "Postgis version 2.5 already installed."
+		upgrade_254_254 $1
+	elif [[ $postgis_version == *"2.1"* ]]; then
+		echo "Upgrading to 2.5!"
+		upgrade_215_254 $1
+	else
+		echo "Postgis not installed in the current DB. Exiting!"
+		exit 1
+	fi
+}
+
+function upgrade_215_254() {
+	has_extension=`psql -t -d $1 -c "SELECT count(*) FROM pg_extension WHERE extname = 'postgis';" | head -n 1`
+	if [ "$has_extension" -eq 0 ]; then
+		## Copy the control file for 2.1.5 to extension folder and CREATE postgis as extension
+		cp $GPHOME/share/postgresql/extension/postgis.control $GPHOME/share/postgresql/extension/postgis.control-2.5.4
+		cp $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis.control-2.1.5 $GPHOME/share/postgresql/extension/postgis.control
+		cp $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis--unpackaged--2.1.5.sql $GPHOME/share/postgresql/extension/
+		psql -d $1 -c "CREATE EXTENSION postgis FROM unpackaged;"
+		## Copy the control file for 2.5.4 to extension folder
+		mv $GPHOME/share/postgresql/extension/postgis.control-2.5.4 $GPHOME/share/postgresql/extension/postgis.control
+		rm -f $GPHOME/share/postgresql/extension/postgis--unpackaged--2.1.5.sql
+	fi
+	## Alter postgis extension to 2.5.4
+	psql -d $1 -c "ALTER EXTENSION postgis UPDATE to '2.5.4';"
+}
+
+function upgrade_254_254() {
+	has_extension=`psql -t -d $1 -c "SELECT count(*) FROM pg_extension WHERE extname = 'postgis';" | head -n 1`
+	if [ "$has_extension" -eq 0 ]; then
+		## CREATE postgis as extension if not created
+		psql -d $1 -c "CREATE EXTENSION postgis FROM unpackaged;"
+	fi
+}
+
+install_postgis()
+{
+	echo "Please use CREATE EXTENSION syntax per the docs for installing postgis. Exiting!"
+}
+
+uninstall_postgis()
+{
+	echo "Please use DROP EXTENSION syntax per the docs for uninstalling postgis. Exiting!"
+}
 if [ "$#" -eq 2 ]
 	then
 	if [ "$2" = "install" ]
 	then
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/postgis.sql;
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/rtpostgis.sql;
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/postgis_comments.sql;
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/raster_comments.sql;
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/spatial_ref_sys.sql;
+		install_postgis
 	elif [ "$2" = "upgrade" ]
 	then
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/legacy.sql;
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis_upgrade_20_21.sql;
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis_upgrade_21_minor.sql;
+		upgrade_postgis $1
 	elif [ "$2" = "uninstall" ]
 	then
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_rtpostgis.sql;
-		psql -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_postgis.sql;
+		uninstall_postgis
 	else
 		echo "Invalid option. Please try install, upgrade or uninstall"
 	fi
@@ -31,23 +73,16 @@ then
 	fi
 	if [ "$3" = "install" ]
 	then
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/postgis.sql;
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/rtpostgis.sql;
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/postgis_comments.sql;
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/raster_comments.sql;
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/install/spatial_ref_sys.sql;
+		install_postgis
 	elif [ "$3" = "upgrade" ]
 	then
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/legacy.sql;
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis_upgrade_20_21.sql;
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis_upgrade_21_minor.sql;
+		upgrade_postgis $1
 	elif [ "$3" = "uninstall" ]
 	then
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_rtpostgis.sql;
-		env PGOPTIONS="--search_path=$2" psql --no-psqlrc -d $1 -f $GPHOME/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_postgis.sql;
+		uninstall_postgis
 	else
 		echo "Invalid option. Please try install, upgrade or uninstall"
 	fi
 else
-	echo "Invalid arguements. Usage: ./postgis_manager.sh <dbname> [<schema_name>] install/uninstall "
+	echo "Invalid arguements. Usage: ./postgis_manager.sh <dbname> [<schema_name>] install/uninstall/upgrade "
 fi
