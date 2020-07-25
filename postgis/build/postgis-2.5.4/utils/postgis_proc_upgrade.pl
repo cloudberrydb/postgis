@@ -235,13 +235,13 @@ EOF
 	}
 
 	# This code handles aggregates by dropping and recreating them.
-	if ( /^create aggregate\s+([^(]+)\s*\(/i )
+	if ( /^create (?:ordered\s)*aggregate\s+([^(]+)\s*\(/i )
 	{
 		my $aggname = $1;
     #print "-- Aggname ${aggname}\n";
 		my $aggtype = 'unknown';
 		my $def = $_;
-    if ( /^create aggregate\s+\S+\s*\(([^)]*)\)/i ) {
+	if ( /^create (?:ordered\s)*aggregate\s+\S+\s*\(([^)]*)\)/i ) {
 	    $aggtype = $1;
       $aggtype =~ s/\s*,\s*/,/g; # drop spaces around commas
       $aggtype =~ s/\s\s*/ /g; # collapse multiple spaces into one
