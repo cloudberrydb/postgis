@@ -18,15 +18,17 @@ function upgrade_postgis() {
 
 function upgrade_215_254() {
 	has_extension=`psql -t -d $1 -c "SELECT count(*) FROM pg_extension WHERE extname = 'postgis';" | head -n 1`
+	all_hosts=`psql -t -d $1 -c "SELECT distinct(hostname) FROM pg_catalog.gp_segment_configuration WHERE role = 'p';"`
 	if [ "$has_extension" -eq 0 ]; then
 		## Copy the control file for 2.1.5 to extension folder and CREATE postgis as extension
-		cp $GPHOME/share/postgresql/extension/postgis.control $GPHOME/share/postgresql/extension/postgis.control-2.5.4
-		cp $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis.control-2.1.5 $GPHOME/share/postgresql/extension/postgis.control
-		cp $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis--unpackaged--2.1.5.sql $GPHOME/share/postgresql/extension/
+		echo "$all_hosts" > $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/all_hosts
+		gpssh -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/all_hosts "cp $GPHOME/share/postgresql/extension/postgis.control $GPHOME/share/postgresql/extension/postgis.control-2.5.4"
+		gpssh -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/all_hosts "cp $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis.control-2.1.5 $GPHOME/share/postgresql/extension/postgis.control"
+		gpssh -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/all_hosts "cp $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/postgis--unpackaged--2.1.5.sql $GPHOME/share/postgresql/extension/"
 		psql -d $1 -c "CREATE EXTENSION postgis FROM unpackaged;"
 		## Copy the control file for 2.5.4 to extension folder
-		mv $GPHOME/share/postgresql/extension/postgis.control-2.5.4 $GPHOME/share/postgresql/extension/postgis.control
-		rm -f $GPHOME/share/postgresql/extension/postgis--unpackaged--2.1.5.sql
+		gpssh -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/all_hosts "mv $GPHOME/share/postgresql/extension/postgis.control-2.5.4 $GPHOME/share/postgresql/extension/postgis.control"
+		gpssh -f $GPHOME/share/postgresql/contrib/postgis-2.5/upgrade/all_hosts "rm -f $GPHOME/share/postgresql/extension/postgis--unpackaged--2.1.5.sql"
 	fi
 	## Alter postgis extension to 2.5.4
 	psql -d $1 -c "ALTER EXTENSION postgis UPDATE to '2.5.4';"
