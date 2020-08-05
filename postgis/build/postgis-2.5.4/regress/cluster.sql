@@ -27,7 +27,7 @@ INSERT INTO dbscan_inputs VALUES
 (6, 'POINT (1.0 0.5)');
 
 /* minpoints = 1, equivalent to ST_ClusterWithin */
-SELECT 't101', id, ST_ClusterDBSCAN(geom, eps := 0.8, minpoints := 1) OVER () from dbscan_inputs ORDER BY id;
+SELECT 't101', id, ST_ClusterDBSCAN(geom, eps := 0.8, minpoints := 1) OVER (ORDER BY id) from dbscan_inputs ORDER BY id;
 
 /* minpoints = 4, no clusters */
 SELECT 't102', id, ST_ClusterDBSCAN(geom, eps := 0.8, minpoints := 4) OVER () from dbscan_inputs ORDER BY id;

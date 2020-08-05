@@ -96,7 +96,7 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast, 1) AS rast
+		ST_Union(rast, 1 order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
@@ -165,7 +165,7 @@ INSERT INTO raster_union_in
 INSERT INTO raster_union_out
 	SELECT
 		'LAST',
-		ST_Union(rast, 2) AS rast
+		ST_Union(rast, 2 order by rid) AS rast
 	FROM raster_union_in;
 
 INSERT INTO raster_union_out
