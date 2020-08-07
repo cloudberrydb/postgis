@@ -96,4 +96,27 @@ SELECT '#1614b' As ticket, pprint_addy(addy), addy.* FROM normalize_address('320
 
 --internal address prefix sometimes get caught in post dir
 SELECT '#1108a' As ticket, pprint_addy(addy), addy.* FROM normalize_address('529 Main Street, Suite 201, Boston, MA 02129') AS addy;
+
+drop table if exists addresses cascade;
+create table addresses (
+  id serial not null primary key,
+  addr text
+);
+
+copy addresses (addr) from stdin;
+1017 LINWOOD AVE APT 12 ST PAUL,MN,55105
+1029 ATLANTIC ST APT 302 ST PAUL,MN,55106
+\.
+
+WITH A AS (
+    SELECT normalize_address(addr) As addy
+    FROM addresses
+)
+SELECT '#GPN001a' As ticket,
+    (addy).address As num,
+    (addy).predirabbrev As pre,
+    (addy).streetname || ' ' || (addy).streettypeabbrev As street,
+    (addy).location As city,
+    (addy).stateabbrev As st
+FROM A ORDER BY num;
 --\timing

@@ -21,11 +21,11 @@ DECLARE var_temp text;
 BEGIN
 	var_temp := tiger.SetSearchPathForInstall('tiger'); /** set set search path to have tiger in front **/
 	IF NOT EXISTS(SELECT table_name FROM information_schema.columns WHERE table_schema = 'tiger' AND table_name = 'geocode_settings')  THEN
-		CREATE TABLE geocode_settings(name text primary key, setting text, unit text, category text, short_desc text);
+		CREATE TABLE geocode_settings(name text primary key, setting text, unit text, category text, short_desc text) DISTRIBUTED REPLICATED;
 		GRANT SELECT ON geocode_settings TO public;
 	END IF;
 	IF NOT EXISTS(SELECT table_name FROM information_schema.columns WHERE table_schema = 'tiger' AND table_name = 'geocode_settings_default')  THEN
-		CREATE TABLE geocode_settings_default(name text primary key, setting text, unit text, category text, short_desc text);
+		CREATE TABLE geocode_settings_default(name text primary key, setting text, unit text, category text, short_desc text) DISTRIBUTED REPLICATED;
 		GRANT SELECT ON geocode_settings_default TO public;
 	END IF;
 	--recreate defaults

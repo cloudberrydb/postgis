@@ -108,5 +108,25 @@ SELECT '#2978a' As ticket, * FROM normalize_address('10-20 DORRANCE ST PROVIDENC
 SELECT '#2978b' As ticket, * FROM normalize_address('10 20 DORRANCE ST PROVIDENCE RI' ) ;
 SELECT '#2978c' As ticket, * FROM normalize_address('10-20 DORRANCE ST, PROVIDENCE. RI' ) ;
 
+drop table if exists addresses cascade;
+create table addresses (
+  id serial not null primary key,
+  addr text
+);
+
+copy addresses (addr) from stdin;
+1017 LINWOOD AVE APT 12 ST PAUL,MN,55105
+1029 ATLANTIC ST APT 302 ST PAUL,MN,55106
+\.
+
+WITH A AS (
+    SELECT pagc_normalize_address(addr) As addy FROM addresses)
+SELECT '#GPP001a' As ticket, (addy).address As num,
+    (addy).predirabbrev As pre,
+    (addy).streetname || ' ' || (addy).streettypeabbrev As street,
+    (addy).location As city,
+    (addy).stateabbrev As st
+FROM A ORDER BY num;
+
 --\timing
 SELECT set_geocode_setting('use_pagc_address_parser', 'false');

@@ -2,7 +2,8 @@
 SELECT tiger.SetSearchPathForInstall('tiger');
 -- Create direction lookup table
 DROP TABLE IF EXISTS tiger.direction_lookup;
-CREATE TABLE direction_lookup (name VARCHAR(20) PRIMARY KEY, abbrev VARCHAR(3));
+CREATE TABLE direction_lookup (name VARCHAR(20) PRIMARY KEY, abbrev VARCHAR(3))
+DISTRIBUTED REPLICATED;
 INSERT INTO direction_lookup (name, abbrev) VALUES('WEST', 'W');
 INSERT INTO direction_lookup (name, abbrev) VALUES('W', 'W');
 INSERT INTO direction_lookup (name, abbrev) VALUES('SW', 'SW');
@@ -35,7 +36,7 @@ CREATE INDEX direction_lookup_abbrev_idx ON direction_lookup (abbrev);
 
 -- Create secondary unit lookup table
 DROP TABLE IF EXISTS tiger.secondary_unit_lookup;
-CREATE TABLE secondary_unit_lookup (name VARCHAR(20) PRIMARY KEY, abbrev VARCHAR(5));
+CREATE TABLE secondary_unit_lookup (name VARCHAR(20) PRIMARY KEY, abbrev VARCHAR(5)) DISTRIBUTED REPLICATED;
 INSERT INTO secondary_unit_lookup (name, abbrev) VALUES ('APARTMENT', 'APT');
 INSERT INTO secondary_unit_lookup (name, abbrev) VALUES ('APT', 'APT');
 INSERT INTO secondary_unit_lookup (name, abbrev) VALUES ('BASEMENT', 'BSMT');
@@ -79,7 +80,8 @@ CREATE INDEX secondary_unit_lookup_abbrev_idx ON secondary_unit_lookup (abbrev);
 
 -- Create state lookup table
 DROP TABLE IF EXISTS tiger.state_lookup;
-CREATE TABLE state_lookup (st_code INTEGER PRIMARY KEY, name VARCHAR(40), abbrev VARCHAR(3), statefp char(2), UNIQUE(st_code, name, abbrev, statefp));
+CREATE TABLE state_lookup (st_code INTEGER PRIMARY KEY, name VARCHAR(40), abbrev VARCHAR(3), statefp char(2), UNIQUE(st_code, name, abbrev, statefp))
+DISTRIBUTED REPLICATED;
 INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('Alabama', 'AL', '01');
 INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('Alaska', 'AK', '02');
 INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('American Samoa', 'AS', '60');
@@ -144,7 +146,7 @@ UPDATE state_lookup SET statefp = lpad(st_code::text,2,'0');
 
 -- Create street type lookup table
 DROP TABLE IF EXISTS tiger.street_type_lookup;
-CREATE TABLE street_type_lookup (name VARCHAR(50) PRIMARY KEY, abbrev VARCHAR(50), is_hw boolean NOT NULL DEFAULT false);
+CREATE TABLE street_type_lookup (name VARCHAR(50) PRIMARY KEY, abbrev VARCHAR(50), is_hw boolean NOT NULL DEFAULT false) DISTRIBUTED REPLICATED;
 INSERT INTO street_type_lookup (name, abbrev) VALUES ('ALLEE', 'Aly');
 INSERT INTO street_type_lookup (name, abbrev) VALUES ('ALLEY', 'Aly');
 INSERT INTO street_type_lookup (name, abbrev) VALUES ('ALLY', 'Aly');
@@ -788,7 +790,7 @@ CREATE TABLE place_lookup (
     pl_code INTEGER,
     name    VARCHAR(90),
     PRIMARY KEY (st_code,pl_code)
-);
+) DISTRIBUTED REPLICATED;
 
 /**
 INSERT INTO place_lookup
@@ -812,7 +814,7 @@ CREATE TABLE county_lookup (
     co_code INTEGER,
     name    VARCHAR(90),
     PRIMARY KEY (st_code, co_code)
-);
+)DISTRIBUTED REPLICATED;
 
 /**
 INSERT INTO county_lookup
@@ -838,7 +840,7 @@ CREATE TABLE countysub_lookup (
     cs_code INTEGER,
     name    VARCHAR(90),
     PRIMARY KEY (st_code, co_code, cs_code)
-);
+)DISTRIBUTED REPLICATED;
 
 /**
 INSERT INTO countysub_lookup
@@ -870,7 +872,7 @@ CREATE TABLE zip_lookup_all (
     pl_code INTEGER,
     place   VARCHAR(90),
     cnt     INTEGER
-);
+)DISTRIBUTED REPLICATED;
 
 /** SET work_mem = '2GB';
 
@@ -922,7 +924,7 @@ CREATE TABLE zip_lookup_base (
     city    VARCHAR(90),
     statefp varchar(2),
     PRIMARY KEY (zip)
-);
+)DISTRIBUTED REPLICATED;
 
 -- INSERT INTO zip_lookup_base
 -- Populate through magic
@@ -941,7 +943,7 @@ CREATE TABLE zip_lookup (
     place   VARCHAR(90),
     cnt     INTEGER,
     PRIMARY KEY (zip)
-);
+)DISTRIBUTED REPLICATED;
 
 DROP TABLE IF EXISTS tiger.zcta500;
 /**
@@ -988,7 +990,7 @@ CREATE TABLE county
   CONSTRAINT enforce_dims_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_geom CHECK (st_srid(the_geom) = 4269)
-);
+)DISTRIBUTED REPLICATED;
 CREATE INDEX idx_tiger_county ON county USING btree (countyfp);
 
 DROP TABLE IF EXISTS tiger.state;
@@ -1015,7 +1017,7 @@ CREATE TABLE state
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
-);
+)DISTRIBUTED REPLICATED;
 CREATE INDEX idx_tiger_state_the_geom_gist ON state USING gist(the_geom);
 
 DROP TABLE IF EXISTS tiger.place;
@@ -1044,7 +1046,7 @@ CREATE TABLE place
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
-);
+)DISTRIBUTED REPLICATED;
 CREATE INDEX tiger_place_the_geom_gist ON place USING gist(the_geom);
 
 DROP TABLE IF EXISTS tiger.zip_state;
@@ -1054,7 +1056,7 @@ CREATE TABLE zip_state
   stusps character varying(2) NOT NULL,
   statefp character varying(2),
   CONSTRAINT zip_state_pkey PRIMARY KEY (zip, stusps)
-);
+)DISTRIBUTED REPLICATED;
 
 DROP TABLE IF EXISTS tiger.zip_state_loc;
 CREATE TABLE zip_state_loc
@@ -1064,7 +1066,7 @@ CREATE TABLE zip_state_loc
   statefp character varying(2),
   place varchar(100),
   CONSTRAINT zip_state_loc_pkey PRIMARY KEY (zip, stusps, place)
-);
+)DISTRIBUTED REPLICATED;
 
 DROP TABLE IF EXISTS tiger.cousub;
 CREATE TABLE cousub
@@ -1093,7 +1095,7 @@ CREATE TABLE cousub
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
-);
+) DISTRIBUTED REPLICATED;
 
 CREATE INDEX tige_cousub_the_geom_gist ON cousub USING gist(the_geom);
 
@@ -1136,7 +1138,7 @@ CREATE TABLE edges
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTILINESTRING'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
-);
+) DISTRIBUTED REPLICATED;
 CREATE INDEX idx_edges_tlid ON edges USING btree(tlid);
 CREATE INDEX idx_tiger_edges_countyfp ON edges USING btree(countyfp);
 CREATE INDEX idx_tiger_edges_the_geom_gist ON edges USING gist(the_geom);
@@ -1172,7 +1174,7 @@ CREATE TABLE addrfeat
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'LINESTRING'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
-);
+)DISTRIBUTED REPLICATED;
 CREATE INDEX idx_addrfeat_geom_gist ON addrfeat USING gist(the_geom );
 CREATE INDEX idx_addrfeat_tlid ON addrfeat USING btree(tlid);
 CREATE INDEX idx_addrfeat_zipl ON addrfeat USING btree(zipl);
@@ -1254,7 +1256,7 @@ gid serial NOT NULL PRIMARY KEY,
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_geotype_the_geom CHECK (geometrytype(the_geom) = 'MULTIPOLYGON'::text OR the_geom IS NULL),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269)
-);
+)DISTRIBUTED REPLICATED;
 CREATE INDEX idx_tiger_faces_tfid ON faces USING btree (tfid);
 CREATE INDEX idx_tiger_faces_countyfp ON faces USING btree(countyfp);
 CREATE INDEX tiger_faces_the_geom_gist ON faces USING gist(the_geom);
@@ -1282,7 +1284,7 @@ CREATE TABLE featnames
   mtfcc character varying(5),
   paflag character varying(1),
   CONSTRAINT featnames_pkey PRIMARY KEY (gid)
-);
+)DISTRIBUTED REPLICATED;
 ALTER TABLE featnames ADD COLUMN statefp character varying(2);
 CREATE INDEX idx_tiger_featnames_snd_name ON featnames USING btree (soundex(name));
 CREATE INDEX idx_tiger_featnames_lname ON featnames USING btree (lower(name));
@@ -1304,7 +1306,7 @@ CREATE TABLE addr
   arid character varying(22),
   mtfcc character varying(5),
   CONSTRAINT addr_pkey PRIMARY KEY (gid)
-);
+)DISTRIBUTED REPLICATED;
 ALTER TABLE addr ADD COLUMN statefp character varying(2);
 
 CREATE INDEX idx_tiger_addr_tlid_statefp ON addr USING btree(tlid,statefp);
@@ -1329,4 +1331,4 @@ CREATE TABLE zcta5
   CONSTRAINT enforce_dims_the_geom CHECK (st_ndims(the_geom) = 2),
   CONSTRAINT enforce_srid_the_geom CHECK (st_srid(the_geom) = 4269),
   CONSTRAINT pk_tiger_zcta5_zcta5ce PRIMARY KEY (zcta5ce,statefp)
- );
+ )DISTRIBUTED REPLICATED;
