@@ -112,7 +112,7 @@ WITH A AS (
     SELECT normalize_address(addr) As addy
     FROM addresses
 )
-SELECT '#GPN001a' As ticket,
+SELECT '#GPN001a' As ticket, pprint_addy(addy),
     (addy).address As num,
     (addy).predirabbrev As pre,
     (addy).streetname || ' ' || (addy).streettypeabbrev As street,

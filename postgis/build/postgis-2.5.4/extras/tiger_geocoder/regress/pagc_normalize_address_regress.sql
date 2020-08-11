@@ -121,7 +121,8 @@ copy addresses (addr) from stdin;
 
 WITH A AS (
     SELECT pagc_normalize_address(addr) As addy FROM addresses)
-SELECT '#GPP001a' As ticket, (addy).address As num,
+SELECT '#GPP001a' As ticket, pprint_addy(addy),
+    (addy).address As num,
     (addy).predirabbrev As pre,
     (addy).streetname || ' ' || (addy).streettypeabbrev As street,
     (addy).location As city,

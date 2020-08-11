@@ -923,7 +923,7 @@ CREATE TABLE zip_lookup_base (
     county  VARCHAR(90),
     city    VARCHAR(90),
     statefp varchar(2),
-    PRIMARY KEY (zip)
+    PRIMARY KEY (zip,state, county, city, statefp)
 )DISTRIBUTED REPLICATED;
 
 -- INSERT INTO zip_lookup_base
