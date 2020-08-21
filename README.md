@@ -26,10 +26,12 @@ Note that if psql is in path, there is no need to use --with-pgconfig flag.
 After installing geospatial extension, run the following commands to enable it:
 
 ```
-psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.5/postgis.sql
-psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.5/postgis_comments.sql
-psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.5/rtpostgis.sql
-psql -d mydatabase -f ${GPHOME}/share/postgresql/contrib/postgis-2.5/raster_comments.sql
+psql mydatabase
+mydatabase# CREATE EXTENSION postgis; -- enables postgis and raster
+mydatabase# CREATE EXTENSION fuzzystrmatch; -- required for installing tiger geocoder
+mydatabase# CREATE EXTENSION postgis_tiger_geocoder; -- enables tiger geocoder
+mydatabase# CREATE EXTENSION address_standardizer; -- enable address_standardizer
+mydatabase# CREATE EXTENSION address_standardizer_data_us;
 ```
 
 To configure raster utilities, please set the following environment variables on the master host and all the segment hosts. A suggested way to do this is to add these variables into your `$GPHOME/greenplum_path.sh` file to ensure they get set in all the segment hosts and the master host. **Make sure that you restart the database after setting them**.
