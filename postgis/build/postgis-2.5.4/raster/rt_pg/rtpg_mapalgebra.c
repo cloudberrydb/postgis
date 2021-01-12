@@ -934,10 +934,7 @@ Datum RASTER_nMapAlgebra(PG_FUNCTION_ARGS)
 			i = arg->numraster - 1;
 			break;
 		case ET_SECOND:
-			if (arg->numraster > 1) {
-				i = 1;
-			break;
-			}
+			i = (arg->numraster > 1) ? 1 : 0;
 			break;
 		default:
 			i = 0;
