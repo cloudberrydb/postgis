@@ -9,7 +9,7 @@ POSTGIS_VER	= 2.5.4
 # -----------------------------------------
 
 # GEOS
-GEOS_VER = 3.4.2
+GEOS_VER = 3.10.2
 GEOS_REL = 1
 
 # PROJ.4
@@ -25,7 +25,7 @@ GDAL_VER = 1.11.1
 GDAL_REL = 1
 
 # LIBEXPAT
-LIBEXPAT_VER = 2.1.0
+LIBEXPAT_VER = 2.4.4
 LIBEXPAT_REL = 1
 
 # GPDB gppkg

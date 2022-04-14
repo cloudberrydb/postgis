@@ -146,10 +146,17 @@ ptarray_from_GEOSCoordSeq(const GEOSCoordSequence* cs, uint8_t want3d)
 
 	for (i = 0; i < size; i++)
 	{
-		GEOSCoordSeq_getX(cs, i, &(point.x));
-		GEOSCoordSeq_getY(cs, i, &(point.y));
-		if (dims >= 3) GEOSCoordSeq_getZ(cs, i, &(point.z));
-		ptarray_set_point4d(pa, i, &point);
+#if POSTGIS_GEOS_VERSION < 38
+	    GEOSCoordSeq_getX(cs, i, &(point.x));
+	    GEOSCoordSeq_getY(cs, i, &(point.y));
+	    if (dims >= 3) GEOSCoordSeq_getZ(cs, i, &(point.z));
+#else
+	    if (dims >= 3)
+	        GEOSCoordSeq_getXYZ(cs, i, &(point.x), &(point.y), &(point.z));
+	    else
+	        GEOSCoordSeq_getXY(cs, i, &(point.x), &(point.y));
+#endif
+	    ptarray_set_point4d(pa, i, &point);
 	}
 
 	return pa;
@@ -284,10 +291,16 @@ ptarray_to_GEOSCoordSeq(const POINTARRAY* pa, uint8_t fix_ring)
 			LWDEBUGF(4, "Point: %g,%g", p2d->x, p2d->y);
 		}
 
+#if POSTGIS_GEOS_VERSION < 38
 		GEOSCoordSeq_setX(sq, i, p2d->x);
 		GEOSCoordSeq_setY(sq, i, p2d->y);
-
 		if (dims == 3) GEOSCoordSeq_setZ(sq, i, p3d->z);
+#else
+		if (dims == 3)
+		    GEOSCoordSeq_setXYZ(sq, i, p2d->x, p2d->y, p3d->z);
+		else
+		    GEOSCoordSeq_setXY(sq, i, p2d->x, p2d->y);
+#endif
 	}
 
 	if (append_points)
@@ -301,8 +314,12 @@ ptarray_to_GEOSCoordSeq(const POINTARRAY* pa, uint8_t fix_ring)
 			p2d = getPoint2d_cp(pa, 0);
 		for (i = pa->npoints; i < pa->npoints + append_points; i++)
 		{
-			GEOSCoordSeq_setX(sq, i, p2d->x);
-			GEOSCoordSeq_setY(sq, i, p2d->y);
+#if POSTGIS_GEOS_VERSION < 38
+		    GEOSCoordSeq_setX(sq, i, p2d->x);
+		    GEOSCoordSeq_setY(sq, i, p2d->y);
+#else
+		    GEOSCoordSeq_setXY(sq, i, p2d->x, p2d->y);
+#endif
 
 			if (dims == 3) GEOSCoordSeq_setZ(sq, i, p3d->z);
 		}
@@ -329,6 +346,7 @@ GBOX2GEOS(const GBOX* box)
 	GEOSCoordSequence* seq = GEOSCoordSeq_create(5, 2);
 	if (!seq) return NULL;
 
+#if POSTGIS_GEOS_VERSION < 38
 	GEOSCoordSeq_setX(seq, 0, box->xmin);
 	GEOSCoordSeq_setY(seq, 0, box->ymin);
 
@@ -343,6 +361,13 @@ GBOX2GEOS(const GBOX* box)
 
 	GEOSCoordSeq_setX(seq, 4, box->xmin);
 	GEOSCoordSeq_setY(seq, 4, box->ymin);
+#else
+	GEOSCoordSeq_setXY(seq, 0, box->xmin, box->ymin);
+	GEOSCoordSeq_setXY(seq, 1, box->xmax, box->ymin);
+	GEOSCoordSeq_setXY(seq, 2, box->xmax, box->ymax);
+	GEOSCoordSeq_setXY(seq, 3, box->xmin, box->ymax);
+	GEOSCoordSeq_setXY(seq, 4, box->xmin, box->ymin);
+#endif
 
 	ring = GEOSGeom_createLinearRing(seq);
 	if (!ring)
@@ -404,8 +429,21 @@ LWGEOM2GEOS(const LWGEOM* lwgeom, uint8_t autofix)
 			g = GEOSGeom_createEmptyPolygon();
 		else
 		{
-			sq = ptarray_to_GEOSCoordSeq(lwp->point, 0);
-			g = GEOSGeom_createPoint(sq);
+#if POSTGIS_GEOS_VERSION < 38
+		    sq = ptarray_to_GEOSCoordSeq(lwp->point, 0);
+		    g = GEOSGeom_createPoint(sq);
+#else
+		    if (lwgeom_has_z(lwgeom))
+		    {
+		        sq = ptarray_to_GEOSCoordSeq(lwp->point, 0);
+		        g = GEOSGeom_createPoint(sq);
+		    }
+		    else
+		    {
+		        const POINT2D* p = getPoint2d_cp(lwp->point, 0);
+		        g = GEOSGeom_createPointFromXY(p->x, p->y);
+		    }
+#endif
 		}
 		if (!g) return NULL;
 		break;
@@ -520,8 +558,12 @@ make_geos_point(double x, double y)
 
 	if (!seq) return NULL;
 
+#if POSTGIS_GEOS_VERSION < 38
 	GEOSCoordSeq_setX(seq, 0, x);
 	GEOSCoordSeq_setY(seq, 0, y);
+#else
+	GEOSCoordSeq_setXY(seq, 0, x, y);
+#endif
 
 	geom = GEOSGeom_createPoint(seq);
 	if (!geom) GEOSCoordSeq_destroy(seq);
@@ -536,10 +578,15 @@ make_geos_segment(double x1, double y1, double x2, double y2)
 
 	if (!seq) return NULL;
 
+#if POSTGIS_GEOS_VERSION < 38
 	GEOSCoordSeq_setX(seq, 0, x1);
 	GEOSCoordSeq_setY(seq, 0, y1);
 	GEOSCoordSeq_setX(seq, 1, x2);
 	GEOSCoordSeq_setY(seq, 1, y2);
+#else
+	GEOSCoordSeq_setXY(seq, 0, x1, y1);
+	GEOSCoordSeq_setXY(seq, 1, x2, y2);
+#endif
 
 	geom = GEOSGeom_createLineString(seq);
 	if (!geom) GEOSCoordSeq_destroy(seq);
@@ -870,41 +917,41 @@ lwgeom_union(const LWGEOM* geom1, const LWGEOM* geom2)
 	return result;
 }
 
-// LWGEOM *
-// lwgeom_clip_by_rect(const LWGEOM *geom1, double x1, double y1, double x2, double y2)
-// {
-// 	LWGEOM *result;
-// 	GEOSGeometry *g1, *g3;
-// 	int is3d;
+ LWGEOM *
+ lwgeom_clip_by_rect(const LWGEOM *geom1, double x1, double y1, double x2, double y2)
+ {
+ 	LWGEOM *result;
+ 	GEOSGeometry *g1, *g3;
+ 	int is3d;
 
-// 	/* A.Intersection(Empty) == Empty */
-// 	if ( lwgeom_is_empty(geom1) )
-// 		return lwgeom_clone_deep(geom1);
+ 	/* A.Intersection(Empty) == Empty */
+ 	if ( lwgeom_is_empty(geom1) )
+ 		return lwgeom_clone_deep(geom1);
 
-// 	is3d = FLAGS_GET_Z(geom1->flags);
+ 	is3d = FLAGS_GET_Z(geom1->flags);
 
-// 	initGEOS(lwnotice, lwgeom_geos_error);
+ 	initGEOS(lwnotice, lwgeom_geos_error);
 
-// 	if (!(g1 = LWGEOM2GEOS(geom1, AUTOFIX)))
-// 		GEOS_FAIL_DEBUG();
+ 	if (!(g1 = LWGEOM2GEOS(geom1, AUTOFIX)))
+ 		GEOS_FAIL_DEBUG();
 
-// 	if (!(g3 = GEOSClipByRect(g1, x1, y1, x2, y2)))
-// 		GEOS_FREE_AND_FAIL_DEBUG(g1);
+ 	if (!(g3 = GEOSClipByRect(g1, x1, y1, x2, y2)))
+ 		GEOS_FREE_AND_FAIL_DEBUG(g1);
 
-// 	GEOS_FREE(g1);
-// 	result = GEOS2LWGEOM(g3, is3d);
-// 	GEOS_FREE(g3);
+ 	GEOS_FREE(g1);
+ 	result = GEOS2LWGEOM(g3, is3d);
+ 	GEOS_FREE(g3);
 
-// 	if (!result)
-// 		GEOS_FAIL_DEBUG();
+ 	if (!result)
+ 		GEOS_FAIL_DEBUG();
 
-// 	result->srid = geom1->srid;
+ 	result->srid = geom1->srid;
 
-// 	return result;
-// }
+ 	return result;
+ }
 
 /* ------------ BuildArea stuff ---------------------------------------------------------------------{ */
-
+#if POSTGIS_GEOS_VERSION < 38
 typedef struct Face_t
 {
 	const GEOSGeometry* geom;
@@ -1150,6 +1197,7 @@ LWGEOM_GEOS_buildArea(const GEOSGeometry* geom_in)
 
 	return shp;
 }
+#endif
 
 LWGEOM*
 lwgeom_buildarea(const LWGEOM* geom)
@@ -1168,8 +1216,11 @@ lwgeom_buildarea(const LWGEOM* geom)
 
 	if (!(g1 = LWGEOM2GEOS(geom, AUTOFIX))) GEOS_FAIL();
 
+#if POSTGIS_GEOS_VERSION < 38
 	g3 = LWGEOM_GEOS_buildArea(g1);
-
+#else
+	g3 = GEOSBuildArea(g1);
+#endif
 	if (!g3) GEOS_FREE_AND_FAIL(g1);
 	GEOSSetSRID(g3, srid);
 
@@ -1559,8 +1610,12 @@ lwpoly_to_points(const LWPOLY* lwpoly, uint32_t npoints)
 			if (x >= bbox.xmax || y >= bbox.ymax) continue;
 
 			gseq = GEOSCoordSeq_create(1, 2);
+#if POSTGIS_GEOS_VERSION < 38
 			GEOSCoordSeq_setX(gseq, 0, x);
 			GEOSCoordSeq_setY(gseq, 0, y);
+#else
+			GEOSCoordSeq_setXY(gseq, 0, x, y);
+#endif
 			gpt = GEOSGeom_createPoint(gseq);
 
 			contains = GEOSPreparedIntersects(gprep, gpt);
@@ -1795,7 +1850,11 @@ lwgeom_get_geos_coordseq_2d(const LWGEOM* g, uint32_t num_points)
 			return NULL;
 		}
 
+#if POSTGIS_GEOS_VERSION < 38
 		if (!GEOSCoordSeq_setX(coords, i, tmp.x) || !GEOSCoordSeq_setY(coords, i, tmp.y))
+#else
+		if (!GEOSCoordSeq_setXY(coords, i, tmp.x, tmp.y))
+#endif
 		{
 			GEOSCoordSeq_destroy(coords);
 			lwpointiterator_destroy(it);
@@ -1808,53 +1867,53 @@ lwgeom_get_geos_coordseq_2d(const LWGEOM* g, uint32_t num_points)
 	return coords;
 }
 
-// LWGEOM*
-// lwgeom_voronoi_diagram(const LWGEOM* g, const GBOX* env, double tolerance, int output_edges)
-// {
-// 	uint32_t num_points = lwgeom_count_vertices(g);
-// 	LWGEOM* lwgeom_result;
-// 	char is_3d = LW_FALSE;
-// 	int srid = lwgeom_get_srid(g);
-// 	GEOSCoordSequence* coords;
-// 	GEOSGeometry* geos_geom;
-// 	GEOSGeometry* geos_env = NULL;
-// 	GEOSGeometry* geos_result;
+ LWGEOM*
+ lwgeom_voronoi_diagram(const LWGEOM* g, const GBOX* env, double tolerance, int output_edges)
+ {
+ 	uint32_t num_points = lwgeom_count_vertices(g);
+ 	LWGEOM* lwgeom_result;
+ 	char is_3d = LW_FALSE;
+ 	int srid = lwgeom_get_srid(g);
+ 	GEOSCoordSequence* coords;
+ 	GEOSGeometry* geos_geom;
+ 	GEOSGeometry* geos_env = NULL;
+ 	GEOSGeometry* geos_result;
 
-// 	if (num_points < 2)
-// 	{
-// 		LWCOLLECTION* empty = lwcollection_construct_empty(COLLECTIONTYPE, lwgeom_get_srid(g), 0, 0);
-// 		return lwcollection_as_lwgeom(empty);
-// 	}
+ 	if (num_points < 2)
+ 	{
+ 		LWCOLLECTION* empty = lwcollection_construct_empty(COLLECTIONTYPE, lwgeom_get_srid(g), 0, 0);
+ 		return lwcollection_as_lwgeom(empty);
+ 	}
 
-// 	initGEOS(lwnotice, lwgeom_geos_error);
+ 	initGEOS(lwnotice, lwgeom_geos_error);
 
-// 	coords = lwgeom_get_geos_coordseq_2d(g, num_points);
-// 	if (!coords) return NULL;
+ 	coords = lwgeom_get_geos_coordseq_2d(g, num_points);
+ 	if (!coords) return NULL;
 
-// 	geos_geom = GEOSGeom_createLineString(coords);
-// 	if (!geos_geom)
-// 	{
-// 		GEOSCoordSeq_destroy(coords);
-// 		return NULL;
-// 	}
+ 	geos_geom = GEOSGeom_createLineString(coords);
+ 	if (!geos_geom)
+ 	{
+ 		GEOSCoordSeq_destroy(coords);
+ 		return NULL;
+ 	}
 
-// 	if (env) geos_env = GBOX2GEOS(env);
+ 	if (env) geos_env = GBOX2GEOS(env);
 
-// 	geos_result = GEOSVoronoiDiagram(geos_geom, geos_env, tolerance, output_edges);
+ 	geos_result = GEOSVoronoiDiagram(geos_geom, geos_env, tolerance, output_edges);
 
-// 	GEOSGeom_destroy(geos_geom);
-// 	if (env) GEOSGeom_destroy(geos_env);
+ 	GEOSGeom_destroy(geos_geom);
+ 	if (env) GEOSGeom_destroy(geos_env);
 
-// 	if (!geos_result)
-// 	{
-// 		lwerror("GEOSVoronoiDiagram: %s", lwgeom_geos_errmsg);
-// 		return NULL;
-// 	}
+ 	if (!geos_result)
+ 	{
+ 		lwerror("GEOSVoronoiDiagram: %s", lwgeom_geos_errmsg);
+ 		return NULL;
+ 	}
 
-// 	lwgeom_result = GEOS2LWGEOM(geos_result, is_3d);
-// 	GEOSGeom_destroy(geos_result);
+ 	lwgeom_result = GEOS2LWGEOM(geos_result, is_3d);
+ 	GEOSGeom_destroy(geos_result);
 
-// 	lwgeom_set_srid(lwgeom_result, srid);
+ 	lwgeom_set_srid(lwgeom_result, srid);
 
-// 	return lwgeom_result;
-// }
+ 	return lwgeom_result;
+ }

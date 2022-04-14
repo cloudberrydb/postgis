@@ -147,7 +147,7 @@ DROP FUNCTION IF EXISTS st_geometry_cmp(geometry, geometry);
 DROP FUNCTION IF EXISTS SnapToGrid(geometry, float8, float8);
 DROP FUNCTION IF EXISTS st_removerepeatedpoints(geometry);
 -- FIX_ME_POSTGIS_254: Re-enable, when adding support for GEOS 3.5
--- DROP FUNCTION IF EXISTS st_voronoi(geometry, geometry, double precision, boolean); --temporarely introduced before 2.3.0 final
+DROP FUNCTION IF EXISTS st_voronoi(geometry, geometry, double precision, boolean); --temporarely introduced before 2.3.0 final
 
 DROP FUNCTION IF EXISTS geometry_gist_sel_2d (internal, oid, internal, int4);
 DROP FUNCTION IF EXISTS geometry_gist_joinsel_2d(internal, oid, internal, smallint);

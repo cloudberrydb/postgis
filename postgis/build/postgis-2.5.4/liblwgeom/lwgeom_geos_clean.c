@@ -35,7 +35,7 @@
 /* #define POSTGIS_DEBUG_LEVEL 4 */
 /* #define PARANOIA_LEVEL 2 */
 #undef LWGEOM_PROFILE_MAKEVALID
-
+#if POSTGIS_GEOS_VERSION < 38
 /*
  * Return Nth vertex in GEOSGeometry as a POINT.
  * May return NULL if the geometry has NO vertex.
@@ -109,6 +109,7 @@ LWGEOM_GEOS_getPointN(const GEOSGeometry* g_in, uint32_t n)
 
 	return GEOSGeom_createPoint(seq_out);
 }
+#endif
 
 LWGEOM* lwcollection_make_geos_friendly(LWCOLLECTION* g);
 LWGEOM* lwline_make_geos_friendly(LWLINE* line);
@@ -314,7 +315,7 @@ lwcollection_make_geos_friendly(LWCOLLECTION* g)
 
 	return (LWGEOM*)ret;
 }
-
+#if POSTGIS_GEOS_VERSION < 38
 /*
  * Fully node given linework
  */
@@ -844,7 +845,7 @@ LWGEOM_GEOS_makeValid(const GEOSGeometry* gin)
 
 	return gout;
 }
-
+#endif
 /* Exported. Uses GEOS internally */
 LWGEOM*
 lwgeom_make_valid(LWGEOM* lwgeom_in)
@@ -890,7 +891,11 @@ lwgeom_make_valid(LWGEOM* lwgeom_in)
 		lwgeom_out = lwgeom_in;
 	}
 
+#if POSTGIS_GEOS_VERSION < 38
 	geosout = LWGEOM_GEOS_makeValid(geosgeom);
+#else
+	geosout = GEOSMakeValid(geosgeom);
+#endif
 	GEOSGeom_destroy(geosgeom);
 	if (!geosout) return NULL;
 

@@ -3543,19 +3543,19 @@ CREATE OR REPLACE FUNCTION ST_RemoveRepeatedPoints(geom geometry, tolerance floa
 -- FIX_ME_POSTGIS_254: Re-enable, when adding support for GEOS 3.5
 -- Requires GEOS >= 3.5.0
 -- Availability: 2.2.0
--- CREATE OR REPLACE FUNCTION ST_ClipByBox2d(geom geometry, box box2d)
--- 	RETURNS geometry
--- 	AS 'MODULE_PATHNAME', 'ST_ClipByBox2d'
--- 	LANGUAGE 'c' IMMUTABLE STRICT _PARALLEL
--- 	COST 50; -- Guessed cost
+ CREATE OR REPLACE FUNCTION ST_ClipByBox2d(geom geometry, box box2d)
+ 	RETURNS geometry
+ 	AS 'MODULE_PATHNAME', 'ST_ClipByBox2d'
+ 	LANGUAGE 'c' IMMUTABLE STRICT _PARALLEL
+ 	COST 50; -- Guessed cost
 
 -- Requires GEOS >= 3.5.0
 -- Availability: 2.2.0
--- CREATE OR REPLACE FUNCTION ST_Subdivide(geom geometry, maxvertices integer DEFAULT 256)
--- 	RETURNS setof geometry
--- 	AS 'MODULE_PATHNAME', 'ST_Subdivide'
--- 	LANGUAGE 'c' IMMUTABLE STRICT _PARALLEL
--- 	COST 100; -- Guessed cost
+ CREATE OR REPLACE FUNCTION ST_Subdivide(geom geometry, maxvertices integer DEFAULT 256)
+ 	RETURNS setof geometry
+ 	AS 'MODULE_PATHNAME', 'ST_Subdivide'
+ 	LANGUAGE 'c' IMMUTABLE STRICT _PARALLEL
+ 	COST 100; -- Guessed cost
 
 --------------------------------------------------------------------------------
 -- ST_CleanGeometry / ST_MakeValid
@@ -3741,23 +3741,23 @@ CREATE OR REPLACE FUNCTION ST_DelaunayTriangles(g1 geometry, tolerance float8 DE
 -- Requires GEOS >= 3.5.0
 --
 
--- CREATE OR REPLACE FUNCTION _ST_Voronoi(g1 geometry, clip geometry DEFAULT NULL, tolerance float8 DEFAULT 0.0, return_polygons boolean DEFAULT true)
---        RETURNS geometry
---        AS 'MODULE_PATHNAME', 'ST_Voronoi'
---        LANGUAGE 'c' IMMUTABLE _PARALLEL
---        COST 1; -- reset cost, see #3675
+ CREATE OR REPLACE FUNCTION _ST_Voronoi(g1 geometry, clip geometry DEFAULT NULL, tolerance float8 DEFAULT 0.0, return_polygons boolean DEFAULT true)
+        RETURNS geometry
+        AS 'MODULE_PATHNAME', 'ST_Voronoi'
+        LANGUAGE 'c' IMMUTABLE _PARALLEL
+        COST 1; -- reset cost, see #3675
 
--- CREATE OR REPLACE FUNCTION ST_VoronoiPolygons(g1 geometry, tolerance float8 DEFAULT 0.0, extend_to geometry DEFAULT NULL)
---        RETURNS geometry
---        AS $$ SELECT @extschema@._ST_Voronoi(g1, extend_to, tolerance, true) $$
---        LANGUAGE SQL IMMUTABLE _PARALLEL
---        COST 1; -- reset cost, see #3675
+ CREATE OR REPLACE FUNCTION ST_VoronoiPolygons(g1 geometry, tolerance float8 DEFAULT 0.0, extend_to geometry DEFAULT NULL)
+        RETURNS geometry
+        AS $$ SELECT @extschema@._ST_Voronoi(g1, extend_to, tolerance, true) $$
+        LANGUAGE SQL IMMUTABLE _PARALLEL
+        COST 1; -- reset cost, see #3675
 
--- CREATE OR REPLACE FUNCTION ST_VoronoiLines(g1 geometry, tolerance float8 DEFAULT 0.0, extend_to geometry DEFAULT NULL)
---        RETURNS geometry
---        AS $$ SELECT @extschema@._ST_Voronoi(g1, extend_to, tolerance, false) $$
---        LANGUAGE SQL IMMUTABLE _PARALLEL
---        COST 1; -- reset cost, see #3675
+ CREATE OR REPLACE FUNCTION ST_VoronoiLines(g1 geometry, tolerance float8 DEFAULT 0.0, extend_to geometry DEFAULT NULL)
+        RETURNS geometry
+        AS $$ SELECT @extschema@._ST_Voronoi(g1, extend_to, tolerance, false) $$
+        LANGUAGE SQL IMMUTABLE _PARALLEL
+        COST 1; -- reset cost, see #3675
 
 --------------------------------------------------------------------------------
 -- Aggregates and their supporting functions
