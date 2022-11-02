@@ -114,7 +114,7 @@ D5|POINT(1 4094)
 D6|POINT(1 4094)
 D7|POINT(1 4094)
 TU2
-ERROR:  pgis_asmvt_transfn: parameter row cannot be other than a rowtype
+ERROR:  pgis_asmvt_transfn: parameter row cannot be other than a rowtype (lwgeom_out_mvt.c:110)
 TU3|
 #3922|t
 #4294_Horizontal|LINESTRING(0 10,0 5)

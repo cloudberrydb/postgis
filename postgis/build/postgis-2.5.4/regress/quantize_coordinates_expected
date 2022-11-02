@@ -1,5 +1,5 @@
 t1|t
-ERROR:  Must specify precision (lwgeom_pg.c:128)
+ERROR:  Must specify precision (lwgeom_pg.c:248)
 t3|t
 t4|t
 t5|t

@@ -33,6 +33,7 @@ CREATE INDEX brin_geog on test using brin (the_geog) WITH (pages_per_range = 10)
 set enable_indexscan = off;
 set enable_bitmapscan = off;
 set enable_seqscan = on;
+set optimizer = off;
 
 SELECT 'scan_seq', qnodes('select * from test where the_geog && ST_GeographyFromText(''SRID=4326;POLYGON((43. 42.,43. 43.,42. 43.,42. 42.,43. 42.))'')');
  select num,ST_astext(the_geog) from test where the_geog && ST_GeographyFromText('SRID=4326;POLYGON((43. 42.,43. 43.,42. 43.,42. 42.,43. 42.))') order by num;

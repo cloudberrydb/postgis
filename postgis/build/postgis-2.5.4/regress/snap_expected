@@ -1,4 +1,4 @@
-ERROR:  lwgeom_snap: Operation on mixed SRID geometries (10 != 5)
+ERROR:  lwgeom_snap: Operation on mixed SRID geometries (10 != 5) (lwgeom_pg.c:248)
 t2|SRID=10;LINESTRING(0 0,9 0,10 0)
 t3|LINESTRING(0 0,5 -1,10 0)
 t4|LINESTRING(0 0,11 0)

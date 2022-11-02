@@ -33,6 +33,7 @@ CREATE INDEX brin_2d on test using brin (the_geom);
 set enable_indexscan = off;
 set enable_bitmapscan = off;
 set enable_seqscan = on;
+set optimizer = off;
 
 SELECT 'scan_seq', qnodes('select * from test where the_geom && ST_MakePoint(0,0)');
  select num,ST_astext(the_geom) from test where the_geom && 'BOX(125 125,135 135)'::box2d order by num;

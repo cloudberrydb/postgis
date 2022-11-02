@@ -1,5 +1,5 @@
 t1|t
-ERROR:  Unsupported geometry type in lwgeom_median (lwgeom_pg.c:128)
+ERROR:  Unsupported geometry type in lwgeom_median (lwgeom_pg.c:248)
 t3|t
 t4|t
 t5|t
@@ -7,5 +7,5 @@ t6|t
 t7|t
 t8|t
 t9|f
-ERROR:  Median failed to converge within 2e-6 after 1 iterations. (lwgeom_pg.c:128)
+ERROR:  Median failed to converge within 2e-6 after 1 iterations. (lwgeom_pg.c:248)
 t11|f

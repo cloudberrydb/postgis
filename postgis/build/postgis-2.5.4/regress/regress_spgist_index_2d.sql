@@ -41,29 +41,29 @@ set enable_indexscan = off;
 set enable_bitmapscan = off;
 set enable_seqscan = on;
 
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '<<', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g << t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g << t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '&<', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g &< t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g &< t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '&&', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g && t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g && t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '&>', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g &> t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g &> t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '>>', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g >> t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g >> t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '~=', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g ~= t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g ~= t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '~', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g ~ t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g ~ t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '@', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g @ t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g @ t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '&<|', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g &<| t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g &<| t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '<<|', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g <<| t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g <<| t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '|>>', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g |>> t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g |>> t2.g;
-insert into test_spgist_idx_2d(op, noidx, noidxscan)
+--insert into test_spgist_idx_2d(op, noidx, noidxscan)
 select '|&>', count(*), qnodes('select count(*) from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g |&> t2.g') from tbl_geomcollection t1, tbl_geomcollection t2 where t1.g |&> t2.g;
 
 ------------------------------------------------------------------------------

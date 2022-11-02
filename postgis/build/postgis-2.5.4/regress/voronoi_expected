@@ -1,7 +1,7 @@
 1|t
 2|t
-ERROR:  Tolerance must be a positive number.
-ERROR:  Tolerance must be a positive number.
+ERROR:  Tolerance must be a positive number. (lwgeom_pg.c:248)
+ERROR:  Tolerance must be a positive number. (lwgeom_pg.c:248)
 6|t
 7|t
 8|t

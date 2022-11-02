@@ -30,10 +30,6 @@ SQLPP = @SQLPP@
 
 # SQL objects (files requiring pre-processing)
 SQL_OBJS = \
-  topology.sql \
-  topology_upgrade.sql \
-  topology_drop_before.sql \
-  topology_drop_after.sql
 
 # Objects to build using PGXS
 OBJS = postgis_topology.o

@@ -30,7 +30,7 @@
 
 #include <postgres.h>
 #include <fmgr.h>
-
+#include "lib/stringinfo.h"
 #include "rtpostgis.h"
 
 Datum RASTER_in(PG_FUNCTION_ARGS);

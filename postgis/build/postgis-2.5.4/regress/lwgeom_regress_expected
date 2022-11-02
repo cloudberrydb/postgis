@@ -23,14 +23,14 @@ BoundingDiagonal5|SRID=3857;LINESTRINGM(4 4 0,5 4 1)
 BoundingDiagonal6|SRID=3857;LINESTRINGM EMPTY
 ST_Azimuth_regular|2.3562
 ST_Azimuth_same_point|
-ERROR:  Operation on mixed SRID geometries (lwgeom_pg.c:128)
-ERROR:  Argument must be POINT geometries (lwgeom_pg.c:128)
-ERROR:  parse error - invalid geometry (lwgeom_pg.c:58)
+ERROR:  Operation on mixed SRID geometries (lwgeom_pg.c:248)
+ERROR:  Argument must be POINT geometries (lwgeom_pg.c:248)
+ERROR:  parse error - invalid geometry (lwgeom_pg.c:178)
 ST_Angle_4_pts|4.71238898038469
 ST_Angle_4_pts|0.785398163397448
 ST_Angle_3_pts|1.5707963267949
-ERROR:  Operation on mixed SRID geometries (lwgeom_pg.c:128)
-ERROR:  Empty geometry (lwgeom_pg.c:128)
+ERROR:  Operation on mixed SRID geometries (lwgeom_pg.c:248)
+ERROR:  Empty geometry (lwgeom_pg.c:248)
 ST_Angle_2_lines|4.71238898038469
 #3965|25|25
 #3971|t

@@ -70,3 +70,17 @@ For e.g. if you compiled and installed `proj` in /tmp/proj-install, this is how
 ```
 2. Run ldconfig
 
+## Other Problem
+
+1) If you encounter the following problems when `./configure`,, please check the `autoconf` version.
+
+```
+configure: error: cannot find required auxiliary files: config.rpath
+```
+
+2) If you fail to `create extension postgis` in psql after `make install` is successful, the following error is reported, please check whether `xsltproc` is installed.
+
+```
+not found postgis.control
+```
+
