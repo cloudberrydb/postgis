@@ -9,6 +9,8 @@ AutoReq:        no
 AutoProv:       no
 Provides:       postgis = %{postgis_ver}
 
+%define _build_id_links none
+
 %description
 The PostGIS module provides geospatial extensions for Greenplum Database.
 
@@ -269,3 +271,63 @@ cp $GPHOME/share/postgresql/extension/address_standardizer*.sql %{buildroot}/tem
 /temp/share/postgresql/extension/address_standardizer--ANY--2.5.4.sql
 /temp/share/postgresql/extension/address_standardizer--2.5.4.sql
 /temp/share/postgresql/extension/address_standardizer--1.0--2.5.4.sql
+/temp/share/postgresql/contrib/postgis-2.5/uninstall/uninstall_sfcgal.sql
+/temp/share/postgresql/contrib/postgis-2.5/upgrade/sfcgal_upgrade.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.0--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.1--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.2--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.3--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.4--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.5--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.6--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.0.7--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.0--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.1--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.2--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.3--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.4--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.5--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.6--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.7--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.8--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.1.9--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.0--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.1--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.2--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.3--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.4--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.5--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.6--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.7--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.2.8--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.0--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.1--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.10--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.2--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.3--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.4--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.5--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.6--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.7--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.8--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.3.9--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.0--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.1--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.2--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.3--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.4--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.5--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.6--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.7--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.4.8--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.0--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.1--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.2--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.3--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.4--2.5.4next.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.4dev--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--2.5.4next--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--ANY--2.5.4.sql
+/temp/share/postgresql/extension/postgis_sfcgal--unpackaged--2.5.4.sql
+

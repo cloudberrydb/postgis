@@ -8,7 +8,9 @@ Prefix:         /temp
 AutoReq:        no
 AutoProv:       no
 Provides:       gdal = %{gdal_ver}, /bin/sh
-Requires:       libexpat = %{libexpat_ver}
+#Requires:       libexpat = %{libexpat_ver}
+
+%define _build_id_links none
 
 %description
 The Geos module provides a geospatial data abstraction library which is used by PostGIS.

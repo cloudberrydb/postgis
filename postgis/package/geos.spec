@@ -9,6 +9,8 @@ AutoReq:        no
 AutoProv:       no
 Provides:       geos = %{geos_ver}
 
+%define _build_id_links none
+
 %description
 The Geos module provides geometric library which is used by PostGIS.
 

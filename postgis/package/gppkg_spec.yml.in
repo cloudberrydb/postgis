@@ -5,8 +5,8 @@ Version: ossv2.5.4+HashData_pv2.5_Cloudberry1.0.0
 GPDBVersion: #gpver
 Description: PostGIS provides spatial database functions for the Cloudberry Database.
 PostInstall:
-- Master: "echo 'Please run the following commands to enable the PostGIS package:
+- Coordinator: "echo 'Please run the following commands to enable the PostGIS package:
 CREATE EXTENSION postgis;'"
 PostUpdate:
-- Master: "echo 'Please run the following commands to finish the upgrade:
+- Coordinator: "echo 'Please run the following commands to finish the upgrade:
 $GPHOME/share/postgresql/contrib/postgis-2.5/postgis_manager.sh mydatabase upgrade'"

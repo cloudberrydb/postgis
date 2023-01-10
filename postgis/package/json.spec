@@ -9,6 +9,8 @@ AutoReq:        no
 AutoProv:       no
 Provides:       json-c = %{json_ver} 
 
+%define _build_id_links none
+
 %description
 The JSON-C module provides a JSON implementation in C which is used by PostGIS.
 
