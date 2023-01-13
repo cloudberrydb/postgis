@@ -15,7 +15,7 @@ Provides:       postgis = %{postgis_ver}
 The PostGIS module provides geospatial extensions for Greenplum Database.
 
 %install
-make -C %{postgis_dir} BLD_TOP=%{bld_top} install prefix=%{buildroot}/temp
+make -C %{postgis_dir} install prefix=%{buildroot}/temp
 
 mkdir -p %{buildroot}/temp/bin
 cp $GPHOME/bin/pgsql2shp %{buildroot}/temp/bin

@@ -6,24 +6,16 @@
 # Copyright (c) 2015 - 2016, Pivotal Inc.
 #
 #------------------------------------------------------------------#
+MKFILE_PATH := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-include $(BLD_TOP)/Makefile.global     # for BLD_ARCH
-#include $(BLD_TOP)/releng/tools.mk
-EXT_TOP=/code/postgis/postgis/package/ext
+EXT_TOP=$(MKFILE_PATH)/ext
 
 #GPDB
-PG_CONFIG=$(BLD_TOP)/../src/bin/pg_config/pg_config
+PG_CONFIG=pg_config
 
-PG_DEP_LIB_DIR=$(shell $(PG_CONFIG) --libdir)
+PG_DEP_LIB_DIR=$($(PG_CONFIG) --libdir)
 GPDB_LIB_DIR=$(PG_DEP_LIB_DIR)
 GPDB_DIR=$(shell cd $(GPDB_LIB_DIR)/.. && pwd)
-
-#ape from $(BLD_TOP)/src/Makefile.global etc
-INSTALL=$(BLD_TOP)/config/install-sh -c
-INSTALL_SHLIB=$(BLD_TOP)/config/install-sh -c -m 755
-INSTALL_DATA=$(BLD_TOP)/config/install-sh -c -m 644
-INSTALL_PROGRAM=$(BLD_TOP)/config/install-sh -s
-mkinstalldirs=$(BLD_TOP)/config/mkinstalldirs
 
 # versions for these 3rd party libraries and Postgis
 include ../Makefile.version
@@ -60,22 +52,27 @@ SFCGAL_DIR=$(EXT_TOP)/sfcgal-$(SFCGAL_VER)
 SFCGAL_RPM_FLAGS="--define 'sfcgal_dir $(SFCGAL_DIR)' --define 'sfcgal_ver $(SFCGAL_VER)' --define 'sfcgal_rel $(SFCGAL_REL)'"
 SFCGAL_RPM=sfcgal-$(SFCGAL_VER)-$(SFCGAL_REL).$(ARCH).rpm
 
+# CGAL
+CGAL_DIR=$(EXT_TOP)/cgal-$(CGAL_VER)
+CGAL_RPM_FLAGS="--define 'cgal_dir $(CGAL_DIR)' --define 'cgal_ver $(CGAL_VER)' --define 'cgal_rel $(CGAL_REL)'"
+CGAL_RPM=cgal-$(CGAL_VER)-$(CGAL_REL).$(ARCH).rpm
+
 # POSTGIS
 POSTGIS_DIR=$(shell cd ../build/postgis-$(POSTGIS_VER) && pwd)
 POSTGIS_PKG_VER=ossv$(POSTGIS_VER)_pv$(PIVOTAL_VER)_gpdb$(GPDB_VER)orca
-POSTGIS_RPM_FLAGS="--define 'bld_top $(BLD_TOP)' --define 'postgis_dir $(POSTGIS_DIR)' --define 'postgis_ver $(POSTGIS_VER)' --define 'postgis_rel $(POSTGIS_REL)' --define 'geos_ver $(GEOS_VER)' --define 'sfcgal_ver $(SFCGAL_VER)' --define 'proj_ver $(PROJ_VER)' --define 'json_ver $(JSON_VER)' --define 'gdal_ver $(GDAL_VER)' --define 'libexpat_ver $(LIBEXPAT_VER)'"
+POSTGIS_RPM_FLAGS="--define 'postgis_dir $(POSTGIS_DIR)' --define 'postgis_ver $(POSTGIS_VER)' --define 'postgis_rel $(POSTGIS_REL)' --define 'geos_ver $(GEOS_VER)' --define 'sfcgal_ver $(SFCGAL_VER)'  --define 'cgal_ver $(CGAL_VER)' --define 'json_ver $(JSON_VER)' --define 'gdal_ver $(GDAL_VER)'"
 DEPENDENT_RPMS="$(GEOS_RPM) $(GDAL_RPM) $(SFCGAL_RPM) $(JSON_RPM)"
 POSTGIS_RPM=postgis-$(POSTGIS_VER)-$(POSTGIS_REL).$(ARCH).rpm
 
 #GPPKG
 POSTGIS_GPPKG=postgis-$(POSTGIS_PKG_VER)-$(OS)-$(ARCH).gppkg
 TARGET_GPPKG=$(POSTGIS_GPPKG)
-EXTRA_CLEAN+=$(GEOS_RPM) $(PROJ_RPM) $(JSON_RPM) $(SFCGAL_RPM) $(GDAL_RPM) $(LIBEXPAT_RPM) $(POSTGIS_RPM) $(POSTGIS_GPPKG)
+EXTRA_CLEAN+=$(GEOS_RPM) $(JSON_RPM) $(SFCGAL_RPM) $(CGAL_RPM) $(GDAL_RPM) $(POSTGIS_RPM) $(POSTGIS_GPPKG)
 
 #
 # Generic rules to build gppkgs included here
 #
-include $(BLD_TOP)/releng/gppkg.mk
+include $(MKFILE_PATH)/gppkg.mk
 
 # trigger the compiling process
 build_postgis:
@@ -83,7 +80,7 @@ build_postgis:
 	$(MAKE) -C ..
 
 # for regressing
-DEP_LIBS_PATH=$(GEOS_DIR) $(PROJ_DIR) $(JSON_DIR) $(GDAL_DIR) $(LIBEXPAT_DIR)
+DEP_LIBS_PATH=$(GEOS_DIR) $(JSON_DIR) $(SFCGAL_DIR) $(CGAL_DIR) $(GDAL_DIR)
 
 #for data dir copying during source-code-building (not form GPROOT)
 DEP_LIBS_DATA=$(GDAL_DIR)/share/gdal $(PROJ_DIR)/share/proj
@@ -112,19 +109,13 @@ endif
 # for compiling
 gppkg: prepare build_postgis gppkg_only 
 
-
-dep = $(GEOS_DIR) $(GDAL_DIR)
-ifeq ($(OS_TYPE), kylin10)
-	dep = $(GEOS_DIR) $(GDAL_DIR) $(SFCGAL_DIR) $(JSON_DIR) 
-endif 
-
-gppkg_only: $(dep)
+gppkg_only: $(GEOS_DIR) $(GDAL_DIR) $(SFCGAL_DIR) $(CGAL_DIR) $(JSON_DIR)
 	$(MAKE) $(GEOS_RPM) RPM_FLAGS=$(GEOS_RPM_FLAGS)
 	$(MAKE) $(GDAL_RPM) RPM_FLAGS=$(GDAL_RPM_FLAGS)
-ifeq ($(OS_TYPE),kylin10)
 	$(MAKE) $(SFCGAL_RPM) RPM_FLAGS=$(SFCGAL_RPM_FLAGS)
+	$(MAKE) $(CGAL_RPM) RPM_FLAGS=$(CGAL_RPM_FLAGS)
 	$(MAKE) $(JSON_RPM) RPM_FLAGS=$(JSON_RPM_FLAGS)
-endif
+
 	$(MAKE) $(POSTGIS_RPM) RPM_FLAGS=$(POSTGIS_RPM_FLAGS)
 	#$(MAKE) $(POSTGIS_GPPKG) MAIN_RPM=$(POSTGIS_RPM) DEPENDENT_RPMS=$(DEPENDENT_RPMS)
 

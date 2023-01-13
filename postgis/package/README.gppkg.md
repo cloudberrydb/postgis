@@ -20,8 +20,7 @@ expat: libexpat 2.1.0
 
 After downloaded libraries, go to package folder. And run make BLD_TARGETS="gppkg"
 with user-defined parameters, which include BLD_ARCH (the os version), GPROOT (the
-location of gpAux folder), BLD_TOP (the location of libraries, usually same as GPROOT),
-POSGIS_DIR (the location of postgis source folder), INSTLOC (the location of installed
+location of gpAux folder),POSGIS_DIR (the location of postgis source folder), INSTLOC (the location of installed
 gpdb), and use gppkg as build traget.
 
 An example is to write a shell 'build.sh' with lines:
@@ -32,14 +31,13 @@ make \
 	BLD_TARGETS="gppkg" \
 	BLD_ARCH="rhel6_x86_64" \
 	INSTLOC=$GPHOME \
-	BLD_TOP="/home/gpadmin/workspace/gpdb/gpAux" \
 	POSTGIS_DIR="/home/gpadmin/workspace/geospatial/postgis/build/postgis-2.5.4" \
 	gppkg_only
 ```
 
 To clean it, run:
 ```sh
-	make BLD_TOP="/home/gpadmin/workspace/gpdb/gpAux" clean
+	make clean
 ```
 
 ### 3. Verification and installation
