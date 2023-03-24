@@ -6,16 +6,30 @@
 # Copyright (c) 2015 - 2016, Pivotal Inc.
 #
 #------------------------------------------------------------------#
-MKFILE_PATH := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-EXT_TOP=$(MKFILE_PATH)/ext
+include $(BLD_TOP)/Makefile.global     # for BLD_ARCH
+include $(BLD_TOP)/releng/tools.mk
+EXT_TOP=$(BLD_TOP)/ext/$(BLD_ARCH)
+
+pg_config_path := $(BLD_TOP)/../src/include/pg_config.h
+GP_VERSION_NUM := $(shell grep 'define  *GP_VERSION_NUM' $(pg_config_path) \
+        | perl -ne '$$m1=int($$1/10000),$$m2=int(($$1-$$m1*10000)/100) if/^.*?([0-9]+)/;print "$$m1.$$m2$$/"' )
+OS=$(word 1,$(subst _, ,$(BLD_ARCH)))
+ARCH=$(shell uname -p)
 
 #GPDB
-PG_CONFIG=pg_config
+PG_CONFIG=$(BLD_TOP)/../src/bin/pg_config/pg_config
 
-PG_DEP_LIB_DIR=$($(PG_CONFIG) --libdir)
+PG_DEP_LIB_DIR=$(shell $(PG_CONFIG) --libdir)
 GPDB_LIB_DIR=$(PG_DEP_LIB_DIR)
 GPDB_DIR=$(shell cd $(GPDB_LIB_DIR)/.. && pwd)
+
+#ape from $(BLD_TOP)/src/Makefile.global etc
+INSTALL=$(BLD_TOP)/config/install-sh -c
+INSTALL_SHLIB=$(BLD_TOP)/config/install-sh -c -m 755
+INSTALL_DATA=$(BLD_TOP)/config/install-sh -c -m 644
+INSTALL_PROGRAM=$(BLD_TOP)/config/install-sh -s
+mkinstalldirs=$(BLD_TOP)/config/mkinstalldirs
 
 # versions for these 3rd party libraries and Postgis
 include ../Makefile.version
@@ -47,32 +61,25 @@ LIBEXPAT_DIR=$(EXT_TOP)/libexpat-$(LIBEXPAT_VER)
 LIBEXPAT_RPM_FLAGS="--define 'libexpat_dir $(LIBEXPAT_DIR)' --define 'libexpat_ver $(LIBEXPAT_VER)' --define 'libexpat_rel $(LIBEXPAT_REL)'"
 LIBEXPAT_RPM=libexpat-$(LIBEXPAT_VER)-$(LIBEXPAT_REL).$(ARCH).rpm
 
-# SFCGAL
-SFCGAL_DIR=$(EXT_TOP)/sfcgal-$(SFCGAL_VER)
-SFCGAL_RPM_FLAGS="--define 'sfcgal_dir $(SFCGAL_DIR)' --define 'sfcgal_ver $(SFCGAL_VER)' --define 'sfcgal_rel $(SFCGAL_REL)'"
-SFCGAL_RPM=sfcgal-$(SFCGAL_VER)-$(SFCGAL_REL).$(ARCH).rpm
-
-# CGAL
-CGAL_DIR=$(EXT_TOP)/cgal-$(CGAL_VER)
-CGAL_RPM_FLAGS="--define 'cgal_dir $(CGAL_DIR)' --define 'cgal_ver $(CGAL_VER)' --define 'cgal_rel $(CGAL_REL)'"
-CGAL_RPM=cgal-$(CGAL_VER)-$(CGAL_REL).$(ARCH).rpm
-
 # POSTGIS
 POSTGIS_DIR=$(shell cd ../build/postgis-$(POSTGIS_VER) && pwd)
 POSTGIS_PKG_VER=ossv$(POSTGIS_VER)_pv$(PIVOTAL_VER)_gpdb$(GPDB_VER)orca
-POSTGIS_RPM_FLAGS="--define 'postgis_dir $(POSTGIS_DIR)' --define 'postgis_ver $(POSTGIS_VER)' --define 'postgis_rel $(POSTGIS_REL)' --define 'geos_ver $(GEOS_VER)' --define 'sfcgal_ver $(SFCGAL_VER)'  --define 'cgal_ver $(CGAL_VER)' --define 'json_ver $(JSON_VER)' --define 'gdal_ver $(GDAL_VER)'"
-DEPENDENT_RPMS="$(GEOS_RPM) $(GDAL_RPM) $(SFCGAL_RPM) $(JSON_RPM)"
+POSTGIS_RPM_FLAGS="--define 'bld_top $(BLD_TOP)' --define 'postgis_dir $(POSTGIS_DIR)' --define 'postgis_ver $(POSTGIS_VER)' --define 'postgis_rel $(POSTGIS_REL)' --define 'geos_ver $(GEOS_VER)' --define 'proj_ver $(PROJ_VER)' --define 'json_ver $(JSON_VER)' --define 'gdal_ver $(GDAL_VER)' --define 'libexpat_ver $(LIBEXPAT_VER)'"
+DEPENDENT_RPMS="$(GEOS_RPM) $(PROJ_RPM) $(JSON_RPM) $(GDAL_RPM) $(LIBEXPAT_RPM)"
 POSTGIS_RPM=postgis-$(POSTGIS_VER)-$(POSTGIS_REL).$(ARCH).rpm
 
 #GPPKG
 POSTGIS_GPPKG=postgis-$(POSTGIS_PKG_VER)-$(OS)-$(ARCH).gppkg
 TARGET_GPPKG=$(POSTGIS_GPPKG)
-EXTRA_CLEAN+=$(GEOS_RPM) $(JSON_RPM) $(SFCGAL_RPM) $(CGAL_RPM) $(GDAL_RPM) $(POSTGIS_RPM) $(POSTGIS_GPPKG)
+EXTRA_CLEAN+=$(GEOS_RPM) $(PROJ_RPM) $(JSON_RPM) $(GDAL_RPM) $(LIBEXPAT_RPM) $(POSTGIS_RPM) $(POSTGIS_GPPKG)
+ifeq ($(GPPKG),)
+GPPKG=gppkg
+endif
 
 #
 # Generic rules to build gppkgs included here
 #
-include $(MKFILE_PATH)/gppkg.mk
+# include $(BLD_TOP)/releng/gppkg.mk
 
 # trigger the compiling process
 build_postgis:
@@ -80,7 +87,7 @@ build_postgis:
 	$(MAKE) -C ..
 
 # for regressing
-DEP_LIBS_PATH=$(GEOS_DIR) $(JSON_DIR) $(SFCGAL_DIR) $(CGAL_DIR) $(GDAL_DIR)
+DEP_LIBS_PATH=$(GEOS_DIR) $(PROJ_DIR) $(JSON_DIR) $(GDAL_DIR) $(LIBEXPAT_DIR)
 
 #for data dir copying during source-code-building (not form GPROOT)
 DEP_LIBS_DATA=$(GDAL_DIR)/share/gdal $(PROJ_DIR)/share/proj
@@ -107,20 +114,61 @@ endif
 	rm -rf gppkg
 
 # for compiling
-gppkg: prepare build_postgis gppkg_only 
+gppkg: prepare build_postgis gppkg_only
 
-gppkg_only: $(GEOS_DIR) $(GDAL_DIR) $(SFCGAL_DIR) $(CGAL_DIR) $(JSON_DIR)
+gppkg_only: $(GEOS_DIR) $(PROJ_DIR) $(JSON_DIR) $(GDAL_DIR) $(LIBEXPAT_DIR)
 	$(MAKE) $(GEOS_RPM) RPM_FLAGS=$(GEOS_RPM_FLAGS)
-	$(MAKE) $(GDAL_RPM) RPM_FLAGS=$(GDAL_RPM_FLAGS)
-	$(MAKE) $(SFCGAL_RPM) RPM_FLAGS=$(SFCGAL_RPM_FLAGS)
-	$(MAKE) $(CGAL_RPM) RPM_FLAGS=$(CGAL_RPM_FLAGS)
+	$(MAKE) $(PROJ_RPM) RPM_FLAGS=$(PROJ_RPM_FLAGS)
 	$(MAKE) $(JSON_RPM) RPM_FLAGS=$(JSON_RPM_FLAGS)
-
+	$(MAKE) $(GDAL_RPM) RPM_FLAGS=$(GDAL_RPM_FLAGS)
+	$(MAKE) $(LIBEXPAT_RPM) RPM_FLAGS=$(LIBEXPAT_RPM_FLAGS)
 	$(MAKE) $(POSTGIS_RPM) RPM_FLAGS=$(POSTGIS_RPM_FLAGS)
-	#$(MAKE) $(POSTGIS_GPPKG) MAIN_RPM=$(POSTGIS_RPM) DEPENDENT_RPMS=$(DEPENDENT_RPMS)
+	$(MAKE) $(POSTGIS_GPPKG) MAIN_RPM=$(POSTGIS_RPM) DEPENDENT_RPMS=$(DEPENDENT_RPMS)
 
-# gppkg_only:
-# 	$(MAKE) $(POSTGIS_RPM) RPM_FLAGS=$(POSTGIS_RPM_FLAGS)
-# 	$(MAKE) $(POSTGIS_GPPKG) MAIN_RPM=$(POSTGIS_RPM) DEPENDENT_RPMS=
+gppkg_spec_v2.yml: gppkg_spec_v2.yml.in
+	cat $< | sed "s/#arch/$(ARCH)/g" | sed "s/#os/$(OS)/g" | sed 's/#gpver/$(GP_VERSION_NUM)/g' > $@
 
-.PHONY: gppkg
+gppkgv2-geos:
+	install -d gppkg_build/files/lib/
+	install $(GEOS_DIR)/lib64/libgeos*so* -t gppkg_build/files/lib/
+
+gppkgv2-proj:
+	install -d gppkg_build/files/lib
+	install -d gppkg_build/files/share/proj
+	install $(PROJ_DIR)/lib64/libproj*so* -t gppkg_build/files/lib
+	install $(PROJ_DIR)/share/proj/*    -t gppkg_build/files/share/proj
+
+gppkgv2-jsonc:
+	install -d gppkg_build/files/lib
+	install $(JSON_DIR)/lib/libjson-c*so* -t gppkg_build/files/lib
+
+gppkgv2-gdal:
+	install -d gppkg_build/files/lib
+	install -d gppkg_build/files/share/gdal
+	install -d gppkg_build/files/etc/environment.d
+	install $(GDAL_DIR)/lib64/libgdal*so* -t gppkg_build/files/lib/
+	install $(GDAL_DIR)/share/gdal/*    -t gppkg_build/files/share/gdal
+	# environment.d available since GPDB7
+	# https://github.com/greenplum-db/gpdb/pull/14327
+	install ./30-postgis.conf           -t gppkg_build/files/etc/environment.d
+
+gppkgv2-libexpat:
+	install -d gppkg_build/files/lib
+	install $(LIBEXPAT_DIR)/lib/libexpat*so* -t gppkg_build/files/lib/
+
+gppkgv2-postgis:
+	make -C $(POSTGIS_DIR) BLD_TOP=$(BLD_TOP) install DESTDIR=$(PWD)/gppkg_build/gphome || true
+	cp -r $(PWD)/gppkg_build/gphome/usr/local/greenplum-db-devel/* $(PWD)/gppkg_build/files
+
+gppkgv2: gppkg_spec_v2.yml gppkgv2-geos gppkgv2-proj gppkgv2-jsonc gppkgv2-gdal gppkgv2-libexpat gppkgv2-postgis
+	$(GPPKG) build \
+		-f \
+		--input $(PWD)/gppkg_build/files \
+		--config $(PWD)/gppkg_spec_v2.yml \
+		--output $(POSTGIS_GPPKG)
+
+gppkgv2-clean:
+	rm $(PWD)/gppkg_spec_v2.yml
+	rm -rf $(PWD)/gppkg_build
+
+.PHONY: gppkg gppkgv2

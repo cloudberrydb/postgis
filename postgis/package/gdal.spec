@@ -17,7 +17,7 @@ The Geos module provides a geospatial data abstraction library which is used by 
 
 %install
 mkdir -p %{buildroot}/temp/lib
-cp -rf %{gdal_dir}/lib/libgdal*so* %{buildroot}/temp/lib/
+cp -rf %{gdal_dir}/lib64/libgdal*so* %{buildroot}/temp/lib/
 mkdir -p %{buildroot}/temp/share
 cp -rf %{gdal_dir}/share/gdal %{buildroot}/temp/share
 

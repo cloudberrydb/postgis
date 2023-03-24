@@ -14,7 +14,7 @@ The Proj module provides cartographic projections library which is used by PostG
 
 %install
 mkdir -p %{buildroot}/temp/lib
-cp -rf %{proj_dir}/lib/libproj*so* %{buildroot}/temp/lib
+cp -rf %{proj_dir}/lib64/libproj*so* %{buildroot}/temp/lib
 mkdir -p %{buildroot}/temp/share
 cp -rf %{proj_dir}/share/proj %{buildroot}/temp/share
 

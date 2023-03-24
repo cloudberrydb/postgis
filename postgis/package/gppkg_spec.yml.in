@@ -1,12 +1,12 @@
 Pkgname: postgis
 Architecture: #arch
 OS: #os
-Version: ossv2.5.4+HashData_pv2.5_Cloudberry1.0.0
+Version: ossv3.3.2+pivotal.1_pv3.3_gpdb7.0
 GPDBVersion: #gpver
-Description: PostGIS provides spatial database functions for the Cloudberry Database.
+Description: PostGIS provides spatial database functions for the Greenplum Database.
 PostInstall:
-- Coordinator: "echo 'Please run the following commands to enable the PostGIS package:
+- Master: "echo 'Please run the following commands to enable the PostGIS package:
 CREATE EXTENSION postgis;'"
 PostUpdate:
-- Coordinator: "echo 'Please run the following commands to finish the upgrade:
-$GPHOME/share/postgresql/contrib/postgis-2.5/postgis_manager.sh mydatabase upgrade'"
+- Master: "echo 'Please run the following commands to finish the upgrade:
+$GPHOME/share/postgresql/contrib/postgis-3.3/postgis_manager.sh mydatabase upgrade'"

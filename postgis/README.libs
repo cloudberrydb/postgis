@@ -15,9 +15,9 @@
 5. sudo yum install -y CUnit CUnit-devel
 
 5. install gdal 1.11.1:
-   wget http://download.osgeo.org/gdal/1.11.1/gdal-1.11.1.tar.gz
-   tar zxf gdal-1.11.1.tar.gz
-   cd gdal-1.11.1
+   wget http://download.osgeo.org/gdal/3.6.3/gdal-3.6.3.tar.gz
+   tar zxf gdal-3.6.3.tar.gz
+   cd gdal-3.6.3
    ./configure --prefix=$GPHOME (or other place you want, default is /usr/local)
    make
    make install
