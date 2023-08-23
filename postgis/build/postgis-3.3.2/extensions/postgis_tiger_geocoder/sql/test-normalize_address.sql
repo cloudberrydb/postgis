@@ -1,4 +1,5 @@
 \t on \a \set ECHO none
+set client_min_messages to WARNING;
 --\timing
 SELECT '#887' As ticket, * FROM normalize_address('2450 N COLORADO ST, PHILADELPHIA, PA, 19132');
 SELECT '#1051a' As ticket, * FROM normalize_address('212 3rd Ave N Suite 560, Minneapolis, MN 55401');

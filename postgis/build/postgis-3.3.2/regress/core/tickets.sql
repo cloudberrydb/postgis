@@ -256,6 +256,7 @@ FROM utm_dots
 WHERE ST_Area(ST_Buffer(the_geog,10)) NOT between 307 and 315
 LIMIT 10;
 
+ANALYZE utm_dots;
 SELECT '#304.a', Count(*) FROM utm_dots WHERE ST_DWithin(the_geog, 'POINT(0 0)'::geography, 3000000);
 
 CREATE INDEX utm_dots_gix ON utm_dots USING GIST (the_geog);
