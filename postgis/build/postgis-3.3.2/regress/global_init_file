@@ -35,4 +35,10 @@ s/\s*\([^\(]*\.c:\d+\)//
 m/WARNING:  autovacuum is not supported in Greenplum\n/
 s/WARNING:  autovacuum is not supported in Greenplum\n//
 
+m/NOTICE:  One or more columns in the following table(s) do not have statistics: .*\n/
+s/NOTICE:  One or more columns in the following table(s) do not have statistics: .*\n//
+
+m/HINT:  For non-partitioned tables, run analyze <table_name>(<column_list>). For partitioned tables, run analyze rootpartition <table_name>(<column_list>). See log for columns missing statistics.\n/
+s/HINT:  For non-partitioned tables, run analyze <table_name>(<column_list>). For partitioned tables, run analyze rootpartition <table_name>(<column_list>). See log for columns missing statistics.\n//
+
 -- end_matchsubs
