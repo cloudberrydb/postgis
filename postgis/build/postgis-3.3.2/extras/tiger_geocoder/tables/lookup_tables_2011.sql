@@ -33,6 +33,7 @@ INSERT INTO direction_lookup (name, abbrev) VALUES('N', 'N');
 INSERT INTO direction_lookup (name, abbrev) VALUES('EAST', 'E');
 INSERT INTO direction_lookup (name, abbrev) VALUES('E', 'E');
 CREATE INDEX direction_lookup_abbrev_idx ON direction_lookup (abbrev);
+ANALYZE direction_lookup(name, abbrev);
 
 -- Create secondary unit lookup table
 DROP TABLE IF EXISTS tiger.secondary_unit_lookup;
@@ -77,6 +78,7 @@ INSERT INTO secondary_unit_lookup (name, abbrev) VALUES ('UNIT', 'UNIT');
 INSERT INTO secondary_unit_lookup (name, abbrev) VALUES ('UPPER', 'UPPR');
 INSERT INTO secondary_unit_lookup (name, abbrev) VALUES ('UPPR', 'UPPR');
 CREATE INDEX secondary_unit_lookup_abbrev_idx ON secondary_unit_lookup (abbrev);
+ANALYZE secondary_unit_lookup(name, abbrev);
 
 -- Create state lookup table
 DROP TABLE IF EXISTS tiger.state_lookup;
@@ -143,6 +145,7 @@ INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('Wisconsin', 'WI', '55'
 INSERT INTO state_lookup (name, abbrev, st_code) VALUES ('Wyoming', 'WY', '56');
 -- NOTE: fix later -- this is wrong for those - state code ones
 UPDATE state_lookup SET statefp = lpad(st_code::text,2,'0');
+ANALYZE state_lookup(st_code, name, abbrev, statefp);
 
 -- Create street type lookup table
 DROP TABLE IF EXISTS tiger.street_type_lookup;
@@ -781,6 +784,8 @@ SELECT name, abbrev, true
            ) t(name, abbrev)
            WHERE t.name NOT IN(SELECT name FROM street_type_lookup);
 CREATE INDEX street_type_lookup_abbrev_idx ON street_type_lookup (abbrev);
+
+ANALYZE street_type_lookup(name, abbrev, is_hw);
 
 -- Create place and countysub lookup tables
 DROP TABLE IF EXISTS tiger.place_lookup;
