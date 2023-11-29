@@ -3,6 +3,9 @@
 -- Copyright (C) 2021 University of Münster (WWU), Germany
 -- Written by Jim Jones <jim.jones@uni-muenster.de>
 
+-- Disable ORCA since it throws the following error
+-- ERROR:  query plan with multiple segworker groups is not supported
+SET optimizer = off;
 CREATE TABLE asmarc21_rt (gid int, geom geometry);
 INSERT INTO asmarc21_rt (gid,geom) VALUES
 	(1,'SRID=4326;GEOMETRYCOLLECTION(
@@ -99,6 +102,7 @@ SELECT 'dddmmss,ssssss',gid,ST_AsText(ST_GeomFromMARC21(ST_AsMARC21(geom,'dddmms
 
 -- Converts geometries (except points) to MARC21/XML, converts them back to geometry, 
 -- and compare their sizes and intersection areas.
+
 SELECT 
   'convert geom to marc21 -> convert back to geom',
   ST_GeometryType(geom) AS type_origin,
@@ -149,7 +153,7 @@ FROM asmarc21_rt
 WHERE ST_GeometryType(geom) = 'ST_Point'
 ORDER BY gid;
 
-
+RESET optimizer;
 
 -- ## Dumping Collections ##
 

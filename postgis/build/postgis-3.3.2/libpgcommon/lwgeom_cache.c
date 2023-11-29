@@ -29,7 +29,6 @@
 
 #include "lwgeom_cache.h"
 
-#include "libsrid.h"
 /*
 * Generic statement caching infrastructure. We cache
 * the following kinds of objects:
@@ -283,14 +282,6 @@ getSRSbySRID(FunctionCallInfo fcinfo, int32_t srid, bool short_crs)
         return NULL;
     }
 
-    if (getSRSbySRIDbyRule(srid, short_crs, query) != NULL) {
-        size = strlen(query) + 1;
-        srscopy = SPI_palloc(size);
-        memcpy(srscopy, query, size);
-        SPI_finish();
-        return srscopy;
-    }
-
     if (short_crs)
         snprintf(query,
              max_query_size,
@@ -387,11 +378,6 @@ getSRIDbySRS(FunctionCallInfo fcinfo, const char *srs)
     Oid argtypes[] = {CSTRINGOID};
     Datum values[] = {CStringGetDatum(srs)};
     int32_t srid, err;
-
-    srid = getSRIDbySRSbyRule(srs);
-    if (srid != 0) {
-        return srid;
-    }
 
     postgis_initialize_cache();
     snprintf(query,

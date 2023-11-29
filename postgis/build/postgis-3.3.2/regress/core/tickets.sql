@@ -1027,12 +1027,12 @@ SELECT '#1014a', ST_AsText(g) FROM (
 	SELECT 'POINT(-0 0)'::geometry AS g
 	UNION
 	SELECT 'POINT(0 0)'::geometry AS g
-) a;
+) a ORDER BY 2;
 SELECT '#1014b', ST_AsText(g) FROM (
 	SELECT 'POINT(0 1)'::geometry AS g
 	UNION
 	SELECT 'POINT(0 1)'::geometry AS g
-) a;
+) a ORDER BY 2;
 CREATE TABLE rec (id integer, g geometry);
 INSERT INTO rec VALUES (1, 'POINT(0 1)');
 INSERT INTO rec VALUES (2, 'POINT(1 2)');
@@ -1044,7 +1044,7 @@ WITH RECURSIVE path (id, g) AS (
     FROM path, rec
     WHERE ST_Y(path.g) = ST_X(rec.g)
 )
-SELECT '#1014c', id, st_astext(g) FROM path;
+SELECT '#1014c', id, st_astext(g) FROM path ORDER BY 2;
 SELECT '#1014d', ST_AsEWKT(g) as t FROM (
 	SELECT 'SRID=1;POINT(0 1)'::geometry AS g
 	UNION
