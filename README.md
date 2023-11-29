@@ -1,15 +1,17 @@
-# geospatial repo
-PostGIS 2.5.4 for Greenplum 6.x
+# PostGIS for Cloudberry Database
 
-## License
-This project is developed under GPL v2, because PostGIS is GPL v2.
+[![Slack](https://img.shields.io/badge/Join_Slack-6a32c9)](https://communityinviter.com/apps/cloudberrydb/welcome)
+[![Twitter Follow](https://img.shields.io/twitter/follow/cloudberrydb)](https://twitter.com/cloudberrydb)
+[![Website](https://img.shields.io/badge/Visit%20Website-eebc46)](https://cloudberrydb.org)
+[![GitHub Discussions](https://img.shields.io/github/discussions/cloudberrydb/cloudberrydb)](https://github.com/orgs/cloudberrydb/discussions)
 
 ## How to compile it
-Currently, we support building geospatial on rhel/centos. To compile geospatial form source code, please install the following third-party libraries as described in [README.libs](https://github.com/greenplum-db/geospatial/blob/master/postgis/README.libs).
-For normal use without raster, please install json-c, geos and proj.4.
-To enable raster functionality, please install gdal and expat. The minimum version requirments are listed in [Makefile.version](https://github.com/greenplum-db/geospatial/blob/master/postgis/Makefile.version).
 
-Before setting up geospatial, please make sure GPDB is installed correctly.
+Currently, we support building geospatial on rhel/centos. To compile geospatial form source code, please install the following third-party libraries as described in [README.libs](https://github.com/cloudberrydb/geospatial/blob/master/postgis/README.libs).
+For normal use without raster, please install json-c, geos and proj.4.
+To enable raster functionality, please install gdal and expat. The minimum version requirments are listed in [Makefile.version](https://github.com/cloudberrydb/geospatial/blob/master/postgis/Makefile.version).
+
+Before setting up geospatial, please make sure CloudberryDB is installed correctly.
 To compile and install geospatial, use following command:
 
 ```
@@ -19,7 +21,7 @@ cd postgis/build/postgis-2.5.4/
 make USE_PGXS=1 clean all install
 ```
 
-Here USE_PGXS will specify the correct install path to gpdb.
+Here USE_PGXS will specify the correct install path to CloudberryDB.
 
 Note that if psql is in path, there is no need to use --with-pgconfig flag.
 
@@ -84,3 +86,6 @@ configure: error: cannot find required auxiliary files: config.rpath
 not found postgis.control
 ```
 
+## License
+
+This project is developed under GPL v2, because PostGIS is GPL v2.
