@@ -1,6 +1,4 @@
 \t on \a \set ECHO none
-set client_min_messages to WARNING;
-
 SELECT set_geocode_setting('use_pagc_address_parser', 'true');
 --\timing
 SELECT '#887' As ticket, * FROM normalize_address('2450 N COLORADO ST, PHILADELPHIA, PA, 19132');

@@ -308,26 +308,27 @@ ${psql} -c "vacuum analyze ${data_schema}.${state_abbrev}_${lookup_name};"', ARR
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state,  level_nation, single_geom_mode, pre_load_process, post_load_process)
 VALUES(2, 'county_all', 'county', true, false, false, true,
-	false, '${psql} -c "CREATE TABLE ${data_schema}.${lookup_name}(CONSTRAINT pk_${data_schema}_${lookup_name} PRIMARY KEY (cntyidfp),CONSTRAINT uidx_${data_schema}_${lookup_name}_gid UNIQUE (gid)  ) INHERITS(tiger.county); " ',
+	false, '${psql} -c "CREATE TABLE ${data_schema}.${lookup_name}(CONSTRAINT pk_${data_schema}_${lookup_name} PRIMARY KEY (cntyidfp),CONSTRAINT uidx_${data_schema}_${lookup_name}_gid UNIQUE (gid,cntyidfp)  ) INHERITS(tiger.county) DISTRIBUTED BY (cntyidfp); " ',
 	'${psql} -c "ALTER TABLE ${staging_schema}.${table_name} RENAME geoid TO cntyidfp;  SELECT loader_load_staged_data(lower(''${table_name}''), lower(''${lookup_name}''));"
 	${psql} -c "CREATE INDEX ${data_schema}_${table_name}_the_geom_gist ON ${data_schema}.${lookup_name} USING gist(the_geom);"
-	${psql} -c "CREATE UNIQUE INDEX uidx_${data_schema}_${lookup_name}_statefp_countyfp ON ${data_schema}.${lookup_name} USING btree(statefp,countyfp);"
-	${psql} -c "CREATE TABLE ${data_schema}.${lookup_name}_lookup ( CONSTRAINT pk_${lookup_name}_lookup PRIMARY KEY (st_code, co_code)) INHERITS (tiger.county_lookup);"
+	${psql} -c "CREATE UNIQUE INDEX uidx_${data_schema}_${lookup_name}_statefp_countyfp ON ${data_schema}.${lookup_name} USING btree(statefp,countyfp,cntyidfp);"
+	${psql} -c "CREATE TABLE ${data_schema}.${lookup_name}_lookup ( CONSTRAINT pk_${lookup_name}_lookup PRIMARY KEY (st_code, co_code)) INHERITS (tiger.county_lookup) DISTRIBUTED BY(st_code);"
 	${psql} -c "VACUUM ANALYZE ${data_schema}.${lookup_name};"
 	${psql} -c "INSERT INTO ${data_schema}.${lookup_name}_lookup(st_code, state, co_code, name) SELECT CAST(s.statefp as integer), s.abbrev, CAST(c.countyfp as integer), c.name FROM ${data_schema}.${lookup_name} As c INNER JOIN state_lookup As s ON s.statefp = c.statefp;"
 	${psql} -c "VACUUM ANALYZE ${data_schema}.${lookup_name}_lookup;" ');
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state, level_nation, single_geom_mode, insert_mode, pre_load_process, post_load_process )
 VALUES(1, 'state_all', 'state', true, false, false,true,false, 'c',
-	'${psql} -c "CREATE TABLE ${data_schema}.${lookup_name}(CONSTRAINT pk_${lookup_name} PRIMARY KEY (statefp),CONSTRAINT uidx_${lookup_name}_stusps  UNIQUE (stusps), CONSTRAINT uidx_${lookup_name}_gid UNIQUE (gid) ) INHERITS(tiger.state); "',
+	'${psql} -c "CREATE TABLE ${data_schema}.${lookup_name}(CONSTRAINT pk_${lookup_name} PRIMARY KEY (statefp),CONSTRAINT uidx_${lookup_name}_stusps  UNIQUE (stusps,statefp), CONSTRAINT uidx_${lookup_name}_gid UNIQUE (gid,statefp) ) INHERITS(tiger.state) DISTRIBUTED BY(statefp); "',
 	'${psql} -c "SELECT loader_load_staged_data(lower(''${table_name}''), lower(''${lookup_name}'')); "
 	${psql} -c "CREATE INDEX ${data_schema}_${lookup_name}_the_geom_gist ON ${data_schema}.${lookup_name} USING gist(the_geom);"
 	${psql} -c "VACUUM ANALYZE ${data_schema}.${lookup_name}"' );
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state, single_geom_mode, insert_mode, pre_load_process, post_load_process )
 VALUES(3, 'place', 'place', true, false, true,false, 'c',
-	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${lookup_name}(CONSTRAINT pk_${state_abbrev}_${table_name} PRIMARY KEY (plcidfp) ) INHERITS(tiger.place);" ',
+	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${lookup_name}(LIKE tiger.place INCLUDING ALL) DISTRIBUTED REPLICATED;" ',
 	'${psql} -c "ALTER TABLE ${staging_schema}.${state_abbrev}_${table_name} RENAME geoid TO plcidfp;SELECT loader_load_staged_data(lower(''${state_abbrev}_${table_name}''), lower(''${state_abbrev}_${lookup_name}'')); ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ADD CONSTRAINT uidx_${state_abbrev}_${lookup_name}_gid UNIQUE (gid);"
+${psql} -c "INSERT INTO tiger.place SELECT * FROM ${data_schema}.${state_abbrev}_${lookup_name};"
 ${psql} -c "CREATE INDEX idx_${state_abbrev}_${lookup_name}_soundex_name ON ${data_schema}.${state_abbrev}_${lookup_name} USING btree (soundex(name));"
 ${psql} -c "CREATE INDEX ${data_schema}_${state_abbrev}_${lookup_name}_the_geom_gist ON ${data_schema}.${state_abbrev}_${lookup_name} USING gist(the_geom);"
 ${psql} -c "ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ADD CONSTRAINT chk_statefp CHECK (statefp = ''${state_fips}'');"'
@@ -335,8 +336,9 @@ ${psql} -c "ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ADD CONSTR
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state, single_geom_mode, insert_mode, pre_load_process, post_load_process )
 VALUES(4, 'cousub', 'cousub', true, false, true,false, 'c',
-	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${lookup_name}(CONSTRAINT pk_${state_abbrev}_${lookup_name} PRIMARY KEY (cosbidfp), CONSTRAINT uidx_${state_abbrev}_${lookup_name}_gid UNIQUE (gid)) INHERITS(tiger.${lookup_name});" ',
+	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${lookup_name}(LIKE tiger.${lookup_name} INCLUDING ALL) DISTRIBUTED REPLICATED;" ',
 	'${psql} -c "ALTER TABLE ${staging_schema}.${state_abbrev}_${table_name} RENAME geoid TO cosbidfp;SELECT loader_load_staged_data(lower(''${state_abbrev}_${table_name}''), lower(''${state_abbrev}_${lookup_name}'')); ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ADD CONSTRAINT chk_statefp CHECK (statefp = ''${state_fips}'');"
+${psql} -c "INSERT INTO tiger.${lookup_name} SELECT * FROM ${data_schema}.${state_abbrev}_${lookup_name};"
 ${psql} -c "CREATE INDEX ${data_schema}_${state_abbrev}_${lookup_name}_the_geom_gist ON ${data_schema}.${state_abbrev}_${lookup_name} USING gist(the_geom);"
 ${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_countyfp ON ${data_schema}.${state_abbrev}_${lookup_name} USING btree(countyfp);"');
 
@@ -351,31 +353,34 @@ ${psql} -c "INSERT INTO ${data_schema}.zcta5_all(statefp, zcta5ce, classfp, mtfc
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state, single_geom_mode, insert_mode, pre_load_process, post_load_process, columns_exclude )
 VALUES(6, 'faces', 'faces', true, true, false,false, 'c',
-	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${table_name}(CONSTRAINT pk_${state_abbrev}_${lookup_name} PRIMARY KEY (gid)) INHERITS(tiger.${lookup_name});" ',
+	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${table_name} (LIKE tiger.${lookup_name} INCLUDING ALL);" ',
 	'${psql} -c "CREATE INDEX ${data_schema}_${state_abbrev}_${table_name}_the_geom_gist ON ${data_schema}.${state_abbrev}_${lookup_name} USING gist(the_geom);"
 	${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_tfid ON ${data_schema}.${state_abbrev}_${lookup_name} USING btree (tfid);"
 	${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${table_name}_countyfp ON ${data_schema}.${state_abbrev}_${table_name} USING btree (countyfp);"
 	${psql} -c "ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ADD CONSTRAINT chk_statefp CHECK (statefp = ''${state_fips}'');"
+	${psql} -c "INSERT INTO tiger.${lookup_name} SELECT * FROM ${data_schema}.${state_abbrev}_${lookup_name};"
 	${psql} -c "vacuum analyze ${data_schema}.${state_abbrev}_${lookup_name};"', ARRAY['gid', 'geoid','cpi','suffix1ce', 'statefp00', 'statefp10', 'countyfp00','countyfp10'
    ,'tractce00','tractce10', 'blkgrpce00', 'blkgrpce10', 'blockce00', 'blockce10'
       , 'cousubfp00', 'submcdfp00', 'conctyfp00', 'placefp00', 'aiannhfp00', 'aiannhce00',
        'comptyp00', 'trsubfp00', 'trsubce00', 'anrcfp00', 'elsdlea00', 'scsdlea00',
        'unsdlea00', 'uace00', 'cd108fp', 'sldust00', 'sldlst00', 'vtdst00', 'zcta5ce00',
-       'tazce00', 'ugace00', 'puma5ce00','vtdst10','tazce10','uace10','puma5ce10','tazce', 'uace', 'vtdst',  'zcta5ce10', 'puma5ce', 'ugace10','pumace10', 'estatefp', 'ugace', 'blockce', 'pumace20', 'sdadmlea']);
+       'tazce00', 'ugace00', 'puma5ce00','vtdst10','tazce10','uace10','puma5ce10','tazce', 'uace', 'vtdst',  'zcta5ce10', 'puma5ce', 'ugace10','pumace10', 'estatefp', 'ugace', 'blockce', 'pumace20', 'sdadmlea', 'uace20', 'zcta5ce20', 'zcta5ce']);
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state, single_geom_mode, insert_mode, pre_load_process, post_load_process, columns_exclude )
 VALUES(7, 'featnames', 'featnames', true, true, false,false, 'a',
-'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${table_name}(CONSTRAINT pk_${state_abbrev}_${table_name} PRIMARY KEY (gid)) INHERITS(tiger.${table_name});ALTER TABLE ${data_schema}.${state_abbrev}_${table_name} ALTER COLUMN statefp SET DEFAULT ''${state_fips}'';" ',
+'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${table_name} (LIKE tiger.${table_name} INCLUDING ALL);ALTER TABLE ${data_schema}.${state_abbrev}_${table_name} ALTER COLUMN statefp SET DEFAULT ''${state_fips}'';" ',
 '${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_snd_name ON ${data_schema}.${state_abbrev}_${table_name} USING btree (soundex(name));"
 ${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_lname ON ${data_schema}.${state_abbrev}_${table_name} USING btree (lower(name));"
 ${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_tlid_statefp ON ${data_schema}.${state_abbrev}_${table_name} USING btree (tlid,statefp);"
 ${psql} -c "ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ADD CONSTRAINT chk_statefp CHECK (statefp = ''${state_fips}'');"
+${psql} -c "INSERT INTO tiger.${lookup_name} SELECT * FROM ${data_schema}.${state_abbrev}_${lookup_name};"
 ${psql} -c "vacuum analyze ${data_schema}.${state_abbrev}_${lookup_name};"', ARRAY['gid','statefp']);
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state, single_geom_mode, insert_mode, pre_load_process, post_load_process, columns_exclude )
 VALUES(8, 'edges', 'edges', true, true, false,false, 'a',
-'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${table_name}(CONSTRAINT pk_${state_abbrev}_${table_name} PRIMARY KEY (gid)) INHERITS(tiger.${table_name});"',
+'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${table_name}(LIKE tiger.${table_name} INCLUDING ALL);"',
 '${psql} -c "ALTER TABLE ${data_schema}.${state_abbrev}_${table_name} ADD CONSTRAINT chk_statefp CHECK (statefp = ''${state_fips}'');"
+${psql} -c "INSERT INTO tiger.${table_name} SELECT * FROM ${data_schema}.${state_abbrev}_${table_name};"
 ${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_tlid ON ${data_schema}.${state_abbrev}_${table_name} USING btree (tlid);"
 ${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}tfidr ON ${data_schema}.${state_abbrev}_${table_name} USING btree (tfidr);"
 ${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_tfidl ON ${data_schema}.${state_abbrev}_${table_name} USING btree (tfidl);"
@@ -395,12 +400,13 @@ ${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_zip_lookup_base_city
 
 INSERT INTO loader_lookuptables(process_order, lookup_name, table_name, load, level_county, level_state, single_geom_mode, insert_mode, pre_load_process, post_load_process,columns_exclude )
 VALUES(9, 'addr', 'addr', true, true, false,false, 'a',
-	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${lookup_name}(CONSTRAINT pk_${state_abbrev}_${table_name} PRIMARY KEY (gid)) INHERITS(tiger.${table_name});ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ALTER COLUMN statefp SET DEFAULT ''${state_fips}'';" ',
+	'${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_${lookup_name} (LIKE tiger.${table_name} INCLUDING ALL);ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ALTER COLUMN statefp SET DEFAULT ''${state_fips}'';" ',
 	'${psql} -c "ALTER TABLE ${data_schema}.${state_abbrev}_${lookup_name} ADD CONSTRAINT chk_statefp CHECK (statefp = ''${state_fips}'');"
 	${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${lookup_name}_least_address ON tiger_data.${state_abbrev}_addr USING btree (least_hn(fromhn,tohn) );"
 	${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${table_name}_tlid_statefp ON ${data_schema}.${state_abbrev}_${table_name} USING btree (tlid, statefp);"
 	${psql} -c "CREATE INDEX idx_${data_schema}_${state_abbrev}_${table_name}_zip ON ${data_schema}.${state_abbrev}_${table_name} USING btree (zip);"
-	${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_zip_state(CONSTRAINT pk_${state_abbrev}_zip_state PRIMARY KEY(zip,stusps)) INHERITS(tiger.zip_state); "
+	${psql} -c "INSERT INTO tiger.${lookup_name} SELECT * FROM ${data_schema}.${state_abbrev}_${lookup_name};"
+	${psql} -c "CREATE TABLE ${data_schema}.${state_abbrev}_zip_state (LIKE tiger.zip_state INCLUDING ALL); "
 	${psql} -c "INSERT INTO ${data_schema}.${state_abbrev}_zip_state(zip,stusps,statefp) SELECT DISTINCT zip, ''${state_abbrev}'', ''${state_fips}'' FROM ${data_schema}.${state_abbrev}_${lookup_name} WHERE zip is not null;"
 	${psql} -c "ALTER TABLE ${data_schema}.${state_abbrev}_zip_state ADD CONSTRAINT chk_statefp CHECK (statefp = ''${state_fips}'');"
 	${psql} -c "vacuum analyze ${data_schema}.${state_abbrev}_${lookup_name};"',  ARRAY['gid','statefp','fromarmid', 'toarmid']);
@@ -418,6 +424,7 @@ WITH lu AS (SELECT lookup_name, table_name, pre_load_process,post_load_process, 
     FROM  loader_lookuptables
 				WHERE level_nation = true AND load = true)
 SELECT
+'set -eox pipefail' ||
 	loader_macro_replace(
 		replace(
 			loader_macro_replace(declare_sect
@@ -454,59 +461,145 @@ WHERE platform.os = $1 -- generate script for selected platform
 $BODY$
   LANGUAGE sql VOLATILE;
 
+CREATE OR REPLACE LANGUAGE plpython3u;
+
 CREATE OR REPLACE FUNCTION loader_generate_script(param_states text[], os text)
-  RETURNS SETOF text AS
+  RETURNS text AS
 $BODY$
-SELECT
-	loader_macro_replace(
-		replace(
-			loader_macro_replace(declare_sect
-				, ARRAY['staging_fold', 'state_fold','website_root', 'psql', 'state_abbrev', 'data_schema', 'staging_schema', 'state_fips'],
-				ARRAY[variables.staging_fold, s.state_fold, variables.website_root, platform.psql, s.state_abbrev, variables.data_schema, variables.staging_schema, s.state_fips::text]
-			), '/', platform.path_sep) || '
-' ||
-	-- State level files - if an override website is specified we use that instead of variable one
-	array_to_string( ARRAY(SELECT 'cd ' || replace(variables.staging_fold,'/', platform.path_sep) || '
-' || platform.wget || ' ' || COALESCE(lu.website_root_override,variables.website_root || '/' || upper(lookup_name)  ) || '/tl_' || variables.tiger_year || '_' || s.state_fips || '_' || lower(table_name) || '.zip --mirror --reject=html
-'
-|| 'cd ' ||  replace(variables.staging_fold,'/', platform.path_sep) || '/' || replace(regexp_replace(COALESCE(lu.website_root_override, variables.website_root || '/' || upper(lookup_name) ), 'http[s]?://', ''),'ftp://','')    || '
-' || replace(platform.unzip_command, '*.zip', 'tl_' || variables.tiger_year || '_' || s.state_fips || '*_' || table_name || '.zip ') || '
-' ||loader_macro_replace(COALESCE(lu.pre_load_process || E'\n', '') || platform.loader || ' -D -' ||  lu.insert_mode || ' -s 4269 -g the_geom '
-		|| CASE WHEN lu.single_geom_mode THEN ' -S ' ELSE ' ' END::text || ' -W "latin1" tl_' || variables.tiger_year || '_' || s.state_fips
-	|| '_' || lu.table_name || '.dbf tiger_staging.' || lower(s.state_abbrev) || '_' || lu.table_name || ' | '::text || platform.psql
-		|| COALESCE(E'\n' ||
-			lu.post_load_process , '') , ARRAY['loader','table_name', 'lookup_name'], ARRAY[platform.loader, lu.table_name, lu.lookup_name ])
-				FROM tiger.loader_lookuptables AS lu
-				WHERE level_state = true AND load = true
-				ORDER BY process_order, lookup_name), E'\n') ::text
-	-- County Level files
-	|| E'\n' ||
-		array_to_string( ARRAY(SELECT 'cd ' || replace(variables.staging_fold,'/', platform.path_sep) || '
-' ||
--- explode county files create wget call for each county file
-array_to_string (ARRAY(SELECT platform.wget || ' --mirror  ' || COALESCE(lu.website_root_override, variables.website_root || '/' || upper(lookup_name)  ) || '/tl_' || variables.tiger_year || '_' || s.state_fips || c.countyfp || '_' || lower(table_name) || '.zip ' || E'\n'  AS county_out
-FROM tiger.county As c
-WHERE c.statefp = s.state_fips), ' ')
-|| 'cd ' ||  replace(variables.staging_fold,'/', platform.path_sep) || '/' || replace(regexp_replace(COALESCE(lu.website_root_override,variables.website_root || '/' || upper(lookup_name)  || '/'), 'http[s]?://', ''),'ftp://','')  || '
-' || replace(platform.unzip_command, '*.zip', 'tl_*_' || s.state_fips || '*_' || table_name || '*.zip ') || '
-' || loader_macro_replace(COALESCE(lu.pre_load_process || E'\n', '') || COALESCE(county_process_command || E'\n','')
-				|| COALESCE(E'\n' ||lu.post_load_process , '') , ARRAY['loader','table_name','lookup_name'], ARRAY[platform.loader  || ' -D ' || CASE WHEN lu.single_geom_mode THEN ' -S' ELSE ' ' END::text, lu.table_name, lu.lookup_name ])
-				FROM tiger.loader_lookuptables AS lu
-				WHERE level_county = true AND load = true
-				ORDER BY process_order, lookup_name), E'\n') ::text
-	, ARRAY['psql', 'data_schema','staging_schema', 'staging_fold', 'state_fold', 'website_root', 'state_abbrev','state_fips'],
-	ARRAY[platform.psql,  variables.data_schema, variables.staging_schema, variables.staging_fold, s.state_fold,variables.website_root, s.state_abbrev, s.state_fips::text])
-			AS shell_code
-FROM loader_variables As variables
-		CROSS JOIN (SELECT name As state, abbrev As state_abbrev, lpad(st_code::text,2,'0') As state_fips,
-			 lpad(st_code::text,2,'0') || '_'
-	|| replace(name, ' ', '_') As state_fold
-FROM tiger.state_lookup) As s CROSS JOIN tiger.loader_platform As platform
-WHERE $1 @> ARRAY[state_abbrev::text]      -- If state is contained in list of states input generate script for it
-AND platform.os = $2  -- generate script for selected platform
-;
+import plpy
+import re
+
+variables = plpy.execute("select * from loader_variables")[0]
+platform = plpy.execute("select * from tiger.loader_platform WHERE os = '{0}'".format(os))[0]
+states = plpy.execute("""
+    SELECT name As state, abbrev As state_abbrev,
+        lpad(st_code::text,2,'0') As state_fips,
+        lpad(st_code::text,2,'0') || '_' || replace(name, ' ', '_') As state_fold
+    FROM tiger.state_lookup
+    WHERE ARRAY[{0}] @> ARRAY[abbrev::text] """.format(param_states))
+
+state_lookuptables = plpy.execute("""
+    select * from tiger.loader_lookuptables AS lu
+    WHERE level_state = true AND load = true
+    ORDER BY process_order, lookup_name
+    """)
+county_lookuptables = plpy.execute("""
+    select * from tiger.loader_lookuptables AS lu
+    WHERE level_county = true AND load = true
+    ORDER BY process_order, lookup_name
+    """)
+
+for i in ['staging_fold', 'website_root', 'data_schema', 'staging_schema']:
+    platform['declare_sect'] = platform['declare_sect'].replace("${" + i + "}", variables[i])
+
+commands = []
+commands.append("#!/bin/bash -l")
+commands.append("set -eox pipefail")
+
+for state_lookup in states:
+    counties = plpy.execute("SELECT countyfp, statefp FROM tiger.county WHERE statefp = '{0}'".format(str(state_lookup['state_fips'])))
+
+    for i in ['state_fold', 'state_abbrev', 'state_fips']:
+        platform['declare_sect'] = platform['declare_sect'].replace("${" + i + "}", state_lookup[i])
+
+    commands.append(platform['declare_sect'])
+    commands.append("cd " + variables['staging_fold'])
+
+    for lu in state_lookuptables:
+
+        commands.append("cd " + variables['staging_fold'])
+        website_root = lu['website_root_override'] if lu['website_root_override'] else variables['website_root'] + "/" + lu['lookup_name'].upper() +"/"
+
+        file_name = "tl_" + str(variables['tiger_year']) + "_" + state_lookup['state_fips'] + "_" + lu['table_name'].lower()
+        zip_name = file_name + ".zip "
+
+        commands.append(platform['wget'] + " " + website_root + zip_name +" --mirror --reject=html")
+
+
+        tmpfolder = re.sub('http[s]?://','', website_root)
+        tmpfolder = tmpfolder.replace('ftp://','')
+        commands.append("cd " + tmpfolder)
+
+        unzipcmd = platform['unzip_command'].replace("*.zip", zip_name)
+
+        commands.append(unzipcmd)
+
+        if lu['pre_load_process'] is not None:
+            pre_load_process = lu['pre_load_process']
+            pre_load_process = pre_load_process.replace("${loader}", platform['loader'])
+            pre_load_process = pre_load_process.replace("${table_name}", lu['table_name'])
+            pre_load_process = pre_load_process.replace("${lookup_name}", lu['lookup_name'])
+            commands.append(pre_load_process)
+
+        loader_str = platform['loader'] + " -D -" + lu['insert_mode'] + " -s 4269 -g the_geom "
+        loader_str = loader_str + " -S " if lu['single_geom_mode'] == True else loader_str + " "
+        loader_str = loader_str + ' -W "latin1" ' + file_name + ".dbf tiger_staging." + state_lookup['state_abbrev'] + "_" + lu['table_name'] + " | " + platform['psql']
+        loader_str = loader_str.replace("${loader}", platform['loader'])
+        loader_str = loader_str.replace("${table_name}", lu['table_name'])
+        loader_str = loader_str.replace("${lookup_name}", lu['lookup_name'])
+        commands.append(loader_str)
+
+        if lu['post_load_process'] is not None:
+            post_load_process = lu['post_load_process']
+            post_load_process = post_load_process.replace("${loader}", platform['loader'])
+            post_load_process = post_load_process.replace("${table_name}", lu['table_name'])
+            post_load_process = post_load_process.replace("${lookup_name}", lu['lookup_name'])
+            commands.append(post_load_process)
+
+
+    for clu in county_lookuptables:
+        c_website_root = clu['website_root_override'] if clu['website_root_override'] else variables['website_root'] + "/" + clu['lookup_name'].upper() +"/"
+
+        if clu['pre_load_process']:
+            pre_load_process = clu['pre_load_process']
+            pre_load_process = pre_load_process.replace("${loader}", platform['loader'])
+            pre_load_process = pre_load_process.replace("${table_name}", clu['table_name'])
+            pre_load_process = pre_load_process.replace("${lookup_name}", clu['lookup_name'])
+            commands.append(pre_load_process + "\n")
+
+        for c in counties:
+            commands.append("cd " + variables['staging_fold'])
+            county_str = platform['wget'] + " --mirror " + c_website_root + "/tl_" + str(variables['tiger_year']) + "_" + state_lookup['state_fips'] + c['countyfp'] + "_" + clu['table_name'].lower() + ".zip"
+            commands.append(county_str)
+
+            c_tmpfolder = re.sub('http[s]?://','', c_website_root)
+            c_tmpfolder = c_tmpfolder.replace('ftp://','')
+
+            commands.append("cd " + variables['staging_fold'] + "/" + c_tmpfolder)
+
+            state_zip = platform['unzip_command'].replace('*.zip', "tl_*_" + state_lookup['state_fips'] + "*_" + clu['table_name'] + "*.zip") + "\n"
+
+            if platform['county_process_command']:
+                state_zip += platform['county_process_command']+ "\n"
+
+            state_zip = state_zip.replace("${loader}", platform['loader'] + (" -S " if clu['single_geom_mode'] == True else " "))
+            state_zip = state_zip.replace("${table_name}", clu['table_name'])
+            state_zip = state_zip.replace("${lookup_name}", clu['lookup_name'])
+            commands.append(state_zip)
+            commands.append("rm {0}/{1}*.zip".format(variables['staging_fold'], c_tmpfolder))
+
+        if clu['post_load_process']:
+            post_load_process = clu['post_load_process']
+            post_load_process = post_load_process.replace("${loader}", platform['loader'])
+            post_load_process = post_load_process.replace("${table_name}", clu['table_name'])
+            post_load_process = post_load_process.replace("${lookup_name}", clu['lookup_name'])
+            commands.append(post_load_process + "\n")
+
+    for idx,cmd in enumerate(commands):
+        for i in ['state_fold', 'state_abbrev', 'state_fips']:
+            commands[idx] = commands[idx].replace("${" + i + "}", state_lookup[i])
+
+for idx,cmd in enumerate(commands):
+    commands[idx] = cmd.replace("${psql}", platform['psql'])
+
+    for i in ['data_schema', 'staging_schema', 'staging_fold', 'website_root']:
+        a = commands[idx].replace("${" + i + "}", variables[i])
+        commands[idx] = a
+
+return '\n'.join(commands)
+
 $BODY$
-  LANGUAGE sql VOLATILE;
+  LANGUAGE plpython3u VOLATILE;
 
 CREATE OR REPLACE FUNCTION loader_load_staged_data(param_staging_table text, param_target_table text, param_columns_exclude text[]) RETURNS integer
 AS
