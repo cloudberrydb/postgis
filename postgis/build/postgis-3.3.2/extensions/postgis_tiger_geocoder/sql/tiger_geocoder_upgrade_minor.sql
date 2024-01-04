@@ -617,8 +617,6 @@ AND platform.os = $2  -- generate script for selected platform
 $BODY$
   LANGUAGE sql VOLATILE;
 
-CREATE OR REPLACE LANGUAGE plpython3u;
-
 CREATE OR REPLACE FUNCTION loader_generate_script_py(param_states text[], os text)
   RETURNS text AS
 $BODY$
