@@ -1,0 +1,22 @@
+Format: V2
+Pkgname: postgis
+Architecture: #arch
+OS: #os
+GPDBVersion: #gpver
+Version: ossv3.3.2+HashData_pv2.5_Cloudberry1.0.0
+Description: PostGIS provides spatial database functions for the Cloudberry Database.
+PreInstall:
+  All: |
+       # Check if libtiff.so.* is available in the shared library cache
+       if ! ldconfig -N -p 2> /dev/null | grep -P '^\tlibtiff.so\.'; then
+           echo "libtiff.so.* is not available. Please install the required library."
+           exit 1
+       fi
+PostInstall:
+  All: |
+      echo "Please run the following commands to enable the PostGIS package:"
+      echo "CREATE EXTENSION postgis;"
+PostUpdate:
+  All: |
+      echo "Please run the following commands to finish the upgrade:"
+      echo '$GPHOME/share/postgresql/contrib/postgis-3.3/postgis_manager.sh mydatabase upgrade'

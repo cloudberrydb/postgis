@@ -1,4 +1,4 @@
-# PostGIS for Cloudberry Database
+# PostGIS 3.3.2 for Cloudberry Database
 
 [![Slack](https://img.shields.io/badge/Join_Slack-6a32c9)](https://communityinviter.com/apps/cloudberrydb/welcome)
 [![Twitter Follow](https://img.shields.io/twitter/follow/cloudberrydb)](https://twitter.com/cloudberrydb)
@@ -117,7 +117,7 @@ Now, let's get started.
    Then we continue:
 
    ```bash
-   cd /home/gpadmin/postgis/postgis/build/postgis-2.5.4/
+   cd /home/gpadmin/postgis/postgis/build/postgis-3.3.2/
    ./autogen.sh
    ./configure --prefix="${GPHOME}" --with-pgconfig="${GPHOME}"/bin/pg_config --with-raster --without-topology --with-gdalconfig=/usr/local/gdal-2.2.1/bin/gdal-config --with-sfcgal=/usr/local/sfcgal-1.3.6/bin/sfcgal-config --with-geosconfig=/usr/local/geos-3.7.0/bin/geos-config
    make && make install
@@ -142,9 +142,9 @@ For more usages, you can follow [PostGIS manual](https://postgis.net/documentati
 ## License
 
 This project is under GPL v2, because PostGIS is under GPL v2, see the [LICENSE](./LICENSE). PostGIS also includes some files not
-under GPL v2 license, you can check the original [LICENSE](./postgis/build/postgis-2.5.4/LICENSE.TXT) in PostGIS
+under GPL v2 license, you can check the original [LICENSE](./postgis/build/postgis-3.3.2/LICENSE.TXT) in PostGIS
 project for details.
 
 ## Acknowledgment
 
-PostGIS is one project forked from [greenplum-db/geopatial](https://github.com/greenplum-db/geospatial/). Thanks to all the original contributors.
+PostGIS is one project forked from [greenplum-db/geospatial](https://github.com/greenplum-db/geospatial/). Thanks to all the original contributors.

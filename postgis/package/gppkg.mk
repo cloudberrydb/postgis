@@ -1,3 +1,11 @@
+GPMGMT=$(BLD_TOP)/gpMgmt
+include $(BLD_TOP)/Makefile.global
+
+pg_config_path := $(BLD_TOP)/../src/include/pg_config.h
+GP_VERSION_NUM := $(shell grep 'define  *GP_VERSION_NUM' $(pg_config_path) \
+        | perl -ne '$$m1=int($$1/10000),$$m2=int(($$1-$$m1*10000)/100) if/^.*?([0-9]+)/;print "$$m1.$$m2$$/"' )
+
+OS=$(word 1,$(subst _, ,$(BLD_ARCH)))
 ARCH=$(shell uname -p)
 
 # e.g. 
@@ -39,7 +47,7 @@ PWD=$(shell pwd)
 	mkdir RPMS BUILD SPECS
 	cp $(RPM_NAME).spec SPECS/
 	rpmbuild -bb SPECS/$(RPM_NAME).spec --buildroot $(PWD)/BUILD --define '_topdir $(PWD)' --define '__os_install_post \%{nil}' --define 'buildarch $(ARCH)' $(RPM_FLAGS)
-	mv RPMS/$(ARCH)/*.rpm .
+	mv RPMS/$(ARCH)/$*.rpm .
 	rm -rf RPMS BUILD SPECS
 
 gppkg_spec.yml: gppkg_spec.yml.in
